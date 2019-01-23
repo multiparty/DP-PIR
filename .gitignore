@@ -1,0 +1,5 @@
+build/
+data/
+package-lock.json
+logs/
+node_modules/

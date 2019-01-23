@@ -1,0 +1,5 @@
+{
+"parties": 2,
+"replicas": 2,
+"base_port": 9110
+}
