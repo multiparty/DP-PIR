@@ -37,7 +37,7 @@ app.get('/recompute/:input?', function (req, res) {
   }
 
   console.log('Recomputation requested!');
-  
+
   // Remember request to reply to later when preprocessing is done.
   preprocess_requests[recompute_count+1] = res;
 
@@ -110,7 +110,9 @@ jiff_instance.listen('preprocess', function (_, msg) {
   }
 
   // Reply to pre-process request
-  preprocess_requests[number].json({ success: true });
+  if (jiff_instance.id === 1) {
+    preprocess_requests[number].json({ success: true });
+  }
 });
 
 // Listen to queries from frontends
