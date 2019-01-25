@@ -8,29 +8,22 @@
 
 // Initialize Express and JIFF Instance
 var party = require('./party.js');
-
-var app = party.app;
-var jiff_instance = party.jiff_instance;
-var config = party.config;
-
-// Data
-var SRC_DEST_PAIR = 0, NEXT_HOP = 1;
-var recompute_count = 0; // Keeps track of how many times we recomputed.
+require('./protocols/preprocessing.js').frontEnd(party);
 
 // Routes and Functionality
 
 // backend or previous frontend wants us to preprocess!
 // we preprocess and then forward to next frontend.
-jiff_instance.listen('preprocess', function (_, msg) {
+party.jiff.listen('preprocess', function (_, msg) {
   msg = JSON.parse(msg);
   party.preprocess(msg.table, msg.recompute_number);
 });
 
 // Listen to queries from frontends/backends
-jiff_instance.listen('query', query_from_party);
+party.jiff.listen('query', query_from_party);
 
 // Listen to queries from user
-app.get('/query/:number/:src_dest', query_from_user);
+party.app.get('/query/:number/:src_dest', query_from_user);
 
 function query_from_user() {
   console.log('Query from user');

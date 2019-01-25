@@ -14,6 +14,7 @@ app.use(function (req, res, next) {
 
 // Serve static files.
 app.use('/static', express.static(path.join(__dirname, 'static/')));
+app.use('/helpers', express.static(path.join(__dirname, 'parties/helpers/')));
 app.use('/jiff', express.static(path.join(__dirname, 'jiff/lib')));
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules/')));
 
@@ -34,7 +35,7 @@ app.get('/', function (req, res) {
 var jiff_instance;
 var http = require('http').Server(app);
 
-var config = require('./parties/config.json');
+var config = require('./parties/config/config.json');
 var parties = config.parties; // number of parties
 var replicas = config.replicas; // number of machines per party
 var total = parties * replicas; // total number of machines

@@ -10,13 +10,9 @@
 var express = require('express');
 var jiff_client = require('../jiff/lib/jiff-client');
 var jiff_client_bignumber = require('../jiff/lib/ext/jiff-client-bignumber');
-var ECWrapper = require('../lib/libsodium-port/wrapper.js');
-var BN = require('bn.js');
 
 // Configurations!
-var config = require('./config.js');
-
-
+var config = require('./config/config.js');
 
 // Express Configuration
 var app = express();
@@ -51,57 +47,12 @@ var jiff_instance = jiff_client.make_jiff('http://localhost:3000', 'shortest-pat
 jiff_instance.apply_extension(jiff_client_bignumber, options);
 jiff_instance.connect();
 
-
-
-// Shared functionality
-var SRC_DEST_PAIR = 0, NEXT_HOP = 1;
-var recompute_number = 0; // Track the most recent install recompute number (latest version of the table/keys)
-var keys = {}; // map recompute number to [ <column1_key>, <column2_key> ]
-
-// Main preprocessing functionality
-var preprocess = function (table, number) {
-  console.log(jiff_instance.id, 'begin preprocess #', number, 'size', table.length);
-  var startTime = new Date().getTime();
-
-  // Generate keys
-  var key1 = ECWrapper.BNToBytes(ECWrapper.randomScalar());
-  var key2 = ECWrapper.BNToBytes(ECWrapper.randomScalar());
-  keys[number] = [ key1, key2 ];
-
-  // in place garbling
-  var lookup = {};
-  for (var i = 0; i < table.length; i++) {
-    var entry = table[i];
-    entry[SRC_DEST_PAIR] = Array.from(ECWrapper.scalarMult(new Uint8Array(entry[SRC_DEST_PAIR]), key1));
-
-    var str = entry[NEXT_HOP].toString();
-    if (lookup[str] == null) {
-      entry[NEXT_HOP] = Array.from(ECWrapper.scalarMult(new Uint8Array(entry[NEXT_HOP]), key2));
-      lookup[str] = entry[NEXT_HOP];
-    }
-  }
-
-  var endTime = (new Date().getTime() - startTime) / 1000;
-  console.log(jiff_instance.id, 'preprocess #', number, 'completed in ', endTime, 'seconds');
-
-  // send to the next party
-  var msg = JSON.stringify({ table: table, recompute_number: number });
-  var nextId = (jiff_instance.id + config.ids[config.owner].length);
-  if (nextId > config.all_parties.length) {
-    nextId = nextId - config.all_parties.length;
-  }
-
-  jiff_instance.emit('preprocess', [ nextId ], msg, false);
-};
-
-
-
-// Exports
+// Create the this object
 module.exports = {
-  // variables
   app: app,
-  jiff_instance: jiff_instance,
+  jiff: jiff_instance,
   config: config,
-  // functions
-  preprocess: preprocess
+  // Shared properties
+  keys: {}, // map recompute number to [ <column1_key>, <column2_key> ]
+  recompute_number: 0
 };

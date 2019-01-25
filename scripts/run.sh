@@ -17,11 +17,11 @@ then
 fi
 
 # Write out config file
-echo "{" > ./parties/config.json
-echo "\"parties\": $PARTIES," >> ./parties/config.json
-echo "\"replicas\": $REPLICAS," >> ./parties/config.json
-echo "\"base_port\": $PORT" >> ./parties/config.json
-echo "}" >> ./parties/config.json
+echo "{" > ./parties/config/config.json
+echo "\"parties\": $PARTIES," >> ./parties/config/config.json
+echo "\"replicas\": $REPLICAS," >> ./parties/config/config.json
+echo "\"base_port\": $PORT" >> ./parties/config/config.json
+echo "}" >> ./parties/config/config.json
 
 # run server
 mkdir -p logs
