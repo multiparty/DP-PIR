@@ -40,5 +40,8 @@ module.exports = {
   },
   clear: function (recompute_number) {
     delete garbled_tables[recompute_number];
+  },
+  lookup: function (garbledQuery, recompute_number) {
+    return garbled_tables[recompute_number][garbledQuery.toString()];
   }
 };

@@ -79,7 +79,7 @@ wrapper.ready.then(function () {
       hashed[i] = [ pairHashMap[str], tmpMap[dst] ];
     }
 
-    var serverContent = JSON.stringify(hashed, null, 2);
+    var serverContent = JSON.stringify(hashed );
 
     // write out to files
     fs.writeFile(SERVER_OUTPUT_PATH, serverContent, console.log);

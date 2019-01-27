@@ -19,16 +19,15 @@ party.jiff.listen('start pre-processing', function (_, msg) {
   party.protocols.preprocess(recompute_number);
 });
 
-// Listen to queries from frontends/backends
-party.jiff.listen('query', query_from_party);
+// Listen to queries from user: the honest user query protocol
+party.app.get('/query/honest/:tag/:scalar', async function (req, res) {
+  if (party.current_recompute_number === 0) {
+    return res.status(500);
+  }
 
-// Listen to queries from user
-party.app.get('/query/:number/:src_dest', query_from_user);
+  var tag = req.params['tag'];
+  var scalarShare = req.params['scalar']; // string representing bn
 
-function query_from_user() {
-  console.log('Query from user');
-}
-
-function query_from_party() {
-  console.log('Query from party');
-}
+  scalarShare = await party.protocols.query_honest(tag, scalarShare); // string representing bn
+  res.send(JSON.stringify({share: scalarShare}));
+});

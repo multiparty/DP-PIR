@@ -17,13 +17,13 @@ module.exports = {
       next_hop = new Uint8Array(next_hop);
 
       // Garble by scalar mult
-      var garbled1 = ECWrapper.scalarMult(src_dest_pair, key[SRC_DEST_PAIR_INDEX]);
+      var garbled1 = ECWrapper.scalarMult(src_dest_pair, key[SRC_DEST_PAIR_INDEX].bytes);
       garbled1 = Array.from(garbled1);
 
       var next_hop_str = next_hop.toString();
       var garbled2 = lookup[next_hop_str];
       if (garbled2 == null) {
-        garbled2 = ECWrapper.scalarMult(next_hop, key[NEXT_HOP_INDEX]);
+        garbled2 = ECWrapper.scalarMult(next_hop, key[NEXT_HOP_INDEX].bytes);
         garbled2 = Array.from(garbled2);
         lookup[next_hop_str] = garbled2;
       }

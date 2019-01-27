@@ -14,8 +14,8 @@ if (exports.replica !== '' && exports.replica != null) {
   exports.replica = parseInt(exports.replica);
   exports.id = (exports.owner - 1) * replicas + exports.replica;
 } else {
-  exports.replica = null;
-  exports.id = null;
+  console.log('missing owner party and replica command line arguments');
+  process.exit();
 }
 
 // Other configurations / constants
@@ -33,5 +33,18 @@ for (var own = 1; own <= parties; own++) {
     var id = (own - 1) * replicas + op;
     exports.ids[own].push(id);
     exports.all_parties.push(id)
+  }
+}
+
+// Cliques: the clique matching this party is an array of replicas
+// each belonging to a different party, and each having the same offset
+// with that parties replicas
+exports.clique = [];
+exports.cliqueNoSelf = [];
+for (own = 1; own <= parties; own++) {
+  id = (own-1) * replicas + exports.replica;
+  exports.clique.push(id);
+  if (id !== exports.id) {
+    exports.cliqueNoSelf.push(id);
   }
 }

@@ -11,24 +11,25 @@ var party = require('./party.js');
 
 var tableHelper = require('./helpers/table.js');
 
-
 // Backend specific code and functionality
 
 // Begins the pre-processing cycle: load the table chunk from the data file
 // start shuffling and garbling, send garbled data to the next party,
 // wait for last party to send final garbled table, and install it.
 const preprocess = async function (recompute_number) {
-  // Chunk table
-  var table = tableHelper.chunk(party.jiff.id, party.config);
+  try {
+    // Chunk table
+    var table = tableHelper.chunk(party.jiff.id, party.config);
 
-  // Perform pre-processing
-  var garbled_table = await party.protocols.preprocess(recompute_number, table);
+    // Perform pre-processing
+    var garbled_table = await party.protocols.preprocess(recompute_number, table);
 
-  // Install table
-  var noDuplicates = tableHelper.install(garbled_table, recompute_number);
+    // Install table
+    var noDuplicates = tableHelper.install(garbled_table, recompute_number);
 
-  // Tell backend leader about installation status
-  party.protocols.chunk.chunk([ 1 ], recompute_number + ':status', [ noDuplicates ]);
+    // Tell backend leader about installation status
+    party.protocols.chunk.chunk([1], recompute_number + ':status', [noDuplicates]);
+  } catch( ERR) { console.log(ERR); }
   return noDuplicates;
 };
 
@@ -43,7 +44,7 @@ if (party.jiff.id === 1) {
 
     // Tell all parties to be ready for pre-processing
     var recompute_number = party.current_recompute_number + 1;
-    party.jiff.emit('start pre-processing', party.config.all_parties.slice(1), recompute_number.toString());
+    party.jiff.emit('start pre-processing', party.config.all_parties.slice(1), recompute_number.toString(), false);
 
     setTimeout(async function () { // timeout to ensure emits are sent out first
       var status = await preprocess(recompute_number);
@@ -62,7 +63,7 @@ if (party.jiff.id === 1) {
 
       // Update everyone with the status.
       var msg = JSON.stringify({ recompute_number: recompute_number, status: status });
-      party.jiff.emit('install', party.config.all_parties.slice(1), msg);
+      party.jiff.emit('install', party.config.all_parties.slice(1), msg, false);
 
       var endTime = new Date().getTime();
       res.json({ success: status, duration: (endTime - startTime) / 1000 });
@@ -87,20 +88,15 @@ party.jiff.listen('install', function (sender_id, msg) {
   tableHelper.clear(msg['recompute_number'] - (msg['status'] ? 3 : 0));
 });
 
+// Listen to queries from user: the honest user query protocol
+party.app.get('/query/honest/:tag/:src_dest', async function (req, res) {
+  if (party.current_recompute_number === 0) {
+    return res.status(500);
+  }
 
+  var tag = req.params['tag'];
+  var pointShare = JSON.parse(req.params['src_dest']); // Array representing EC point
 
-// Listen to queries from frontends
-party.jiff.listen('query', query_from_party);
-
-
-// Listen to queries from user
-party.app.get('/query/:number/:src_dest', query_from_user);
-
-
-function query_from_user() {
-  console.log('Query from user');
-}
-
-function query_from_party() {
-  console.log('Query from party');
-}
+  pointShare = await party.protocols.query_honest(tag, pointShare, tableHelper);
+  res.send(JSON.stringify({share: pointShare})); // Array representing EC point
+});

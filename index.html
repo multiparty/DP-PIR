@@ -8,12 +8,15 @@
 	<div id="leaflet" style="width:100vw; height:100vh;"></div>
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
+
   <script src="node_modules/bn.js/lib/bn.js"></script>
   <script src="static/sodium-wrappers-sumo.js"></script>
+  <script src="static/elliptic.js"></script>
+  <script src="lib/libsodium-port/wrapper.js"></script>
+  <script src="parties/helpers/ECMPC.js"></script>
   <script src="data/client-map.js"></script>
-  <script src="static/oprf-client.js"></script>
   <script src="client.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
 
 
 	<script>
@@ -26,9 +29,9 @@
       var isPathRendered = false;
 
       function getPointById(id) {
-        for(var i = 0; i < obj.features.length; i++) {
-          if(obj.features[i].properties.point_id == id)
-            return obj.features[i];
+        for(var i = 0; i < points.features.length; i++) {
+          if(points.features[i].properties.point_id == id)
+            return points.features[i];
         }
         return null;
       }
@@ -94,7 +97,7 @@
           // var popupContent = " You have selected:<p>" + feature.coordinates[0] + ' , ' + feature.coordinates[1] + ".</p>";
           // layer.bindPopup(popupContent);
         }
-      L.geoJson(obj, {
+      L.geoJson(points, {
         filter: function (feature, layer) { return true; },
         onEachFeature: onEachFeature,
         style: function (feature) { return {"color": randomColor()}; },

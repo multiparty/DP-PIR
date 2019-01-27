@@ -31,12 +31,13 @@ var options = {
   party_id: config.id,
   party_count: config.all_parties.length,
   autoConnect: false,
+  sodium: false,
   initialization: {
     owner_party: config.owner
   },
   onConnect: function (jiff_instance) { // Connection
     var port = config.base_port + jiff_instance.id;
-    app.listen(port, function () { // Start listening with express on port 9111
+    app.listen(port, function () {
       console.log('Party up and listening on ' + port);
     });
   }
@@ -56,6 +57,7 @@ var party = {
 
   // Shared properties
   keys: {}, // map recompute number to [ <column1_key>, <column2_key> ]
+  invKey: {}, // map recompute number to (<column2_key> inv mod prime)
   current_recompute_number: 0 // latest recompute number with a garbled table that is ready for use on all backends
 };
 
@@ -65,6 +67,7 @@ require('./protocols/forward.js')(party);
 require('./protocols/shuffle.js')(party);
 require('./protocols/broadcast.js')(party);
 require('./protocols/preprocessing.js')(party);
+require('./protocols/query-honest.js')(party);
 
 // Shared listeners
 jiff_instance.listen('install', function (sender_id, msg) {

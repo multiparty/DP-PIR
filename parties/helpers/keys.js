@@ -6,20 +6,22 @@ module.exports = {
     // BN as a string
     var key1 = ECWrapper.randomScalar().toString(); // already generated mod prime
     var key2 = ECWrapper.randomScalar().toString();
-    var key = [key1, key2];
-    return key;
+    return [key1, key2];
   },
   parse: function (key) {
     var key1 = key[0];
-    var key2 = key[2];
+    var key2 = key[1];
 
-    key1 = ECWrapper.BNToBytes(new bn(key1));
-    key2 = ECWrapper.BNToBytes(new bn(key2));
-    return [key1, key2];
+    var bnk1 = new bn(key1);
+    var bnk2 = new bn(key2);
+
+    key1 = ECWrapper.BNToBytes(bnk1);
+    key2 = ECWrapper.BNToBytes(bnk2);
+    return [{ bytes: key1, bn: bnk1 }, { bytes: key2, bn: bnk2 }];
   },
   inverse: function (singleKey) {
-    var bnKey = ECWrapper.bytesToBN(singleKey);
+    var bnKey = singleKey.bn;
     var invKey = bnKey.invm(ECWrapper.prime);
-    return ECWrapper.BNToBytes(invKey);
+    return { bytes: ECWrapper.BNToBytes(invKey), bn: invKey };
   }
 };

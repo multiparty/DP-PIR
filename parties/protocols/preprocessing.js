@@ -10,17 +10,15 @@ const replicateKey = async function (party, tag) {
     party.protocols.broadcast.broadcast(tag + ':key', keysHelper.generate());
   }
 
-  // Receive key that was broadcasted by leader
+  // Receive key that was broad-casted by leader
   var key = await party.protocols.broadcast.get(tag + ':key');
 
   // Parse and store key
   key = keysHelper.parse(key);
   party.keys[tag] = key;
+  party.invKey[tag] = keysHelper.inverse(key[1]);
   return key;
 };
-
-// Exports
-module.exports = {};
 
 // Frontend protocol
 module.exports = function (party) {

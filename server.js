@@ -14,9 +14,13 @@ app.use(function (req, res, next) {
 
 // Serve static files.
 app.use('/static', express.static(path.join(__dirname, 'static/')));
-app.use('/helpers', express.static(path.join(__dirname, 'parties/helpers/')));
+app.use('/parties/helpers', express.static(path.join(__dirname, 'parties/helpers/')));
 app.use('/jiff', express.static(path.join(__dirname, 'jiff/lib')));
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules/')));
+
+app.use('/lib/libsodium-port/wrapper.js', function (req, res) {
+  res.sendFile(__dirname + '/lib/libsodium-port/wrapper.js');
+});
 
 app.get('/client.js', function (req, res) {
   res.sendFile(__dirname + '/client.js');
@@ -76,6 +80,7 @@ var beforeInitHook = function (jiff, computation_id, msg, meta) {
 
 var options = {
   logs: false,
+  sodium: false,
   hooks: {
     beforeInitialize: [ beforeInitHook ]
   }

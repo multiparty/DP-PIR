@@ -1,5 +1,5 @@
 {
-"parties": 2,
-"replicas": 2,
+"parties": 3,
+"replicas": 3,
 "base_port": 9110
 }
