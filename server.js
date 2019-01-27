@@ -15,15 +15,10 @@ app.use(function (req, res, next) {
 // Serve static files.
 app.use('/static', express.static(path.join(__dirname, 'static/')));
 app.use('/parties/helpers', express.static(path.join(__dirname, 'parties/helpers/')));
-app.use('/jiff', express.static(path.join(__dirname, 'jiff/lib')));
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules/')));
 
 app.use('/lib/libsodium-port/wrapper.js', function (req, res) {
   res.sendFile(__dirname + '/lib/libsodium-port/wrapper.js');
-});
-
-app.get('/client.js', function (req, res) {
-  res.sendFile(__dirname + '/client.js');
 });
 
 app.get('/data/client-map.js', function (req, res) {
@@ -31,9 +26,14 @@ app.get('/data/client-map.js', function (req, res) {
 });
 
 app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/static/index.html');
 });
 
+app.get('/config.js', function (req, res) {
+  var config = require('./parties/config/config.json');
+  var code = 'var config = ' + JSON.stringify(config);
+  res.send(code);;
+});
 
 // JIFF config
 var jiff_instance;

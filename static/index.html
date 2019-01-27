@@ -7,19 +7,29 @@
   <body style="width:100%; height:100%; margin:0; padding:0;">
 	<div id="leaflet" style="width:100vw; height:100vh;"></div>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js"></script>
 
-  <script src="node_modules/bn.js/lib/bn.js"></script>
-  <script src="static/sodium-wrappers-sumo.js"></script>
-  <script src="static/elliptic.js"></script>
-  <script src="lib/libsodium-port/wrapper.js"></script>
-  <script src="parties/helpers/ECMPC.js"></script>
-  <script src="data/client-map.js"></script>
-  <script src="client.js"></script>
+    <!-- Map data -->
+    <script src="config.js"></script>
+    <script src="data/client-map.js"></script>
 
+    <!-- external dependencies -->
+    <script src="node_modules/bn.js/lib/bn.js"></script>
+    <script src="static/js/sodium-wrappers-sumo.js"></script>
+    <script src="static/js/elliptic.js"></script>
 
-	<script>
+    <!-- Our libsodium/elliptic port -->
+    <script src="lib/libsodium-port/wrapper.js"></script>
+
+    <!-- Helpers for sharing/reconstructing EC points. -->
+    <script src="parties/helpers/ECMPC.js"></script>
+    <script src="static/protocols.js"></script>
+
+    <!-- Client intermediate code between protocols and UI -->
+    <script src="static/client.js"></script>
+
+	<script type="text/javascript">
       $( document ).ready(function() {
         document.getElementById('leaflet').style.cursor = 'crosshair';
       });
