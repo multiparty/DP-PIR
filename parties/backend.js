@@ -6,65 +6,88 @@
  * 4. When a frontend server demands: executes retrival protocol (local access by index).
  */
 
-// Read Configs
-const DEFAULT_MAP_DATA_PATH = 'data/server-map.json';
-
 // Initialize Express and JIFF Instance
 var party = require('./party.js');
-require('./protocols/preprocessing.js').backEnd(party);
 
-// Data
-var recompute_count = 0; // Keeps track of how many times we recomputed.
-var garbled_tables = []; // Maps index i to the resulting encrypted table of the ith re-computation.
-var preprocess_requests = {}; // Remember requests and respond to them after tasks are done
+var tableHelper = require('./helpers/table.js');
+
+
+// Backend specific code and functionality
+
+// Begins the pre-processing cycle: load the table chunk from the data file
+// start shuffling and garbling, send garbled data to the next party,
+// wait for last party to send final garbled table, and install it.
+const preprocess = async function (recompute_number) {
+  // Chunk table
+  var table = tableHelper.chunk(party.jiff.id, party.config);
+
+  // Perform pre-processing
+  var garbled_table = await party.protocols.preprocess(recompute_number, table);
+
+  // Install table
+  var noDuplicates = tableHelper.install(garbled_table, recompute_number);
+
+  // Tell backend leader about installation status
+  party.protocols.chunk.chunk([ 1 ], recompute_number + ':status', [ noDuplicates ]);
+  return noDuplicates;
+};
 
 // Routes and Functionality
 
 // when http://localhost:8080/recompute/[<input>] is called,
-// server recomputes shortest paths according to what is
-// defined in the file: ./<input> (could be a path)
-party.app.get('/recompute/:input?', function (req, res) {
-  if (party.jiff.id !== 1) {
-    res.json({ success: false, error: 'party id is not 1!' });
-    return;
-  }
+// the backend leader initiates a new pre-processing stage
+if (party.jiff.id === 1) {
+  party.app.get('/recompute', function (req, res) {
+    console.log('Recomputation requested!');
+    var startTime = new Date().getTime();
 
-  console.log('Recomputation requested!');
+    // Tell all parties to be ready for pre-processing
+    var recompute_number = party.current_recompute_number + 1;
+    party.jiff.emit('start pre-processing', party.config.all_parties.slice(1), recompute_number.toString());
 
-  // Remember request to reply to later when preprocessing is done.
-  preprocess_requests[recompute_count+1] = res;
+    setTimeout(async function () { // timeout to ensure emits are sent out first
+      var status = await preprocess(recompute_number);
 
-  // parse request parameters
-  var path = req.params.input != null ? req.params.input : DEFAULT_MAP_DATA_PATH;
+      // Check if everyone successfully installed the table.
+      var results = await party.protocols.chunk.combine(party.config.ids[party.config.owner], recompute_number + ':status');
+      for (var i = 0; i < status.length; i++) {
+        status = status && results;
+      }
 
-  // Call begin_preprocess on all backend replicas
-  // This executes the function `begin_preprocess' defined below
-  // in all of the replicas (including this replica)!
-  var msg = JSON.stringify({ path: path, recompute_number: recompute_count+1 });
-  party.jiff.emit('begin_preprocess', party.config.ids[party.config.BACKEND_LEADER].slice(1), msg, false);
+      // Clean previous tables and install
+      tableHelper.clear(recompute_number - (status ? 3 : 0));
+      if (party.current_recompute_number < recompute_number) {
+        party.current_recompute_number = recompute_number;
+      }
 
-  setTimeout(function () { // timeout to ensure emits are sent out first
-    party.begin_preprocess(party.jiff.id, msg);
-  }, 200);
+      // Update everyone with the status.
+      var msg = JSON.stringify({ recompute_number: recompute_number, status: status });
+      party.jiff.emit('install', party.config.all_parties.slice(1), msg);
+
+      var endTime = new Date().getTime();
+      res.json({ success: status, duration: (endTime - startTime) / 1000 });
+    }, 200);
+  });
+}
+
+// the backend leader wants us to pre-process!
+// Call pre-process with the given re-computation number to
+// replicate keys and start pre-processing when data is received.
+party.jiff.listen('start pre-processing', function (_, msg) {
+  var recompute_number = parseInt(msg);
+  preprocess(recompute_number);
 });
 
-// Start sending the table to frontend parties in a ring.
-party.jiff.listen('begin_preprocess', party.begin_preprocess);
-
-// Table came back to us after finishing all the ring!
-party.jiff.listen('preprocess', function (sender_id, data) {
-  var result = party.end_preprocess(sender_id, data);
-  recompute_count = result.number;
-  garbled_tables[result.number] = result.garbled_table;
-  if (result.number > 3) {
-    delete garbled_tables[result.number - 3];
+party.jiff.listen('install', function (sender_id, msg) {
+  msg = JSON.parse(msg);
+  if (msg['status'] && party.current_recompute_number < msg['recompute_number']) {
+    party.current_recompute_number = msg['recompute_number'];
   }
 
-  // Reply to pre-process request
-  if (party.jiff.id === 1) {
-    preprocess_requests[result.number].json({success: true});
-  }
+  tableHelper.clear(msg['recompute_number'] - (msg['status'] ? 3 : 0));
 });
+
+
 
 // Listen to queries from frontends
 party.jiff.listen('query', query_from_party);

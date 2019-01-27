@@ -47,12 +47,32 @@ var jiff_instance = jiff_client.make_jiff('http://localhost:3000', 'shortest-pat
 jiff_instance.apply_extension(jiff_client_bignumber, options);
 jiff_instance.connect();
 
-// Create the this object
-module.exports = {
+// Create this party's object
+var party = {
   app: app,
   jiff: jiff_instance,
   config: config,
+  protocols: {},
+
   // Shared properties
   keys: {}, // map recompute number to [ <column1_key>, <column2_key> ]
-  recompute_number: 0
+  current_recompute_number: 0 // latest recompute number with a garbled table that is ready for use on all backends
 };
+
+// Add protocols to party
+require('./protocols/chunk.js')(party);
+require('./protocols/forward.js')(party);
+require('./protocols/shuffle.js')(party);
+require('./protocols/broadcast.js')(party);
+require('./protocols/preprocessing.js')(party);
+
+// Shared listeners
+jiff_instance.listen('install', function (sender_id, msg) {
+  msg = JSON.parse(msg);
+  if (msg['status'] && party.current_recompute_number < msg['recompute_number']) {
+    party.current_recompute_number = msg['recompute_number'];
+  }
+});
+
+// Exports
+module.exports = party;
