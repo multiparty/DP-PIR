@@ -100,6 +100,46 @@
     });
   };
   exports.query_malicious_client = function (source, dest) {
+    // Generate unique tag
+    var tag = uuid+'-'+(count++);
 
+    // Hash query to EC Point and share it
+    var queryPoint = _pairHashMap[source + ':' + dest];
+    var shares = _ECMPC.share(queryPoint, _config.parties);
+    shares[0] = JSON.stringify(shares[0]);
+
+    // Swap shares: 1st frontend gets point, backend gets scalar
+    var tmp = shares[1];
+    shares[1] = shares[0];
+    shares[0] = tmp;
+
+    // Send queries
+    var promises = [];
+    var urls = randomCliqueURLs();
+    for (var i = 0; i < urls.length; i++) {
+      var url = urls[i] + '/query/malicious/' + tag + '/' + shares[i];
+      promises.push(POST(url));
+    }
+
+    // Receive responses
+    return Promise.all(promises).then(function (results) {
+      // parse
+      for (var k = 0; k < results.length; k++) {
+        results[k] = JSON.parse(results[k])['share'];
+      }
+
+      // Swap results: 1st frontend gives us back the point, backend gives us scalar
+      var tmp = results[1];
+      results[1] = results[0];
+      results[0] = tmp;
+
+      // Reconstruct
+      var hop = _ECMPC.reconstruct(results);
+      if (hop.toString() === _unreached.toString()) {
+        return 'unreachable';
+      } else {
+        return _elligatorMap[JSON.stringify(hop)];
+      }
+    });
   };
 }((typeof exports === 'undefined' ? this.protocols = {} : exports), typeof exports !== 'undefined'));

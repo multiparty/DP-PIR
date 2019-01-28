@@ -31,3 +31,16 @@ party.app.get('/query/honest/:tag/:scalar', async function (req, res) {
   scalarShare = await party.protocols.query_honest(tag, scalarShare); // string representing bn
   res.send(JSON.stringify({share: scalarShare}));
 });
+
+// Listen to queries from user: the malicious user query protocol
+party.app.get('/query/malicious/:tag/:share', async function (req, res) {
+  if (party.current_recompute_number === 0) {
+    return res.status(500);
+  }
+
+  var tag = req.params['tag'];
+  var share = req.params['share']; // the actual meaning of this share depends on which frontend we belong to!
+
+  share = await party.protocols.query_malicious.frontend(tag, share);
+  res.send(JSON.stringify({share: share}));
+});

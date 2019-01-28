@@ -68,6 +68,7 @@ require('./protocols/shuffle.js')(party);
 require('./protocols/broadcast.js')(party);
 require('./protocols/preprocessing.js')(party);
 require('./protocols/query-honest.js')(party);
+require('./protocols/query-malicious.js')(party);
 
 // Shared listeners
 jiff_instance.listen('install', function (sender_id, msg) {

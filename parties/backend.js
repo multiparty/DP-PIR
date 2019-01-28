@@ -100,3 +100,16 @@ party.app.get('/query/honest/:tag/:src_dest', async function (req, res) {
   pointShare = await party.protocols.query_honest(tag, pointShare, tableHelper);
   res.send(JSON.stringify({share: pointShare})); // Array representing EC point
 });
+
+// Listen to queries from user: the malicious user query protocol
+party.app.get('/query/malicious/:tag/:scalar', async function (req, res) {
+  if (party.current_recompute_number === 0) {
+    return res.status(500);
+  }
+
+  var tag = req.params['tag'];
+  var scalarShare = req.params['scalar']; // string representing bn
+
+  scalarShare = await party.protocols.query_malicious.backend(tag, scalarShare, tableHelper);
+  res.send(JSON.stringify({share: scalarShare})); // Array representing EC point
+});

@@ -7,13 +7,20 @@ module.exports = function (party) {
 
   // forward, get, and listen('forward') relies on assumption:
   //   all parties have the same number of replicas.
-  party.protocols.forward.forward = function (tag, msg) {
+  party.protocols.forward.forward = function (tag, msg, backwards) {
     var replica_ids = party.config.ids[party.config.owner];
     var id = party.jiff.id;
 
     var next = id + replica_ids.length;
     if (next > party.config.all_parties.length) {
       next = next - party.config.all_parties.length;
+    }
+
+    if (backwards === true) {
+      next = id - replica_ids.length;
+      if (next <= 0) {
+        next = next + party.config.all_parties.length;
+      }
     }
 
     // send over the wire.
