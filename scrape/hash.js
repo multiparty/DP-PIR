@@ -1,92 +1,38 @@
-var CLIENT_INPUT_PATH = './output/client-raw-data.json';
-var SERVER_INPUT_PATH = './output/server-raw-data.json';
-var CLIENT_OUTPUT_PATH = './output/client-ready-data.js';
-var SERVER_OUTPUT_PATH = './output/server-ready-data.json';
+// Input and output directories.
+// Server side files contain the plain map data, client side files contain the
+// same map data but formatted so it can be rendered in the browser.
+const CLIENT_INPUT_PATH = './output/client-raw-data.json';
+const SERVER_INPUT_PATH = './output/server-raw-data.json';
+const CLIENT_OUTPUT_PATH = './output/client-ready-data.js';
+const SERVER_OUTPUT_PATH = './output/server-ready-data.json';
 
-var fs = require('fs');
+const fs = require('fs');
+const hash = require('../client/hash.js');
 
-var wrapper = require('../lib/libsodium-port/wrapper.js');
+// Client processing: keep the raw points, but surrond the JSON data
+// with JS boilerplate to make it includable in the browser.
+const clientInput = require(CLIENT_INPUT_PATH);
+let clientContent = 'var points = ' + JSON.stringify(clientInput) + ';\n';
+clientContent += 'if(typeof exports !== "undefined") { exports = points; }';
 
-wrapper.ready.then(function () {
-  try {
-    var str, hash, hstr;
-    var unreachablePlain = '0';
-    var unreachable = Array.from(wrapper.hashToPoint(unreachablePlain));
-    var tmpMap = {};
+fs.writeFile(CLIENT_OUTPUT_PATH, clientContent, function (err) {
+  console.log('Client files written, errors = ', err);
+});
 
-    // Client processing: keep the raw points, add pointers to hashed pairs!
-    var clientInput = require(CLIENT_INPUT_PATH);
+// Server processing: values must be hashed so that all entries in the table
+// are numbers. Furthermore, the hashing must be consistent with that of the
+// client side, hence we do it in JS to use the same library.
+const file = require(SERVER_INPUT_PATH);
+const hashedTable = [];
+for (let row of file) {
+  const key = row[0];
+  const val = row[1];
+  hashedTable.push([
+    hash(key, clientInput.features.length),
+    hash(val, clientInput.features.length)
+  ]);
+}
 
-    var points = [];
-    var elligatorMap = {};
-    for (var k = 0; k < clientInput.features.length; k++) {
-      str = clientInput.features[k].properties.point_id.toString();
-      hash = Array.from(wrapper.hashToPoint(str));
-
-      hstr = JSON.stringify(hash);
-      if (elligatorMap[hstr] != null) {
-        console.log('duplicate in next hop', str, elligatorMap[hstr]);
-      }
-
-      elligatorMap[hstr] = str;
-      tmpMap[str] = hash;
-      points.push(str);
-    }
-
-    var pairHashMap = {};
-    var revsPairMap = {};
-    for (var p1 = 0; p1 < points.length; p1++) {
-      for (var p2 = 0; p2 < points.length; p2++) {
-        str = points[p1] + ':' + points[p2];
-        hash = Array.from(wrapper.hashToPoint(str));
-        pairHashMap[str] = hash;
-
-        hstr = JSON.stringify(hash);
-        if (revsPairMap[hstr] != null) {
-          console.log('duplicate in source/destination pair', str, revsPairMap[hstr]);
-        }
-        revsPairMap[hstr] = str;
-      }
-    }
-
-    var clientContent = 'var points = ' + JSON.stringify(clientInput) + ';\n';
-    clientContent += 'var pairHashMap = ' + JSON.stringify(pairHashMap) + ';\n';
-    clientContent += 'var elligatorMap = ' + JSON.stringify(elligatorMap) + ';\n';
-    clientContent += 'var unreached = ' + JSON.stringify(unreachable) + ';\n';
-    clientContent += 'if(typeof exports !== "undefined") { exports.points = points; exports.unreached = unreached; exports.pairHashMap = pairHashMap; exports.elligatorMap = elligatorMap; }\n';
-
-    // Server hashing
-    var file = require(SERVER_INPUT_PATH);
-
-    var hashed = [];
-    for (var i = 0; i < file.length; i++) {
-      var row = file[i];
-      str = row[0] + ':' + row[1];
-
-      if (pairHashMap[str] == null) {
-        console.log('Found pair in server that was not in the client!', str);
-        process.exit(1);
-      }
-
-      var dst = row[2].toString();
-      if (dst === unreachablePlain) {
-        console.log('Found an unreachable hop!');
-      } else if (tmpMap[dst] == null) {
-        console.log('Found jump in server that is not in the client nor is unreachable!', dst);
-        process.exit(1);
-      }
-
-      hashed[i] = [ pairHashMap[str], tmpMap[dst] ];
-    }
-
-    var serverContent = JSON.stringify(hashed );
-
-    // write out to files
-    fs.writeFile(SERVER_OUTPUT_PATH, serverContent, console.log);
-    fs.writeFile(CLIENT_OUTPUT_PATH, clientContent, console.log);
-
-    console.log('Hashing Done: should output 2 nulls if file write is successful!');
-  } catch (Err) {
-    console.log(Err);
-  }
+fs.writeFile(SERVER_OUTPUT_PATH, JSON.stringify(hashedTable), function (err) {
+  console.log('Server files written, errors = ', err);
 });

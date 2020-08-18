@@ -1,3 +1,4 @@
+# Python 3
 import json
 import geojson
 # if this does not work [specifically on Linux]:
@@ -5,10 +6,10 @@ import geojson
 # 2. replace all "from geoql.geoql import <whatever>" with "from geoql import <whatever>"
 from geoql import geoql
 import requests
-from Queue import Queue
+from queue import Queue
 
 ############################ CONFIGURATIONS
-RADIUS = 0.4
+RADIUS = 5
 RAW_OUTPUT_PATH = './output/raw.geojson';
 CLIENT_OUTPUT_PATH = './output/client-raw-data.json';
 SERVER_OUTPUT_PATH = './output/server-raw-data.json';
@@ -30,12 +31,12 @@ g = geoql.loads(requests.get(url + 'example_extract.geojson').text, encoding="la
 g = g.properties_null_remove()\
      .tags_parse_str_to_dict()\
      .keep_by_property({"highway": {"$in": ["residential", "secondary", "tertiary"]}})
-g = g.keep_within_radius((42.344936, -71.086976), RADIUS, 'miles') # 0.6 miles from Boston Common.
-
+g = g.keep_within_radius((42.344936, -71.086976), RADIUS, 'miles') # 4 miles from Boston Common.
 
 g = g.keep_that_intersect(z) # Only those entries found in a Boston ZIP Code regions.
 g = g.node_edge_graph() # Converted into a graph with nodes and edges.
 g.dump(open(RAW_OUTPUT_PATH, 'w'))
+
 
 ########################### FORMAT MAP AS A GRAPH
 
@@ -47,7 +48,6 @@ for k in g["features"]:
   else:
     shapes.append(k)
 
-
 # make points in the format of client
 nodes = []
 coordinates2ID = {}
@@ -57,12 +57,7 @@ for i in range(len(points)):
   coordinates2ID[(coords[0], coords[1])] = i+1
   nodes.append(i+1)
 
-
-# Print out JSON object for client
-client = { 'features': points }
-clientFile = open(CLIENT_OUTPUT_PATH, 'w')
-clientFile.write(json.dumps(client))
-clientFile.close()
+print("Total number of nodes scraped: ", len(nodes))
 
 # format edges
 edges = { src: [] for src in nodes }
@@ -73,6 +68,17 @@ for shape in shapes:
     dst = coordinates2ID[coords[1]]
     edges[src].append(dst)
     edges[dst].append(src) # bi-directional graph
+
+# put edges in the points data so that we can find out neighbors of a point
+# in the client data.
+for i in nodes:
+  points[i-1].properties['neighbors'] = edges[i]
+
+# Print out JSON object for client
+client = { 'features': points }
+clientFile = open(CLIENT_OUTPUT_PATH, 'w')
+clientFile.write(json.dumps(client))
+clientFile.close()
 
 
 ############################ ALL PAIRS SHORTEST PATHS USING BFS
@@ -99,18 +105,18 @@ for src in nodes:
 
   # Format as table
   for dst in nodes:
-    table.append([src, dst, jumps.get(dst, 0)])
+    if src == dst:
+      continue
 
-# Check unreachables!!
-for t in table:
-  if t[1] == 0:
-    # can make everything reachable by hooking t[1] = some node
-    print "unreachable: ", (t[0], t[1])
+    next = jumps.get(dst, 0)
+    #if next == 0:
+    #  print("unreachable: ", (src, dst))
+
+    key = [src, dst]
+    value = [src, dst, next]
+    table.append([key, value])
 
 # write out JSON object for server
 serverFile = open(SERVER_OUTPUT_PATH, 'w')
 serverFile.write(json.dumps(table))
 serverFile.close()
-
-
-
