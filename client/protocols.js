@@ -1,145 +1,70 @@
-/* global ECMPC pairHashMap elligatorMap unreached config $ */
-(function (exports, node) {
-  // Making ajax requests
-  var POST;
-  if(!node) {
-    POST = function (url) {
-      return $.ajax({ type: 'GET', url: url, crossDomain: true, cache: false });
-    };
-  } else {
-    POST = function (url) {
-      var request = require('request');
-      return new Promise(function (resolve, reject) {
-        request.get({ url: url }, function (error, response, body) {
-          if (error != null) resolve(body);
-          else reject(error);
-        });
-      });
-    };
-  }
+/* global TOTAL_COUNT, getPointById */
 
-  // Dependencies
-  var BN, _ECMPC, _pairHashMap, _elligatorMap, _unreached, _config;
-  if (node) {
-    var clientData = require('../data/client-map.js');
-    _pairHashMap = clientData.pairHashMap;
-    _elligatorMap = clientData.elligatorMap;
-    _unreached = clientData._unreached;
 
-    _ECMPC = require('../parties/helpers/ECMPC.js');
-    _config = require('../parties/config/config.json');
-  } else {
-    _pairHashMap = pairHashMap;
-    _elligatorMap = elligatorMap;
-    _unreached = unreached;
-
-    _ECMPC = ECMPC;
-    _config = config;
-  }
-
-  // Configuration and initialization
-  var count = 0;
-  var uuid = (function () {
-    // https://stackoverflow.com/questions/105034/create-guid-uuid-in-javascript
-    var d = new Date().getTime(); // Public Domain/MIT
-    if (typeof performance !== 'undefined' && typeof performance.now === 'function'){
-      d += performance.now(); //use high-precision timer if available
+const BFS = function (src, dst) {
+  const queue = [[src, 0]];
+  const visited = {src: true};
+  while (queue.length > 0) {
+    const entry = queue.shift();
+    const n = entry[0];
+    const c = entry[1];
+    if (n == dst) {
+      return c;
     }
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      var r = (d + Math.random() * 16) % 16 | 0;
-      d = Math.floor(d / 16);
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
-  }());
 
-  var urls = {};
-  for (var j = 0; j < _config.replicas; j++) {
-    urls[j] = [];
-    for (var i = 0; i < _config.parties; i++) {
-      var offset = (i * _config.replicas) + j + 1;
-      urls[j].push('http://localhost:' + (_config.base_port + offset));
+    const neighbors = getPointById(n).properties["neighbors"];
+    for (let d of neighbors) {
+      if (!visited[d]) {
+        queue.unshift([d, c+1]);
+        visited[d] = true;
+      }
     }
   }
-  var randomCliqueURLs = function () {
-    var r = Math.floor(Math.random() * _config.replicas);
-    return urls[r];
-  };
 
-  // Protocols
-  exports.query_honest_client = function (source, dest) {
-    // Generate unique tag
-    var tag = uuid+'-'+(count++);
+  // Unreachable.
+  return Number.MAX_VALUE;
+}
 
-    // Hash query to EC Point and share it
-    var queryPoint = _pairHashMap[source + ':' + dest];
-    var shares = _ECMPC.share(queryPoint, _config.parties);
-    shares[0] = JSON.stringify(shares[0]);
-
-    // Send queries
-    var promises = [];
-    var urls = randomCliqueURLs();
-    for (var i = 0; i < urls.length; i++) {
-      var url = urls[i] + '/query/honest/' + tag + '/' + shares[i];
-      promises.push(POST(url));
+const makeQuery = function (src, dst, query) {
+  return new Promise(function (resolve) {
+    if (src == dst) {
+      resolve(-1);
     }
 
-    // Receive responses
-    return Promise.all(promises).then(function (results) {
-      // parse
-      for (var k = 0; k < results.length; k++) {
-        results[k] = JSON.parse(results[k])['share'];
+    const srcPoint = getPointById(src);
+    let min = Number.MAX_VALUE;
+    let next = 0;
+    for (let i = 0; i < srcPoint.properties["neighbors"].length; i++) {
+      const neighbor = srcPoint.properties["neighbors"][i];
+      const cost = BFS(neighbor, dst);
+      if (cost < min) {
+        next = neighbor;
+        min = cost;
       }
+    }
+    resolve(hash([src, dst, next], TOTAL_COUNT));
+  });
+}
 
-      // Reconstruct
-      var hop = _ECMPC.reconstruct(results);
-      if (hop.toString() === _unreached.toString()) {
-        return 'unreachable';
-      } else {
-        return _elligatorMap[JSON.stringify(hop)];
+const protocol = function (src, dst) {
+  const query = hash([src, dst], TOTAL_COUNT);
+  return makeQuery(src, dst, query).then(function (response) {
+    // Find out what the response mean (search for hash).
+    // I.e. transform response to the next hop point id!
+    const srcPoint = getPointById(src);
+    const neighbors = srcPoint.properties["neighbors"].slice();
+    neighbors.push(0);  // Special case: unreachable destinations.
+
+    let next = null;
+    for (let i = 0; i < neighbors.length; i++) {
+      const candidateResponse = [src, dst, neighbors[i]];
+      if (response == hash(candidateResponse, TOTAL_COUNT)) {
+        return neighbors[i];
       }
-    });
-  };
-  exports.query_malicious_client = function (source, dest) {
-    // Generate unique tag
-    var tag = uuid+'-'+(count++);
-
-    // Hash query to EC Point and share it
-    var queryPoint = _pairHashMap[source + ':' + dest];
-    var shares = _ECMPC.share(queryPoint, _config.parties);
-    shares[0] = JSON.stringify(shares[0]);
-
-    // Swap shares: 1st frontend gets point, backend gets scalar
-    var tmp = shares[1];
-    shares[1] = shares[0];
-    shares[0] = tmp;
-
-    // Send queries
-    var promises = [];
-    var urls = randomCliqueURLs();
-    for (var i = 0; i < urls.length; i++) {
-      var url = urls[i] + '/query/malicious/' + tag + '/' + shares[i];
-      promises.push(POST(url));
     }
 
-    // Receive responses
-    return Promise.all(promises).then(function (results) {
-      // parse
-      for (var k = 0; k < results.length; k++) {
-        results[k] = JSON.parse(results[k])['share'];
-      }
+    throw new Error("Internal Error: response returned unrecognizable hash "
+      + response);
+  });
+}
 
-      // Swap results: 1st frontend gives us back the point, backend gives us scalar
-      var tmp = results[1];
-      results[1] = results[0];
-      results[0] = tmp;
-
-      // Reconstruct
-      var hop = _ECMPC.reconstruct(results);
-      if (hop.toString() === _unreached.toString()) {
-        return 'unreachable';
-      } else {
-        return _elligatorMap[JSON.stringify(hop)];
-      }
-    });
-  };
-}((typeof exports === 'undefined' ? this.protocols = {} : exports), typeof exports !== 'undefined'));
