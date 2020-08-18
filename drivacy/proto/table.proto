@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package drivacy.proto;
+
+message Table {
+  repeated Row table = 1;
+}
+
+message Row {
+  uint64 key = 1;
+  uint64 value = 2;
+}

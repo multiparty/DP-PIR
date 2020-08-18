@@ -1,0 +1,31 @@
+load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+# messages.proto
+cc_proto_library(
+    name = "messages_cc_proto",
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [":messages_proto"],
+)
+
+proto_library(
+    name = "messages_proto",
+    srcs = [
+        "messages.proto",
+    ],
+)
+
+# table.proto
+cc_proto_library(
+    name = "table_cc_proto",
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [":table_proto"],
+)
+
+proto_library(
+    name = "table_proto",
+    srcs = [
+        "table.proto",
+    ],
+)
+

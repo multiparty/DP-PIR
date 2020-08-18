@@ -27,12 +27,13 @@ const hashedTable = [];
 for (let row of file) {
   const key = row[0];
   const val = row[1];
-  hashedTable.push([
-    hash(key, clientInput.features.length),
-    hash(val, clientInput.features.length)
-  ]);
+  hashedTable.push({
+    key:  hash(key, clientInput.features.length),
+    value: hash(val, clientInput.features.length)
+  });
 }
 
-fs.writeFile(SERVER_OUTPUT_PATH, JSON.stringify(hashedTable), function (err) {
+const serverContent = JSON.stringify({table: hashedTable});
+fs.writeFile(SERVER_OUTPUT_PATH, , function (err) {
   console.log('Server files written, errors = ', err);
 });
