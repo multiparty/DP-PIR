@@ -1,0 +1,19 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "file",
+    srcs = [
+        "file.cc",
+    ],
+    hdrs = [
+        "file.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/proto:table_cc_proto",
+        "//drivacy/util:status",
+        "//third_party:rapidjson"
+    ],
+)

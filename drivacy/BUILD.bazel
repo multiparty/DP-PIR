@@ -5,6 +5,15 @@ cc_binary(
     srcs = [
         "main.cc",
     ],
-    deps = [],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/io:file",
+        "//drivacy/proto:table_cc_proto",
+        "//drivacy/util:status",
+    ],
 )
 
