@@ -1,0 +1,18 @@
+name: "All Tests and Build"
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Test all
+      run: bazel test //drivacy/... --test_output=errors
