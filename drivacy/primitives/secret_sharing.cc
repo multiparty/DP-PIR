@@ -19,31 +19,26 @@ inline uint64_t Mod(uint64_t a, uint64_t modulus) {
 
 }  // namespace
 
-uint64_t **IncrementalSecretShare(uint64_t query, uint64_t numparty) {
-  uint64_t **shares =
-      reinterpret_cast<uint64_t **>(malloc(2 * sizeof(uint64_t *)));
-  shares[0] = reinterpret_cast<uint64_t *>(malloc(numparty * sizeof(uint64_t)));
-  shares[1] = reinterpret_cast<uint64_t *>(malloc(numparty * sizeof(uint64_t)));
+std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
+    uint64_t query, uint64_t numparty) {
+  std::vector<IncrementalSecretShare> shares;
 
   uint64_t t = 1;
   for (size_t i = 0; i < numparty - 1; i++) {
-    shares[0][i] = std::rand() % PRIME + 1;
-    shares[1][i] = std::rand() % PRIME + 1;
-    t = (t * shares[1][i] + shares[0][i]) % PRIME;
+    uint64_t x = std::rand() % PRIME;
+    uint64_t y = std::rand() % PRIME;
+    t = (t * y + x) % PRIME;
+    shares.push_back({x, y});
   }
-  shares[1][numparty - 1] = std::rand() % PRIME + 1;
-  shares[0][numparty - 1] = Mod(query - t * shares[1][numparty - 1], PRIME);
+  uint64_t last_y = std::rand() % PRIME;
+  uint64_t last_x = Mod(query - t * last_y, PRIME);
+  shares.push_back({last_x, last_y});
 
   return shares;
 }
 
-uint64_t IncrementalReconstruct(uint64_t **shares, uint64_t numparty) {
-  uint64_t query = 1;
-  for (size_t i = 0; i < numparty; i++) {
-    query = (shares[1][i] * query + shares[0][i]) % PRIME;
-  }
-
-  return query;
+uint64_t IncrementalReconstruct(uint64_t tally, IncrementalSecretShare share) {
+  return (share.y * tally + share.x) % PRIME;
 }
 
 }  // namespace primitives
