@@ -1,3 +1,5 @@
+// Copyright 2020 multiparty.org
+
 // Main entry point to our protocol.
 // This file must be run from the command line once per server:
 // every time this file is run, it is logically equivalent to a new
@@ -36,9 +38,9 @@ int main(int argc, char *argv[]) {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Command line usage message.
-  absl::SetProgramUsageMessage(absl::StrFormat(
-      "usage: %s %s", argv[0],
-      "--json=path/to/data.json --config=path/to/config.json"));
+  absl::SetProgramUsageMessage(
+      absl::StrFormat("usage: %s %s", argv[0],
+                      "--json=path/to/data.json --config=path/to/config.json"));
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.

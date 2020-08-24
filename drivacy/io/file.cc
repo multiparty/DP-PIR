@@ -1,3 +1,7 @@
+// Copyright 2020 multiparty.org
+
+// Helpers for file and file protobuf IO.
+
 #include "drivacy/io/file.h"
 
 #include <cerrno>
@@ -64,7 +68,7 @@ util::OutputStatus<proto::Table> ParseTable(const std::string &json) {
     proto_row->set_key(key_val.GetUint64());
     proto_row->set_value(value_val.GetUint64());
   }
-  
+
   return table;
 }
 

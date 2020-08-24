@@ -1,3 +1,7 @@
+// Copyright 2020 multiparty.org
+
+// Protobuf defining the format of the input table.
+
 syntax = "proto3";
 
 package drivacy.proto;

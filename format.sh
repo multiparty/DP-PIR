@@ -8,6 +8,7 @@ CLANG_FORMAT_EXTENSIONS="cc|h|proto"
 clang-format --version
 
 # Run clang-format.
-find . -not -path "./third_party/**" \
+find . -not -path "./third_party/**" -not -path "./scrape/**" \
+       -not -path "./.git/**" \
   | egrep "\.(${CLANG_FORMAT_EXTENSIONS})\$" \
   | xargs clang-format --verbose -style=google -i

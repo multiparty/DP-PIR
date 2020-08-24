@@ -1,4 +1,8 @@
+// Copyright 2020 multiparty.org
+
+// Definitions of protobuf used to communicate between servers / parties
+// during the execution of the procotol.
+
 syntax = "proto3";
 
 package drivacy.proto;
-
