@@ -1,0 +1,24 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+    name = "secret_sharing",
+    srcs = [
+        "secret_sharing.cc",
+    ],
+    hdrs = [
+        "secret_sharing.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+cc_test(
+    name = "secret_sharing_test",
+    srcs = [
+        "secret_sharing_test.cc",
+    ],
+    deps = [
+        ":secret_sharing",
+    ],
+)
