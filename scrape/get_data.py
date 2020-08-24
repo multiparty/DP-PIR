@@ -82,6 +82,7 @@ clientFile.close()
 
 
 ############################ ALL PAIRS SHORTEST PATHS USING BFS
+UNREACHABLE_COUNT = 0
 table = []
 for src in nodes:
   jumps = { src: src }
@@ -109,8 +110,8 @@ for src in nodes:
       continue
 
     next = jumps.get(dst, 0)
-    #if next == 0:
-    #  print("unreachable: ", (src, dst))
+    if next == 0:
+      UNREACHABLE_COUNT = UNREACHABLE_COUNT + 1
 
     key = [src, dst]
     value = [src, dst, next]
@@ -120,3 +121,6 @@ for src in nodes:
 serverFile = open(SERVER_OUTPUT_PATH, 'w')
 serverFile.write(json.dumps(table))
 serverFile.close()
+
+print("Total size of table", len(table))
+print("Unreachable pairs", UNREACHABLE_COUNT)

@@ -24,16 +24,22 @@ fs.writeFile(CLIENT_OUTPUT_PATH, clientContent, function (err) {
 // client side, hence we do it in JS to use the same library.
 const file = require(SERVER_INPUT_PATH);
 const hashedTable = [];
+let max = 0;
 for (let row of file) {
   const key = row[0];
   const val = row[1];
-  hashedTable.push({
+  const hashedRow = {
     key:  hash(key, clientInput.features.length),
     value: hash(val, clientInput.features.length)
-  });
+  };
+  hashedTable.push(hashedRow);
+  max = Math.max(max, hashedRow.key, hashedRow.value);
 }
 
 const serverContent = JSON.stringify({table: hashedTable});
-fs.writeFile(SERVER_OUTPUT_PATH, , function (err) {
+fs.writeFile(SERVER_OUTPUT_PATH, serverContent, function (err) {
   console.log('Server files written, errors = ', err);
+  console.log('Size of table = ', hashedTable.length);
+  console.log('Largest hash/index = ', max, ' is safe = ',
+              max < Number.MAX_SAFE_INTEGER);
 });

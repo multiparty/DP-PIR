@@ -17,10 +17,14 @@ fi
 echo "Scraping..."
 python get_data.py
 deactivate
+echo ""
+echo ""
 
 # Hash and move outputs
 echo "Hashing..."
 node hash.js
+echo ""
+echo ""
 
 mkdir -p ../data
 mv output/client-ready-data.js ../data/client-map.js
