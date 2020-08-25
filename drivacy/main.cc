@@ -15,6 +15,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "drivacy/io/file.h"
+#include "drivacy/proto/config.pb.h"
 #include "drivacy/proto/table.pb.h"
 #include "drivacy/util/status.h"
 
@@ -23,6 +24,12 @@ ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 
 absl::Status Protocol(const std::string &json_path,
                       const std::string &config_path) {
+  // Read configuration.
+  drivacy::proto::Configuration config;
+  CHECK_STATUS(drivacy::io::file::ReadProtobufFromJson(config_path, &config));
+  std::cout << config.DebugString() << std::endl;
+
+  // Read input table.
   ASSIGN_OR_RETURN(std::string json,
                    drivacy::io::file::ReadFile(json_path.c_str()));
   ASSIGN_OR_RETURN(drivacy::proto::Table table,

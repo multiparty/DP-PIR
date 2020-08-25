@@ -9,8 +9,9 @@
 #include <streambuf>
 #include <string>
 
-#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
+#include "drivacy/proto/config.pb.h"
+#include "google/protobuf/util/json_util.h"
 #include "rapidjson/document.h"
 
 namespace drivacy {
@@ -71,6 +72,24 @@ util::OutputStatus<proto::Table> ParseTable(const std::string &json) {
 
   return table;
 }
+
+template <typename T>
+absl::Status ReadProtobufFromJson(const std::string &path, T *protobuf) {
+  ASSIGN_OR_RETURN(std::string json, ReadFile(path));
+  google::protobuf::util::Status parse_status =
+      google::protobuf::util::JsonStringToMessage(json, protobuf);
+  if (!parse_status.ok()) {
+    return absl::InvalidArgumentError(
+        "Cannot parse configuration protobuf from JSON!");
+  }
+  return absl::OkStatus();
+}
+
+// Specialization of template to concrete types.
+// Need this work around since the function is declared in the header file
+// but defined here.
+template absl::Status ReadProtobufFromJson<>(const std::string &,
+                                             drivacy::proto::Configuration *);
 
 }  // namespace file
 }  // namespace io
