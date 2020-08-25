@@ -14,7 +14,6 @@ cc_library(
     deps = [
     ],
 )
-
 cc_test(
     name = "secret_sharing_test",
     srcs = [
@@ -22,5 +21,28 @@ cc_test(
     ],
     deps = [
         ":secret_sharing",
+    ],
+)
+
+cc_library(
+    name = "additive_secret_sharing",
+    srcs = [
+        "additive_secret_sharing.cc",
+    ],
+    hdrs = [
+        "additive_secret_sharing.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+    ],
+)
+
+cc_test(
+    name = "additive_secret_sharing_test",
+    srcs = [
+        "additive_secret_sharing_test.cc",
+    ],
+    deps = [
+        ":additive_secret_sharing",
     ],
 )
