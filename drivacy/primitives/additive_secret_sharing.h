@@ -13,10 +13,9 @@ namespace primitives {
 
 extern uint64_t PRIME;
 
-
 // Additively secret share the given query into numparty-many shares.
-std::vector<uint64_t> GenerateAdditiveSecretShares(
-    uint64_t query, uint64_t numparty);
+std::vector<uint64_t> GenerateAdditiveSecretShares(uint64_t query,
+                                                   uint64_t numparty);
 
 // (Partial/incremental) reconstruction: given a current tally and a share,
 // the function returns a new tally that includes this share.
