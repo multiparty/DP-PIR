@@ -1,6 +1,6 @@
 # Copyright 2020 multiparty.org
 
-load("@rules_cc//cc:defs.bzl", "cc_proto_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 
 # messages.proto
@@ -17,20 +17,6 @@ proto_library(
     ],
 )
 
-# table.proto
-cc_proto_library(
-    name = "table_cc_proto",
-    visibility = ["//drivacy:__subpackages__"],
-    deps = [":table_proto"],
-)
-
-proto_library(
-    name = "table_proto",
-    srcs = [
-        "table.proto",
-    ],
-)
-
 # config.proto
 cc_proto_library(
     name = "config_cc_proto",
@@ -43,4 +29,14 @@ proto_library(
     srcs = [
         "config.proto",
     ],
+)
+
+# table.h
+cc_library(
+    name = "types",
+    srcs = [],
+    hdrs = [
+        "types.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
 )

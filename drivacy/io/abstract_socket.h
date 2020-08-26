@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <functional>
 
-#include "drivacy/proto/messages.pb.h"
+#include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
 namespace io {
@@ -17,10 +17,9 @@ namespace socket {
 
 class AbstractSocket {
  public:
-  virtual void SendQuery(uint32_t party,
-                         const drivacy::proto::Query &query) const = 0;
+  virtual void SendQuery(uint32_t party, const types::Query &query) const = 0;
   virtual void SendResponse(uint32_t party,
-                            const drivacy::proto::Response &response) const = 0;
+                            const types::Response &response) const = 0;
 
   AbstractSocket() {}
 };

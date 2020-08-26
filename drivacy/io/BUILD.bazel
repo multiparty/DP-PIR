@@ -14,8 +14,8 @@ cc_library(
     deps = [
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "//drivacy/proto:config_cc_proto",
-        "//drivacy/proto:table_cc_proto",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
         "//drivacy/util:status",
         "//third_party:rapidjson"
     ],
@@ -28,7 +28,7 @@ cc_library(
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
-        "//drivacy/proto:messages_cc_proto",
+        "//drivacy/types:messages_cc_proto",
     ],
 )
 
@@ -43,6 +43,6 @@ cc_library(
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "//drivacy/io:abstract_socket",
-        "//drivacy/proto:messages_cc_proto",
+        "//drivacy/types:messages_cc_proto",
     ],
 )

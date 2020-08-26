@@ -15,7 +15,8 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
-        ":util"
+        ":util",
+        "//drivacy/types:types"
     ],
 )
 

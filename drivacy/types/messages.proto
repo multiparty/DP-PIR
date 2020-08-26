@@ -5,7 +5,7 @@
 
 syntax = "proto3";
 
-package drivacy.proto;
+package drivacy.types;
 
 message Query {
   uint64 tag = 1;

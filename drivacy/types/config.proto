@@ -4,7 +4,7 @@
 
 syntax = "proto3";
 
-package drivacy.proto;
+package drivacy.types;
 
 message Configuration {
   uint32 parties = 1;

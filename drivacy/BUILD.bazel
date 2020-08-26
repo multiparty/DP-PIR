@@ -16,8 +16,8 @@ cc_binary(
         "//drivacy:party",
         "//drivacy/io:file",
         "//drivacy/io:socket",
-        "//drivacy/proto:config_cc_proto",
-        "//drivacy/proto:table_cc_proto",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
         "//drivacy/util:status",
     ],
 )
@@ -34,8 +34,8 @@ cc_library(
         "@com_google_absl//absl/functional:bind_front",
         "//drivacy/io:abstract_socket",
         "//drivacy/primitives:sharing",
-        "//drivacy/proto:config_cc_proto",
-        "//drivacy/proto:messages_cc_proto",
-        "//drivacy/proto:table_cc_proto",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:messages_cc_proto",
+        "//drivacy/types:types",
     ],
 )

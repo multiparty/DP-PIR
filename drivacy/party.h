@@ -20,9 +20,9 @@
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/primitives/additive.h"
 #include "drivacy/primitives/incremental.h"
-#include "drivacy/proto/config.pb.h"
-#include "drivacy/proto/messages.pb.h"
-#include "drivacy/proto/table.pb.h"
+#include "drivacy/types/config.pb.h"
+#include "drivacy/types/messages.pb.h"
+#include "drivacy/types/types.h"
 
 namespace drivacy {
 
@@ -38,21 +38,21 @@ class Party {
   Party(const Party &) = delete;
   Party &operator=(const Party &) = delete;
 
-  Party(uint32_t party, const proto::Configuration &config,
-        const proto::Table &table)
+  Party(uint32_t party, const types::Configuration &config,
+        const types::Table &table)
       : party_id_(party), config_(config), table_(table), tag_(0) {}
 
   void Configure();
-  void OnReceiveQuery(uint32_t party, const proto::Query &query) const;
-  void OnReceiveResponse(uint32_t party, const proto::Response &response) const;
-  void Start();
+  void OnReceiveQuery(uint32_t party, const types::Query &query) const;
+  void OnReceiveResponse(uint32_t party, const types::Response &response) const;
+  void Start(uint64_t query);
 
   uint32_t party_id() const { return this->party_id_; }
 
  private:
   uint32_t party_id_;
-  const proto::Configuration &config_;
-  const proto::Table &table_;
+  const types::Configuration &config_;
+  const types::Table &table_;
   uint64_t tag_;
   S *socket_;
 };

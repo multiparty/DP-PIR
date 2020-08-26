@@ -11,9 +11,9 @@
 namespace drivacy {
 namespace primitives {
 
-std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
+std::vector<types::IncrementalSecretShare> GenerateIncrementalSecretShares(
     uint64_t query, uint32_t numparty) {
-  std::vector<IncrementalSecretShare> shares;
+  std::vector<types::IncrementalSecretShare> shares;
 
   uint64_t t = 1;
   for (uint32_t i = 0; i < numparty - 1; i++) {
@@ -29,7 +29,8 @@ std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
   return shares;
 }
 
-uint64_t IncrementalReconstruct(uint64_t tally, IncrementalSecretShare share) {
+uint64_t IncrementalReconstruct(uint64_t tally,
+                                types::IncrementalSecretShare share) {
   return (share.y * tally + share.x) % util::Prime();
 }
 

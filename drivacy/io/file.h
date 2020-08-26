@@ -8,7 +8,7 @@
 #include <string>
 
 #include "absl/status/status.h"
-#include "drivacy/proto/table.pb.h"
+#include "drivacy/types/types.h"
 #include "drivacy/util/status.h"
 
 namespace drivacy {
@@ -17,7 +17,7 @@ namespace file {
 
 util::OutputStatus<std::string> ReadFile(const std::string &path);
 
-util::OutputStatus<proto::Table> ParseTable(const std::string &json);
+util::OutputStatus<types::Table> ParseTable(const std::string &json);
 
 // Read content of the json file at the given path, and uses protobuf to parse
 // it and store it inside protobuf.

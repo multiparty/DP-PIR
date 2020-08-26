@@ -18,8 +18,8 @@
 #include "drivacy/io/file.h"
 #include "drivacy/io/simulated_socket.h"
 #include "drivacy/party.h"
-#include "drivacy/proto/config.pb.h"
-#include "drivacy/proto/table.pb.h"
+#include "drivacy/types/config.pb.h"
+#include "drivacy/types/types.h"
 #include "drivacy/util/status.h"
 
 ABSL_FLAG(std::string, json, "", "The path to input JSON file (required)");
@@ -28,18 +28,19 @@ ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 absl::Status Protocol(const std::string &json_path,
                       const std::string &config_path) {
   // Read configuration.
-  drivacy::proto::Configuration config;
+  drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::io::file::ReadProtobufFromJson(config_path, &config));
   std::cout << config.DebugString() << std::endl;
 
   // Read input table.
   ASSIGN_OR_RETURN(std::string json,
                    drivacy::io::file::ReadFile(json_path.c_str()));
-  ASSIGN_OR_RETURN(drivacy::proto::Table table,
+  ASSIGN_OR_RETURN(drivacy::types::Table table,
                    drivacy::io::file::ParseTable(json));
 
-  std::cout << table.rows_size() << std::endl;
-  std::cout << table.rows(0).DebugString() << std::endl;
+  const auto &it = table.cbegin();  // Pick any entry in the table.
+  std::cout << table.size() << std::endl;
+  std::cout << it->first << "= " << it->second << std::endl;
 
   // Execute mock protocol.
   std::cout << "Mock protocol" << std::endl;
@@ -49,7 +50,7 @@ absl::Status Protocol(const std::string &json_path,
     parties.push_back({i, config, table});
     parties.at(i - 1).Configure();
   }
-  parties.at(0).Start();
+  parties.at(0).Start(it->first);
   return absl::OkStatus();
 }
 

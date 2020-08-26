@@ -8,16 +8,13 @@
 #include <cstdint>
 #include <vector>
 
+#include "drivacy/types/types.h"
+
 namespace drivacy {
 namespace primitives {
 
-struct IncrementalSecretShare {
-  uint64_t x;  // The additive component.
-  uint64_t y;  // The multiplicative component.
-};
-
 // Secret share the given query into numparty-many IncrementalSecretShares.
-std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
+std::vector<types::IncrementalSecretShare> GenerateIncrementalSecretShares(
     uint64_t query, uint32_t numparty);
 
 // (Partial/incremental) reconstruction: given a current tally and a share,
@@ -26,7 +23,8 @@ std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
 // "GenerateIncrementalSecretShares(query, n)", in order, such that the
 // resulting tally of every call is fed to the next, and the tally was initially
 // 1, then the final tally will be equal to query (complete reconstruction).
-uint64_t IncrementalReconstruct(uint64_t tally, IncrementalSecretShare share);
+uint64_t IncrementalReconstruct(uint64_t tally,
+                                types::IncrementalSecretShare share);
 
 }  // namespace primitives
 }  // namespace drivacy

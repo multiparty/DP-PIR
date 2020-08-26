@@ -26,13 +26,13 @@ SimulatedSocket::SimulatedSocket(uint32_t party_id,
 }
 
 void SimulatedSocket::SendQuery(uint32_t party,
-                                const drivacy::proto::Query &query) const {
+                                const drivacy::types::Query &query) const {
   SimulatedSocket *socket = SimulatedSocket::sockets_.at(party);
   socket->query_listener_(this->party_id_, query);
 }
 
 void SimulatedSocket::SendResponse(
-    uint32_t party, const drivacy::proto::Response &response) const {
+    uint32_t party, const drivacy::types::Response &response) const {
   SimulatedSocket *socket = SimulatedSocket::sockets_.at(party);
   socket->response_listener_(this->party_id_, response);
 }

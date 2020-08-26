@@ -14,17 +14,17 @@
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
-#include "drivacy/proto/messages.pb.h"
+#include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
 namespace io {
 namespace socket {
 
 using QueryListener =
-    std::function<void(uint32_t, const drivacy::proto::Query &)>;
+    std::function<void(uint32_t, const drivacy::types::Query &)>;
 
 using ResponseListener =
-    std::function<void(uint32_t, const drivacy::proto::Response &)>;
+    std::function<void(uint32_t, const drivacy::types::Response &)>;
 
 class SimulatedSocket : public AbstractSocket {
  public:
@@ -32,9 +32,9 @@ class SimulatedSocket : public AbstractSocket {
                   ResponseListener response_listener);
 
   void SendQuery(uint32_t party,
-                 const drivacy::proto::Query &query) const override;
+                 const drivacy::types::Query &query) const override;
   void SendResponse(uint32_t party,
-                    const drivacy::proto::Response &response) const override;
+                    const drivacy::types::Response &response) const override;
 
  private:
   static std::unordered_map<uint32_t, SimulatedSocket *> sockets_;
