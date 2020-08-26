@@ -20,5 +20,6 @@ message QueryShare {
 
 message Response {
   uint64 tag = 1;
-  uint64 response = 2;
+  uint64 tally = 2;
+  repeated uint64 shares = 3;
 }

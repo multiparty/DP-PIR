@@ -20,9 +20,6 @@ SimulatedSocket::SimulatedSocket(uint32_t party_id,
       query_listener_(query_listener),
       response_listener_(response_listener) {
   SimulatedSocket::sockets_[party_id] = this;
-  for (const auto &[id, sock] : sockets_) {
-    std::cout << " id: " << id << "  " << sock->party_id_ << std::endl;
-  }
 }
 
 void SimulatedSocket::SendQuery(uint32_t party,

@@ -46,6 +46,7 @@ class Party {
   void OnReceiveQuery(uint32_t party, const types::Query &query) const;
   void OnReceiveResponse(uint32_t party, const types::Response &response) const;
   void Start(uint64_t query);
+  void End(const types::Response &response) const;
 
   uint32_t party_id() const { return this->party_id_; }
 

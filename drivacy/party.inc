@@ -26,9 +26,16 @@ void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) const {
 
   if (this->party_id_ == this->config_.parties()) {
     std::cout << "query: " << next_tally << std::endl;
+    uint64_t response_value = this->table_.at(next_tally);
+    auto shares = primitives::GenerateAdditiveSecretShares(
+        response_value, this->config_.parties());
+
     types::Response response;
     response.set_tag(query.tag());
-    response.set_response(this->table_.at(next_tally));
+    response.set_tally(0);
+    for (const auto &share : shares) {
+      response.add_shares(share);
+    }
     this->socket_->SendResponse(party, response);
   } else {
     types::Query next_query;
@@ -49,10 +56,25 @@ void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) const {
 template <typename S>
 void Party<S>::OnReceiveResponse(uint32_t party,
                                  const types::Response &response) const {
-  if (party == 1) {
-    std::cout << "response: " << response.DebugString() << std::endl;
+  // Find next tally.
+  uint64_t share = response.shares(0);
+  uint64_t next_tally =
+      primitives::AdditiveReconstruct(response.tally(), share);
+
+  // Construct next response object.
+  types::Response next_response;
+  next_response.set_tag(response.tag());
+  next_response.set_tally(next_tally);
+  auto iterator = response.shares().cbegin();
+  for (iterator++; iterator != response.shares().cend(); iterator++) {
+    next_response.add_shares(*iterator);
+  }
+
+  // Send next response to the following party or client.
+  if (this->party_id_ == 1) {
+    this->End(next_response);
   } else {
-    this->socket_->SendResponse(party - 1, response);
+    this->socket_->SendResponse(this->party_id_ - 1, next_response);
   }
 }
 
@@ -69,4 +91,12 @@ void Party<S>::Start(uint64_t q) {
     query_share->set_y(share.y);
   }
   this->OnReceiveQuery(0, query);
+}
+
+template <typename S>
+void Party<S>::End(const types::Response &response) const {
+  uint64_t share = response.shares(0);
+  uint64_t next_tally =
+      primitives::AdditiveReconstruct(response.tally(), share);
+  std::cout << "response: " << next_tally << std::endl;
 }
