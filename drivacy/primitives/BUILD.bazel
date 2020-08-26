@@ -2,47 +2,48 @@
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
+# Secret Sharing Schemes we use in the protocol.
 cc_library(
-    name = "secret_sharing",
+    name = "sharing",
     srcs = [
-        "secret_sharing.cc",
+        "incremental.cc",
+        "additive.cc",
     ],
     hdrs = [
-        "secret_sharing.h",
+        "incremental.h",
+        "additive.h",
     ],
     visibility = ["//visibility:public"],
     deps = [
-    ],
-)
-cc_test(
-    name = "secret_sharing_test",
-    srcs = [
-        "secret_sharing_test.cc",
-    ],
-    deps = [
-        ":secret_sharing",
+        ":util"
     ],
 )
 
+# Private utility library.
 cc_library(
-    name = "additive_secret_sharing",
-    srcs = [
-        "additive_secret_sharing.cc",
-    ],
+    name = "util",
+    srcs = [],
     hdrs = [
-        "additive_secret_sharing.h",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
+        "util.h",
     ],
 )
 
+# Tests
 cc_test(
-    name = "additive_secret_sharing_test",
+    name = "incremental_test",
     srcs = [
-        "additive_secret_sharing_test.cc",
+        "incremental_test.cc",
     ],
     deps = [
-        ":additive_secret_sharing",
+        ":sharing",
+    ],
+)
+cc_test(
+    name = "additive_test",
+    srcs = [
+        "additive_test.cc",
+    ],
+    deps = [
+        ":sharing",
     ],
 )

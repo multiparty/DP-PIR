@@ -7,10 +7,12 @@
 // from the shares, and tests that the final reconstruction is equal to the
 // initial value.
 
-#include "drivacy/primitives/secret_sharing.h"
+#include "drivacy/primitives/incremental.h"
 
 #include <cstdlib>
 #include <iostream>
+
+#include "drivacy/primitives/util.h"
 
 uint64_t Test(uint64_t value, uint64_t numparties) {
   // Secret share value into numparties-many shares.
@@ -30,7 +32,7 @@ uint64_t Test(uint64_t value, uint64_t numparties) {
 
 int main() {
   for (int i = 0; i < 100; i++) {
-    uint64_t value = std::rand() % drivacy::primitives::PRIME;
+    uint64_t value = std::rand() % drivacy::primitives::util::Prime();
     uint32_t numparties = std::rand() % 5 + 2;  // [2, 7)
     uint64_t reconstructed = Test(value, numparties);
     if (value != reconstructed) {

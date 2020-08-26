@@ -2,16 +2,14 @@
 
 // Our Incremental and non-malleable secret sharing scheme.
 
-#ifndef DRIVACY_PRIMITIVES_SECRET_SHARING_H_
-#define DRIVACY_PRIMITIVES_SECRET_SHARING_H_
+#ifndef DRIVACY_PRIMITIVES_INCREMENTAL_H_
+#define DRIVACY_PRIMITIVES_INCREMENTAL_H_
 
 #include <cstdint>
 #include <vector>
 
 namespace drivacy {
 namespace primitives {
-
-extern uint64_t PRIME;
 
 struct IncrementalSecretShare {
   uint64_t x;  // The additive component.
@@ -33,4 +31,4 @@ uint64_t IncrementalReconstruct(uint64_t tally, IncrementalSecretShare share);
 }  // namespace primitives
 }  // namespace drivacy
 
-#endif  // DRIVACY_PRIMITIVES_SECRET_SHARING_H_
+#endif  // DRIVACY_PRIMITIVES_INCREMENTAL_H_

@@ -2,16 +2,14 @@
 
 // Our Incremental and non-malleable secret sharing scheme.
 
-#ifndef DRIVACY_PRIMITIVES_ADDITIVE_SECRET_SHARING_H_
-#define DRIVACY_PRIMITIVES_ADDITIVE_SSECRET_SHARING_H_
+#ifndef DRIVACY_PRIMITIVES_ADDITIVE_H_
+#define DRIVACY_PRIMITIVES_ADDITIVE_H_
 
 #include <cstdint>
 #include <vector>
 
 namespace drivacy {
 namespace primitives {
-
-extern uint64_t PRIME;
 
 // Additively secret share the given query into numparty-many shares.
 std::vector<uint64_t> GenerateAdditiveSecretShares(uint64_t query,
@@ -28,4 +26,4 @@ uint64_t AdditiveReconstruct(uint64_t tally, uint64_t share);
 }  // namespace primitives
 }  // namespace drivacy
 
-#endif  // DRIVACY_PRIMITIVES_SECRET_SHARING_H_
+#endif  // DRIVACY_PRIMITIVES_ADDITIVE_H_

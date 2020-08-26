@@ -33,7 +33,7 @@ cc_library(
     deps = [
         "@com_google_absl//absl/functional:bind_front",
         "//drivacy/io:abstract_socket",
-        "//drivacy/primitives:secret_sharing",
+        "//drivacy/primitives:sharing",
         "//drivacy/proto:config_cc_proto",
         "//drivacy/proto:messages_cc_proto",
         "//drivacy/proto:table_cc_proto",

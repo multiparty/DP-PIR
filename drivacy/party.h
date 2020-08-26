@@ -18,7 +18,8 @@
 
 #include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
-#include "drivacy/primitives/secret_sharing.h"
+#include "drivacy/primitives/additive.h"
+#include "drivacy/primitives/incremental.h"
 #include "drivacy/proto/config.pb.h"
 #include "drivacy/proto/messages.pb.h"
 #include "drivacy/proto/table.pb.h"
