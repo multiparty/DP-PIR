@@ -20,7 +20,7 @@ struct IncrementalSecretShare {
 
 // Secret share the given query into numparty-many IncrementalSecretShares.
 std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
-    uint64_t query, uint64_t numparty);
+    uint64_t query, uint32_t numparty);
 
 // (Partial/incremental) reconstruction: given a current tally and a share,
 // the function returns a new tally that includes this share.

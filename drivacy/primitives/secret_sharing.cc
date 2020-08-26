@@ -20,11 +20,11 @@ inline uint64_t Mod(uint64_t a, uint64_t modulus) {
 }  // namespace
 
 std::vector<IncrementalSecretShare> GenerateIncrementalSecretShares(
-    uint64_t query, uint64_t numparty) {
+    uint64_t query, uint32_t numparty) {
   std::vector<IncrementalSecretShare> shares;
 
   uint64_t t = 1;
-  for (size_t i = 0; i < numparty - 1; i++) {
+  for (uint32_t i = 0; i < numparty - 1; i++) {
     uint64_t x = std::rand() % PRIME;
     uint64_t y = std::rand() % PRIME;
     t = (t * y + x) % PRIME;

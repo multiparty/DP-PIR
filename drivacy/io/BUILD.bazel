@@ -10,7 +10,7 @@ cc_library(
     hdrs = [
         "file.h",
     ],
-    visibility = ["//visibility:public"],
+    visibility = ["//drivacy:__subpackages__"],
     deps = [
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
@@ -18,5 +18,31 @@ cc_library(
         "//drivacy/proto:table_cc_proto",
         "//drivacy/util:status",
         "//third_party:rapidjson"
+    ],
+)
+
+cc_library(
+    name = "abstract_socket",
+    hdrs = [
+        "abstract_socket.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/proto:messages_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "socket",
+    srcs = [
+        "simulated_socket.cc",
+    ],
+    hdrs = [
+        "simulated_socket.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/io:abstract_socket",
+        "//drivacy/proto:messages_cc_proto",
     ],
 )

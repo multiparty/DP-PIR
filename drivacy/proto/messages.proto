@@ -6,3 +6,19 @@
 syntax = "proto3";
 
 package drivacy.proto;
+
+message Query {
+  uint64 tag = 1;
+  uint64 tally = 2;
+  repeated QueryShare shares = 3;
+}
+
+message QueryShare {
+  uint64 x = 1;
+  uint64 y = 2;
+}
+
+message Response {
+  uint64 tag = 1;
+  uint64 response = 2;
+}

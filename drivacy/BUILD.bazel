@@ -1,6 +1,6 @@
 # Copyright 2020 multiparty.org
 
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
 
 cc_binary(
     name = "main",
@@ -13,10 +13,29 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "//drivacy:party",
         "//drivacy/io:file",
+        "//drivacy/io:socket",
         "//drivacy/proto:config_cc_proto",
         "//drivacy/proto:table_cc_proto",
         "//drivacy/util:status",
     ],
 )
 
+cc_library(
+    name = "party",
+    srcs = [],
+    hdrs = [
+        "party.h",
+        "party.inc",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/functional:bind_front",
+        "//drivacy/io:abstract_socket",
+        "//drivacy/primitives:secret_sharing",
+        "//drivacy/proto:config_cc_proto",
+        "//drivacy/proto:messages_cc_proto",
+        "//drivacy/proto:table_cc_proto",
+    ],
+)

@@ -7,6 +7,7 @@
 // The server's configurations, including which party it belongs to, is
 // set by the input configuration file passed to it via the command line.
 
+#include <cstdlib>
 #include <iostream>
 
 #include "absl/flags/flag.h"
@@ -15,6 +16,8 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "drivacy/io/file.h"
+#include "drivacy/io/simulated_socket.h"
+#include "drivacy/party.h"
 #include "drivacy/proto/config.pb.h"
 #include "drivacy/proto/table.pb.h"
 #include "drivacy/util/status.h"
@@ -37,6 +40,16 @@ absl::Status Protocol(const std::string &json_path,
 
   std::cout << table.rows_size() << std::endl;
   std::cout << table.rows(0).DebugString() << std::endl;
+
+  // Execute mock protocol.
+  std::cout << "Mock protocol" << std::endl;
+  std::vector<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
+  parties.reserve(config.parties());
+  for (uint32_t i = 1; i <= config.parties(); i++) {
+    parties.push_back({i, config, table});
+    parties.at(i - 1).Configure();
+  }
+  parties.at(0).Start();
   return absl::OkStatus();
 }
 
