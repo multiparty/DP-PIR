@@ -30,6 +30,7 @@ class SimulatedSocket : public AbstractSocket {
  public:
   SimulatedSocket(uint32_t party_id, QueryListener query_listener,
                   ResponseListener response_listener);
+  ~SimulatedSocket() override;
 
   void SendQuery(uint32_t party,
                  const drivacy::types::Query &query) const override;

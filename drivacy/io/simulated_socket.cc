@@ -19,7 +19,11 @@ SimulatedSocket::SimulatedSocket(uint32_t party_id,
     : party_id_(party_id),
       query_listener_(query_listener),
       response_listener_(response_listener) {
-  SimulatedSocket::sockets_[party_id] = this;
+  SimulatedSocket::sockets_.insert({party_id, this});
+}
+
+SimulatedSocket::~SimulatedSocket() {
+  SimulatedSocket::sockets_.erase(this->party_id_);
 }
 
 void SimulatedSocket::SendQuery(uint32_t party,

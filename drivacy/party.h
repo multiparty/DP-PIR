@@ -14,6 +14,7 @@
 #define DRIVACY_PARTY_H_
 
 #include <cstdlib>
+#include <memory>
 #include <type_traits>
 
 #include "absl/functional/bind_front.h"
@@ -56,7 +57,7 @@ class Party {
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
-  S *socket_;
+  std::unique_ptr<S> socket_;
   types::PartyState state_;
 };
 

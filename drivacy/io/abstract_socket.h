@@ -22,6 +22,7 @@ class AbstractSocket {
                             const types::Response &response) const = 0;
 
   AbstractSocket() {}
+  virtual ~AbstractSocket() = default;
 };
 
 }  // namespace socket
