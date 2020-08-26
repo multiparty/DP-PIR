@@ -1,0 +1,22 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "protocol",
+    srcs = [
+        "backend.cc",
+        "client.cc",
+        "query.cc",
+        "response.cc",
+    ],
+    hdrs = [
+        "backend.h",
+        "client.h",
+        "query.h",
+        "response.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/primitives:sharing",
+        "//drivacy/types:messages_cc_proto",
+    ],
+)

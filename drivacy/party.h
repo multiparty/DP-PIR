@@ -18,8 +18,10 @@
 
 #include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
-#include "drivacy/primitives/additive.h"
-#include "drivacy/primitives/incremental.h"
+#include "drivacy/protocol/backend.h"
+#include "drivacy/protocol/client.h"
+#include "drivacy/protocol/query.h"
+#include "drivacy/protocol/response.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"

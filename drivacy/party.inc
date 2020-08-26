@@ -19,36 +19,12 @@ void Party<S>::Configure() {
 
 template <typename S>
 void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) const {
-  // Find next tally.
-  const types::QueryShare &share = query.shares(0);
-  uint64_t next_tally =
-      primitives::IncrementalReconstruct(query.tally(), {share.x(), share.y()});
-
   if (this->party_id_ == this->config_.parties()) {
-    std::cout << "query: " << next_tally << std::endl;
-    uint64_t response_value = this->table_.at(next_tally);
-    auto shares = primitives::GenerateAdditiveSecretShares(
-        response_value, this->config_.parties());
-
-    types::Response response;
-    response.set_tag(query.tag());
-    response.set_tally(0);
-    for (const auto &share : shares) {
-      response.add_shares(share);
-    }
-    this->socket_->SendResponse(party, response);
+    types::Response response = protocol::backend::QueryToResponse(
+        query, this->table_, this->config_.parties());
+    this->socket_->SendResponse(this->party_id_ - 1, response);
   } else {
-    types::Query next_query;
-    next_query.set_tag(query.tag());
-    next_query.set_tally(next_tally);
-    // Discard the first share that was already used, keep the next shares.
-    auto iterator = query.shares().cbegin();
-    for (iterator++; iterator != query.shares().cend(); iterator++) {
-      types::QueryShare *next_share = next_query.add_shares();
-      next_share->set_x(iterator->x());
-      next_share->set_y(iterator->y());
-    }
-    // Send the query to the next party.
+    types::Query next_query = protocol::query::ProcessQuery(query);
     this->socket_->SendQuery(this->party_id_ + 1, next_query);
   }
 }
@@ -56,21 +32,7 @@ void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) const {
 template <typename S>
 void Party<S>::OnReceiveResponse(uint32_t party,
                                  const types::Response &response) const {
-  // Find next tally.
-  uint64_t share = response.shares(0);
-  uint64_t next_tally =
-      primitives::AdditiveReconstruct(response.tally(), share);
-
-  // Construct next response object.
-  types::Response next_response;
-  next_response.set_tag(response.tag());
-  next_response.set_tally(next_tally);
-  auto iterator = response.shares().cbegin();
-  for (iterator++; iterator != response.shares().cend(); iterator++) {
-    next_response.add_shares(*iterator);
-  }
-
-  // Send next response to the following party or client.
+  types::Response next_response = protocol::response::ProcessResponse(response);
   if (this->party_id_ == 1) {
     this->End(next_response);
   } else {
@@ -80,23 +42,12 @@ void Party<S>::OnReceiveResponse(uint32_t party,
 
 template <typename S>
 void Party<S>::Start(uint64_t q) {
-  types::Query query;
-  query.set_tag(this->tag_++);
-  query.set_tally(1);
-  auto shares =
-      primitives::GenerateIncrementalSecretShares(q, this->config_.parties());
-  for (const auto &share : shares) {
-    types::QueryShare *query_share = query.add_shares();
-    query_share->set_x(share.x);
-    query_share->set_y(share.y);
-  }
+  types::Query query =
+      protocol::client::CreateQuery(q, this->config_.parties());
   this->OnReceiveQuery(0, query);
 }
 
 template <typename S>
 void Party<S>::End(const types::Response &response) const {
-  uint64_t share = response.shares(0);
-  uint64_t next_tally =
-      primitives::AdditiveReconstruct(response.tally(), share);
-  std::cout << "response: " << next_tally << std::endl;
+  protocol::client::ReconstructResponse(response);
 }
