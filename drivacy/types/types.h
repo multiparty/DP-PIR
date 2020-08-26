@@ -18,6 +18,19 @@ struct IncrementalSecretShare {
   uint64_t y;  // The multiplicative component.
 };
 
+// The state to keep per query.
+struct QueryState {
+  uint64_t preshare;  // The preshare for use while responding to the query.
+  uint64_t tag;       // The tag that was associated with this query.
+};
+
+// A party state. This survives between a query and its response.
+struct PartyState {
+  uint64_t tag;
+  std::unordered_map<uint64_t, QueryState> tag_to_query_state;
+  PartyState() { tag = 0; }
+};
+
 }  // namespace types
 }  // namespace drivacy
 

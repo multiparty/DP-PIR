@@ -18,21 +18,23 @@ void Party<S>::Configure() {
 }
 
 template <typename S>
-void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) const {
+void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) {
   if (this->party_id_ == this->config_.parties()) {
-    types::Response response = protocol::backend::QueryToResponse(
-        query, this->table_, this->config_.parties());
+    types::Response response =
+        protocol::backend::QueryToResponse(query, this->table_);
     this->socket_->SendResponse(this->party_id_ - 1, response);
   } else {
-    types::Query next_query = protocol::query::ProcessQuery(query);
+    types::Query next_query =
+        protocol::query::ProcessQuery(query, &this->state_);
     this->socket_->SendQuery(this->party_id_ + 1, next_query);
   }
 }
 
 template <typename S>
 void Party<S>::OnReceiveResponse(uint32_t party,
-                                 const types::Response &response) const {
-  types::Response next_response = protocol::response::ProcessResponse(response);
+                                 const types::Response &response) {
+  types::Response next_response =
+      protocol::response::ProcessResponse(response, &this->state_);
   if (this->party_id_ == 1) {
     this->End(next_response);
   } else {

@@ -6,12 +6,14 @@
 #define DRIVACY_PROTOCOL_RESPONSE_H_
 
 #include "drivacy/types/messages.pb.h"
+#include "drivacy/types/types.h"
 
 namespace drivacy {
 namespace protocol {
 namespace response {
 
-types::Response ProcessResponse(const types::Response &response);
+types::Response ProcessResponse(const types::Response &response,
+                                types::PartyState *state);
 
 }  // namespace response
 }  // namespace protocol

@@ -18,5 +18,6 @@ cc_library(
     deps = [
         "//drivacy/primitives:sharing",
         "//drivacy/types:messages_cc_proto",
+        "//drivacy/types:types",
     ],
 )

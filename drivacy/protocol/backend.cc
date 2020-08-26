@@ -16,27 +16,25 @@ namespace protocol {
 namespace backend {
 
 types::Response QueryToResponse(const types::Query &query,
-                                const types::Table &table, uint32_t parties) {
+                                const types::Table &table) {
   const types::QueryShare &share = query.shares(0);
   uint64_t query_value =
       primitives::IncrementalReconstruct(query.tally(), {share.x(), share.y()});
   uint64_t response_value = table.at(query_value);
 
   // Debugging.
-  std::cout << "query: " << query_value << std::endl;
-  std::cout << "response: " << response_value << std::endl;
+  std::cout << "\tbackend query: " << query_value << std::endl;
+  std::cout << "\tbackend response: " << response_value << std::endl;
 
-  // Share response value.
-  auto shares =
-      primitives::GenerateAdditiveSecretShares(response_value, parties);
+  // Share response value using preshare from query.
+  uint64_t response_tally =
+      primitives::AdditiveReconstruct(response_value, query.preshares(0));
 
   // Construct response object.
   types::Response response;
   response.set_tag(query.tag());
-  response.set_tally(0);
-  for (const auto &share : shares) {
-    response.add_shares(share);
-  }
+  response.set_tally(response_tally);
+
   return response;
 }
 

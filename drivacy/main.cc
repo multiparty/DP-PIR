@@ -30,7 +30,8 @@ absl::Status Protocol(const std::string &json_path,
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::io::file::ReadProtobufFromJson(config_path, &config));
-  std::cout << config.DebugString() << std::endl;
+  std::cout << "Parties: " << config.parties() << std::endl;
+  std::cout << std::endl;
 
   // Read input table.
   ASSIGN_OR_RETURN(std::string json,
@@ -39,17 +40,23 @@ absl::Status Protocol(const std::string &json_path,
                    drivacy::io::file::ParseTable(json));
 
   const auto &it = table.cbegin();  // Pick any entry in the table.
-  std::cout << table.size() << std::endl;
-  std::cout << it->first << "= " << it->second << std::endl;
+  std::cout << "Table size: " << table.size() << std::endl;
+  std::cout << "\t" << it->first << " => " << it->second << std::endl;
+  std::cout << std::endl;
 
   // Execute mock protocol.
-  std::cout << "Mock protocol" << std::endl;
+  std::cout << "Mock protocol:" << std::endl;
+  std::cout << "\tclient query: " << it->first << std::endl;
+
+  // Setup parties.
   std::vector<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
   parties.reserve(config.parties());
   for (uint32_t i = 1; i <= config.parties(); i++) {
     parties.push_back({i, config, table});
     parties.at(i - 1).Configure();
   }
+
+  // Make a query.
   parties.at(0).Start(it->first);
   return absl::OkStatus();
 }

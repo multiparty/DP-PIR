@@ -10,7 +10,10 @@ package drivacy.types;
 message Query {
   uint64 tag = 1;
   uint64 tally = 2;
+  // Incremental shares of the query.
   repeated QueryShare shares = 3;
+  // Pre-additive-shares of zero to use to mask response.
+  repeated uint64 preshares = 4;
 }
 
 message QueryShare {
@@ -21,5 +24,4 @@ message QueryShare {
 message Response {
   uint64 tag = 1;
   uint64 tally = 2;
-  repeated uint64 shares = 3;
 }

@@ -42,11 +42,11 @@ class Party {
 
   Party(uint32_t party, const types::Configuration &config,
         const types::Table &table)
-      : party_id_(party), config_(config), table_(table), tag_(0) {}
+      : party_id_(party), config_(config), table_(table) {}
 
   void Configure();
-  void OnReceiveQuery(uint32_t party, const types::Query &query) const;
-  void OnReceiveResponse(uint32_t party, const types::Response &response) const;
+  void OnReceiveQuery(uint32_t party, const types::Query &query);
+  void OnReceiveResponse(uint32_t party, const types::Response &response);
   void Start(uint64_t query);
   void End(const types::Response &response) const;
 
@@ -56,8 +56,8 @@ class Party {
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
-  uint64_t tag_;
   S *socket_;
+  types::PartyState state_;
 };
 
 #include "drivacy/party.inc"

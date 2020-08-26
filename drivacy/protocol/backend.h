@@ -15,7 +15,7 @@ namespace protocol {
 namespace backend {
 
 types::Response QueryToResponse(const types::Query &query,
-                                const types::Table &table, uint32_t parties);
+                                const types::Table &table);
 
 }  // namespace backend
 }  // namespace protocol
