@@ -9,6 +9,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <list>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -49,15 +50,13 @@ absl::Status Protocol(const std::string &json_path,
   std::cout << "\tclient query: " << it->first << std::endl;
 
   // Setup parties.
-  std::vector<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
-  parties.reserve(config.parties());
-  for (uint32_t i = 1; i <= config.parties(); i++) {
-    parties.push_back({i, config, table});
-    parties.at(i - 1).Configure();
+  std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
+  for (uint32_t party_id = 1; party_id <= config.parties(); party_id++) {
+    parties.emplace_back(party_id, config, table);
   }
 
   // Make a query.
-  parties.at(0).Start(it->first);
+  parties.front().Start(it->first);
   return absl::OkStatus();
 }
 

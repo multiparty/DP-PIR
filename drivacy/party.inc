@@ -11,13 +11,6 @@
 // party.
 
 template <typename S>
-void Party<S>::Configure() {
-  this->socket_ = std::make_unique<S>(
-      this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
-      absl::bind_front(&Party<S>::OnReceiveResponse, this));
-}
-
-template <typename S>
 void Party<S>::OnReceiveQuery(uint32_t party, const types::Query &query) {
   if (this->party_id_ == this->config_.parties()) {
     types::Response response =

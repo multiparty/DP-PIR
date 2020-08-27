@@ -6,6 +6,7 @@
 #include "drivacy/protocol/client.h"
 
 #include <iostream>
+#include <unordered_map>
 
 #include "drivacy/primitives/additive.h"
 #include "drivacy/primitives/incremental.h"

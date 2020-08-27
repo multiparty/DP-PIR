@@ -36,16 +36,25 @@ class Party {
                 "S must inherit from AbstractSocket");
 
  public:
-  Party(Party &&other) = default;
-  Party &operator=(Party &&other) = default;
+  // Not movable or copyable: when an instance is constructed, a pointer to it
+  // is stored in the socket (e.g. look at io/simulated_socket.[cc|h]).
+  // If the object is later moved or copied, the pointer might become invalid.
+  Party(Party &&other) = delete;
+  Party &operator=(Party &&other) = delete;
   Party(const Party &) = delete;
   Party &operator=(const Party &) = delete;
 
+  // Construct the party given its configuration.
+  // Creates a socket of the appropriate template type with an internal
+  // back-pointer to the party.
   Party(uint32_t party, const types::Configuration &config,
         const types::Table &table)
-      : party_id_(party), config_(config), table_(table) {}
+      : party_id_(party), config_(config), table_(table) {
+    this->socket_ = std::make_unique<S>(
+        this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
+        absl::bind_front(&Party<S>::OnReceiveResponse, this));
+  }
 
-  void Configure();
   void OnReceiveQuery(uint32_t party, const types::Query &query);
   void OnReceiveResponse(uint32_t party, const types::Response &response);
   void Start(uint64_t query);
