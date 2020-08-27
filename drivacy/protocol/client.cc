@@ -7,8 +7,10 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 #include "drivacy/primitives/additive.h"
+#include "drivacy/primitives/crypto.h"
 #include "drivacy/primitives/incremental.h"
 
 namespace drivacy {
@@ -21,26 +23,29 @@ uint64_t tag = 0;
 // Maps query tag to the preshare meant for them.
 std::unordered_map<uint64_t, uint64_t> tag_to_preshare;
 
-types::Query CreateQuery(uint64_t value, uint32_t parties) {
+types::Query CreateQuery(uint64_t value, const types::Configuration &config) {
   uint64_t query_tag = tag++;
+  uint64_t parties = config.parties();
 
   types::Query query;
   query.set_tag(query_tag);
   query.set_tally(1);
-  // Share query value.
+
+  // Share query value and create additive preshares of the response.
   auto shares = primitives::GenerateIncrementalSecretShares(value, parties);
-  for (const auto &share : shares) {
-    types::QueryShare *query_share = query.add_shares();
-    query_share->set_x(share.x);
-    query_share->set_y(share.y);
-  }
-  // Create additive pre-shares for response, save one.
   auto preshares = primitives::GenerateAdditiveSecretShares(0, parties + 1);
   tag_to_preshare.insert({query_tag, preshares.at(parties)});
-  preshares.pop_back();
-  for (const auto &preshare : preshares) {
-    query.add_preshares(preshare);
+
+  // Combine shares into a single struct.
+  std::vector<types::QueryShare> query_shares;
+  query_shares.reserve(shares.size());
+  for (size_t i = 0; i < shares.size(); i++) {
+    query_shares.push_back({shares.at(i).x, shares.at(i).y, preshares.at(i)});
   }
+
+  // Onion encrypt shares and place them in query.
+  primitives::crypto::OnionEncrypt(query_shares, config, &query);
+
   return query;
 }
 

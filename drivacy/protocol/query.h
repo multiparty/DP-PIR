@@ -5,6 +5,7 @@
 #ifndef DRIVACY_PROTOCOL_QUERY_H_
 #define DRIVACY_PROTOCOL_QUERY_H_
 
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
@@ -12,7 +13,9 @@ namespace drivacy {
 namespace protocol {
 namespace query {
 
-types::Query ProcessQuery(const types::Query &query, types::PartyState *state);
+types::Query ProcessQuery(const types::Query &query,
+                          const types::Configuration &config,
+                          types::PartyState *state);
 
 }  // namespace query
 }  // namespace protocol

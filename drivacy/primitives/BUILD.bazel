@@ -16,7 +16,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":util",
-        "//drivacy/types:types"
+        "//drivacy/types:types",
     ],
 )
 
@@ -33,6 +33,8 @@ cc_library(
     deps = [
         "//:libsodium",
         "//drivacy/types:config_cc_proto",
+        "//drivacy/types:messages_cc_proto",
+        "//drivacy/types:types",
     ],
 )
 

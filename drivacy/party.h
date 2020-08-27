@@ -49,7 +49,7 @@ class Party {
   // back-pointer to the party.
   Party(uint32_t party, const types::Configuration &config,
         const types::Table &table)
-      : party_id_(party), config_(config), table_(table) {
+      : party_id_(party), config_(config), table_(table), state_(party) {
     this->socket_ = std::make_unique<S>(
         this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
         absl::bind_front(&Party<S>::OnReceiveResponse, this));

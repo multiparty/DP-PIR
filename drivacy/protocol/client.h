@@ -6,13 +6,14 @@
 #ifndef DRIVACY_PROTOCOL_CLIENT_H_
 #define DRIVACY_PROTOCOL_CLIENT_H_
 
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
 namespace protocol {
 namespace client {
 
-types::Query CreateQuery(uint64_t value, uint32_t parties);
+types::Query CreateQuery(uint64_t value, const types::Configuration &config);
 void ReconstructResponse(const types::Response &response);
 
 }  // namespace client

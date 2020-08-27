@@ -7,6 +7,7 @@
 #ifndef DRIVACY_PROTOCOL_BACKEND_H_
 #define DRIVACY_PROTOCOL_BACKEND_H_
 
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
@@ -15,7 +16,9 @@ namespace protocol {
 namespace backend {
 
 types::Response QueryToResponse(const types::Query &query,
-                                const types::Table &table);
+                                const types::Configuration &config,
+                                const types::Table &table,
+                                types::PartyState *state);
 
 }  // namespace backend
 }  // namespace protocol
