@@ -20,6 +20,22 @@ cc_library(
     ],
 )
 
+# Crypto wrapper.
+cc_library(
+    name = "crypto",
+    srcs = [
+        "crypto.cc",
+    ],
+    hdrs = [
+        "crypto.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:libsodium",
+        "//drivacy/types:config_cc_proto",
+    ],
+)
+
 # Private utility library.
 cc_library(
     name = "util",

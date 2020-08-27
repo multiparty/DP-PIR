@@ -1,0 +1,8 @@
+# Libsodium using configure && make.
+load("@rules_foreign_cc//tools/build_defs:configure.bzl", "configure_make")
+configure_make(
+    name = "libsodium",
+    lib_source = "@libsodium//:all",
+    out_lib_dir = "lib",
+    visibility = ["//visibility:public"],
+)

@@ -14,6 +14,7 @@ cc_library(
     deps = [
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf_headers",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/util:status",

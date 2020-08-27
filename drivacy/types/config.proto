@@ -8,4 +8,10 @@ package drivacy.types;
 
 message Configuration {
   uint32 parties = 1;
+  map<uint32, KeyPair> keys = 2;
+}
+
+message KeyPair {
+  bytes public_key = 1;
+  bytes secret_key = 2;
 }
