@@ -27,13 +27,36 @@
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 
-absl::Status Protocol(const std::string &table_path,
-                      const std::string &config_path) {
+absl::Status Test(const drivacy::types::Configuration &config,
+                  const drivacy::types::Table &table) {
+  std::cout << "Testing..." << std::endl;
+
+  // Create a client.
+  drivacy::Client<drivacy::io::socket::SimulatedSocket> client(config);
+
+  // Verify correctness of query / response.
+  uint64_t last_query;
+  client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
+    assert(query == last_query);
+    assert(response == table.at(query));
+  });
+
+  // Query everything in the table.
+  for (const auto &[query, response] : table) {
+    last_query = query;
+    client.MakeQuery(query);
+  }
+
+  return absl::OkStatus();
+}
+
+absl::Status Setup(const std::string &table_path,
+                   const std::string &config_path) {
+  std::cout << "Setting up..." << std::endl;
+
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::io::file::ReadProtobufFromJson(config_path, &config));
-  std::cout << "Parties: " << config.parties() << std::endl;
-  std::cout << std::endl;
 
   // Read input table.
   ASSIGN_OR_RETURN(std::string json,
@@ -41,33 +64,14 @@ absl::Status Protocol(const std::string &table_path,
   ASSIGN_OR_RETURN(drivacy::types::Table table,
                    drivacy::io::file::ParseTable(json));
 
-  const auto &[expected_query, expected_response] = *table.cbegin();
-  std::cout << "Table size: " << table.size() << std::endl;
-  std::cout << "\t" << expected_query << " => " << expected_response
-            << std::endl;
-  std::cout << std::endl;
-
-  // Execute mock protocol.
-  std::cout << "Mock protocol:" << std::endl;
-  std::cout << "\tclient query: " << expected_query << std::endl;
-
   // Setup parties.
   std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
   for (uint32_t party_id = 1; party_id <= config.parties(); party_id++) {
     parties.emplace_back(party_id, config, table);
   }
 
-  // Create a client.
-  drivacy::Client<drivacy::io::socket::SimulatedSocket> client(config);
-  client.SetOnResponseHandler([=](uint64_t query, uint64_t response) {
-    assert(query == expected_query);
-    assert(response == expected_response);
-    std::cout << "\tclient response: " << response << std::endl;
-  });
-
   // Make a query.
-  client.MakeQuery(expected_query);
-  return absl::OkStatus();
+  return Test(config, table);
 }
 
 int main(int argc, char *argv[]) {
@@ -94,8 +98,8 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Execute mock protocol.
-  absl::Status output = Protocol(table_path, config_path);
+  // Do the testing!
+  absl::Status output = Setup(table_path, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

@@ -1,0 +1,57 @@
+# Copyright 2020 multiparty.org
+load("@rules_cc//cc:defs.bzl", "cc_test", "cc_binary")
+
+MAIN_DEPS = [
+    "@com_google_absl//absl/flags:flag",
+    "@com_google_absl//absl/flags:parse",
+    "@com_google_absl//absl/flags:usage",
+    "@com_google_absl//absl/status",
+    "@com_google_absl//absl/strings",
+    "//drivacy:client",
+    "//drivacy:party",
+    "//drivacy/io:file",
+    "//drivacy/io:socket",
+    "//drivacy/types:config_cc_proto",
+    "//drivacy/types:types",
+    "//drivacy/util:status",
+]
+
+cc_binary(
+    name = "main",
+    srcs = [
+        "main.cc",
+    ],
+    deps = MAIN_DEPS,
+)
+
+# Tests
+cc_test(
+    name = "local-test-1",
+    srcs = [
+        "main.cc",
+    ],
+    deps = MAIN_DEPS,
+    data = [
+        "testdata/config1.json",
+        "testdata/table1.json",
+    ],
+    args = [
+        "--config=$(location testdata/config1.json)",
+        "--table=$(location testdata/table1.json)",
+    ],
+)
+cc_test(
+    name = "local-test-2",
+    srcs = [
+        "main.cc",
+    ],
+    deps = MAIN_DEPS,
+    data = [
+        "testdata/config2.json",
+        "testdata/table2.json",
+    ],
+    args = [
+        "--config=$(location testdata/config2.json)",
+        "--table=$(location testdata/table2.json)",
+    ],
+)

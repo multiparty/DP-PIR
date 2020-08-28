@@ -7,7 +7,6 @@
 #include "drivacy/protocol/backend.h"
 
 #include <cstdint>
-#include <iostream>
 
 #include "drivacy/primitives/additive.h"
 #include "drivacy/primitives/crypto.h"
@@ -30,10 +29,6 @@ types::Response QueryToResponse(const types::Query &query,
   uint64_t query_value =
       primitives::IncrementalReconstruct(query.tally(), {share.x, share.y});
   uint64_t response_value = table.at(query_value);
-
-  // Debugging.
-  std::cout << "\tbackend query: " << query_value << std::endl;
-  std::cout << "\tbackend response: " << response_value << std::endl;
 
   // Share response value using preshare from query.
   uint64_t response_tally =

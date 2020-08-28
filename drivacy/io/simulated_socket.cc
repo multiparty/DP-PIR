@@ -19,6 +19,7 @@ SimulatedSocket::SimulatedSocket(uint32_t party_id,
     : party_id_(party_id),
       query_listener_(query_listener),
       response_listener_(response_listener) {
+  assert(SimulatedSocket::sockets_.count(party_id) == 0);
   SimulatedSocket::sockets_.insert({party_id, this});
 }
 

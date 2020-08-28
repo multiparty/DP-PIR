@@ -55,22 +55,35 @@ class Party {
         absl::bind_front(&Party<S>::OnReceiveResponse, this));
   }
 
-  void OnReceiveQuery(uint32_t party, const types::Query &query);
-  void OnReceiveResponse(uint32_t party, const types::Response &response);
-  void Start(uint64_t query);
-  void End(const types::Response &response) const;
-
   uint32_t party_id() const { return this->party_id_; }
 
  private:
+  // Called by the socket when a query is received.
+  void OnReceiveQuery(uint32_t party, const types::Query &query) {
+    if (this->party_id_ == this->config_.parties()) {
+      types::Response response = protocol::backend::QueryToResponse(
+          query, this->config_, this->table_, &this->state_);
+      this->socket_->SendResponse(this->party_id_ - 1, response);
+    } else {
+      types::Query next_query =
+          protocol::query::ProcessQuery(query, this->config_, &this->state_);
+      this->socket_->SendQuery(this->party_id_ + 1, next_query);
+    }
+  }
+
+  // Called by the socket when a response is received.
+  void OnReceiveResponse(uint32_t party, const types::Response &response) {
+    types::Response next_response =
+        protocol::response::ProcessResponse(response, &this->state_);
+    this->socket_->SendResponse(this->party_id_ - 1, next_response);
+  }
+
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<S> socket_;
   types::PartyState state_;
 };
-
-#include "drivacy/party.inc"
 
 }  // namespace drivacy
 

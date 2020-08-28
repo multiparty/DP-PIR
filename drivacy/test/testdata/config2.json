@@ -1,0 +1,25 @@
+{
+ "parties": 5,
+ "keys": {
+  "1": {
+   "public_key": "OWApb0l2c+ARYBz3UI8+CF3SqJzRxrodvcJYkHZTkmE=",
+   "secret_key": "Nc+B6hiqWWcJ/PT0kr9n2M9xgah38ND8E1MtBqQUbNQ="
+  },
+  "2": {
+   "public_key": "xhwlr4Dpr8FcBddXH8aJuzz/YC2Lw7w7uOmYzF9z6T4=",
+   "secret_key": "9Gnrv/4zmZ/Nifz1ZxCwAAkcLORoV9Oh0pUZqxwaguo="
+  },
+  "3": {
+   "public_key": "1/d/vu73d2aTmUPLg9oSS9Eu+sLPgzVVHIDKFf/OsmQ=",
+   "secret_key": "TLXk5B/ICfRJMPSaAAqfAki+UA1QykhDTb9vzl0iVd4="
+  },
+  "4": {
+   "public_key": "nEwpAcJq0ctoYCgrzClolWj0E8z2cxzwm4HhcqmMjC0=",
+   "secret_key": "PylSOzIXP4tuoo/eSQofcUMiF2zsjOQAftnaTQJ3VvE="
+  },
+  "5": {
+   "public_key": "EjFlWenXgdETFGpPA6cBq97GYESW/p+MPsbJ8wXrVhs=",
+   "secret_key": "UoH16BspRdvPpTyyuF7d4fB/5rMXWMkv7qi+Z6WrDa4="
+  }
+ }
+}

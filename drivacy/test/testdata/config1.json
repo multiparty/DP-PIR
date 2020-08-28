@@ -1,0 +1,14 @@
+{
+ "parties": 2,
+ "keys": {
+  "1": {
+   "public_key": "saDuiVwGXLER0C1WafFYhLqgtx2QHVHPwNh6omDIzl8=",
+   "secret_key": "UoFjJwtSOo4ZpNn58XQqer5v8cfIJD/BzExkFjybqfo="
+  },
+  "2": {
+   "public_key": "po8R+sqflZXEE5vxYlARkst40w3fohdB/g/3Ab/UqBI=",
+   "secret_key": "wdnJ7slwtRS08oi7V5JqN1VLnvGn1895+FLtBDzT3K0="
+  }
+ }
+}
+
