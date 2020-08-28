@@ -9,6 +9,7 @@
 
 #include "drivacy/primitives/incremental.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 

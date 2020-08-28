@@ -9,6 +9,7 @@
 
 #include "drivacy/primitives/additive.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 

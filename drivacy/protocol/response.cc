@@ -4,6 +4,8 @@
 
 #include "drivacy/protocol/response.h"
 
+#include <cstdint>
+
 #include "drivacy/primitives/additive.h"
 
 namespace drivacy {

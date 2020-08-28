@@ -13,7 +13,7 @@
 #ifndef DRIVACY_PARTY_H_
 #define DRIVACY_PARTY_H_
 
-#include <cstdlib>
+#include <cstdint>
 #include <memory>
 #include <type_traits>
 

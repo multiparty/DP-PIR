@@ -10,7 +10,7 @@
 #ifndef DRIVACY_IO_SIMULATED_SOCKET_H_
 #define DRIVACY_IO_SIMULATED_SOCKET_H_
 
-#include <cstdlib>
+#include <cstdint>
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"

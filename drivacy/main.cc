@@ -7,7 +7,7 @@
 // The server's configurations, including which party it belongs to, is
 // set by the input configuration file passed to it via the command line.
 
-#include <cstdlib>
+#include <cstdint>
 #include <iostream>
 #include <list>
 

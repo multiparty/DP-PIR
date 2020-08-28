@@ -5,7 +5,7 @@
 #ifndef DRIVACY_PRIMITIVES_UTIL_H_
 #define DRIVACY_PRIMITIVES_UTIL_H_
 
-#include <cstdlib>
+#include <cstdint>
 
 namespace drivacy {
 namespace primitives {

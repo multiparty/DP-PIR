@@ -6,7 +6,7 @@
 #ifndef DRIVACY_IO_ABSTRACT_SOCKET_H_
 #define DRIVACY_IO_ABSTRACT_SOCKET_H_
 
-#include <cstdlib>
+#include <cstdint>
 #include <functional>
 
 #include "drivacy/types/messages.pb.h"

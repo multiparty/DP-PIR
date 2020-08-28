@@ -4,6 +4,8 @@
 
 #include "drivacy/protocol/query.h"
 
+#include <cstdint>
+
 #include "drivacy/primitives/crypto.h"
 #include "drivacy/primitives/incremental.h"
 

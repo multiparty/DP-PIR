@@ -6,6 +6,7 @@
 
 #include "drivacy/protocol/backend.h"
 
+#include <cstdint>
 #include <iostream>
 
 #include "drivacy/primitives/additive.h"

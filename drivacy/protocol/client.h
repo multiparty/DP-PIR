@@ -6,6 +6,8 @@
 #ifndef DRIVACY_PROTOCOL_CLIENT_H_
 #define DRIVACY_PROTOCOL_CLIENT_H_
 
+#include <cstdint>
+
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 

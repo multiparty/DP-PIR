@@ -3,7 +3,7 @@
 // A script for generating a config file in the appropriate format
 // given configuration parameters.
 
-#include <cstdlib>
+#include <cstdint>
 #include <iostream>
 #include <string>
 
