@@ -1,7 +1,7 @@
 workspace(name = "drivacy")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
 
 # Protobuf dependencies
 http_archive(
@@ -50,9 +50,18 @@ rules_foreign_cc_dependencies()
 # Grab libsodium
 all_content = """filegroup(name = "all", srcs = glob(["**"]), visibility = ["//visibility:public"])"""
 http_archive(
-  name="libsodium",
-  type="zip",
-  url="https://github.com/jedisct1/libsodium/archive/1.0.18-RELEASE.zip",
+  name = "libsodium",
+  type = "zip",
+  url = "https://github.com/jedisct1/libsodium/archive/1.0.18-RELEASE.zip",
   strip_prefix = "libsodium-1.0.18-RELEASE",
+  build_file_content = all_content,
+)
+
+# Grab uWebSockets
+new_git_repository(
+  name = "uWebSockets",
+  remote = "https://github.com/uNetworking/uWebSockets.git",
+  commit = "f666aab105bd5c41d3a51d48b4949b2bbcdc2a21",
+  init_submodules = True,
   build_file_content = all_content,
 )
