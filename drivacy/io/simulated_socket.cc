@@ -15,7 +15,8 @@ namespace socket {
 
 SimulatedSocket::SimulatedSocket(uint32_t party_id,
                                  QueryListener query_listener,
-                                 ResponseListener response_listener)
+                                 ResponseListener response_listener,
+                                 const types::Configuration &_)
     : party_id_(party_id),
       query_listener_(query_listener),
       response_listener_(response_listener) {

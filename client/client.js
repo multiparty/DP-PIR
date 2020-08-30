@@ -1,22 +1,25 @@
 /* global protocol, drawPath */
 
 function oneStep(src, dst) {
+  if (src === dst) {
+    return;
+  }
+
   return protocol(src, dst).then(function (next) {
     // Is the destination unreachable?
     if (next === 0) {
       alert("Destination unreachable!");
       drawPath([src, dst]);
-      return false;
+      return;
     }
 
     // Draw path!
     drawPath([src, next]);
 
     // Keep going.
-    if (next == dst) {
-      return true;
+    if (next != dst) {
+      oneStep(next, dst);
     }    
-    return oneStep(next, dst);
   });
 }
 

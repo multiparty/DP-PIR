@@ -65,7 +65,9 @@ absl::Status Setup(const std::string &table_path,
                    drivacy::io::file::ParseTable(json));
 
   // Setup parties.
-  std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
+  std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket,
+                           drivacy::io::socket::SimulatedSocket>>
+      parties;
   for (uint32_t party_id = 1; party_id <= config.parties(); party_id++) {
     parties.emplace_back(party_id, config, table);
   }

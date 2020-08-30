@@ -49,7 +49,7 @@ class Client {
   Client(const types::Configuration &config) : config_(config) {
     this->socket_ = std::make_unique<S>(
         0, absl::bind_front(&Client<S>::Unused, this),
-        absl::bind_front(&Client<S>::OnReceiveResponse, this));
+        absl::bind_front(&Client<S>::OnReceiveResponse, this), config);
   }
 
   uint32_t party_id() const { return this->party_id_; }

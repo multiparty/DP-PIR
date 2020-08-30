@@ -5,7 +5,6 @@
 
 #include "drivacy/protocol/client.h"
 
-#include <iostream>
 #include <unordered_map>
 #include <vector>
 

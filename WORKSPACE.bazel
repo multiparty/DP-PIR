@@ -57,11 +57,17 @@ http_archive(
   build_file_content = all_content,
 )
 
-# Grab uWebSockets
+# Grab uSockets and uWebSockets
+new_git_repository(
+  name = "uSockets",
+  remote = "https://github.com/uNetworking/uSockets.git",
+  commit = "716c51be4447196d6818b212189bcf31698179c4",
+  build_file_content = all_content,
+)
+
 new_git_repository(
   name = "uWebSockets",
   remote = "https://github.com/uNetworking/uWebSockets.git",
   commit = "f666aab105bd5c41d3a51d48b4949b2bbcdc2a21",
-  init_submodules = True,
   build_file_content = all_content,
 )

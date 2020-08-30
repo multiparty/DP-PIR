@@ -29,11 +29,13 @@
 
 namespace drivacy {
 
-template <typename S>
+template <typename S1, typename S2>
 class Party {
-  // Ensure S inherits AbstractSocket.
-  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S>::value,
-                "S must inherit from AbstractSocket");
+  // Ensure S1 and S2 inherit from AbstractSocket.
+  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S1>::value,
+                "S1 must inherit from AbstractSocket");
+  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S2>::value,
+                "S2 must inherit from AbstractSocket");
 
  public:
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -50,12 +52,19 @@ class Party {
   Party(uint32_t party, const types::Configuration &config,
         const types::Table &table)
       : party_id_(party), config_(config), table_(table), state_(party) {
-    this->socket_ = std::make_unique<S>(
-        this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
-        absl::bind_front(&Party<S>::OnReceiveResponse, this));
+    this->socket_ = std::make_unique<S1>(
+        this->party_id_, absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
+        absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this), config);
+
+    if (config.network().at(party).webserver_port() > -1) {
+      this->client_socket_ = std::make_unique<S2>(
+          100, absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
+          absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this), config);
+    }
   }
 
   uint32_t party_id() const { return this->party_id_; }
+  void Listen() { this->client_socket_->Listen(); }
 
  private:
   // Called by the socket when a query is received.
@@ -75,13 +84,18 @@ class Party {
   void OnReceiveResponse(uint32_t party, const types::Response &response) {
     types::Response next_response =
         protocol::response::ProcessResponse(response, &this->state_);
-    this->socket_->SendResponse(this->party_id_ - 1, next_response);
+    if (this->party_id_ == 1) {
+      this->client_socket_->SendResponse(next_response.tag(), next_response);
+    } else {
+      this->socket_->SendResponse(this->party_id_ - 1, next_response);
+    }
   }
 
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
-  std::unique_ptr<S> socket_;
+  std::unique_ptr<S1> socket_;
+  std::unique_ptr<S2> client_socket_;
   types::PartyState state_;
 };
 

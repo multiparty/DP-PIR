@@ -68,9 +68,6 @@ L.geoJson(points, {
         } else if (pointCount == 1){
           window.localStorage.setItem("StopLatLng", [lat,lng]);
           window.localStorage.setItem("StopPointId", circle.feature.geometry.properties["point_id"]);
-
-          //make ajax call to server
-          //'https://hri.appliedmpc.org/calculate/'
           pointsSelected();
         }
         pointCount++;

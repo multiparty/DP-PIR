@@ -36,14 +36,20 @@ cc_library(
 cc_library(
     name = "socket",
     srcs = [
+        "client_socket.cc",
         "simulated_socket.cc",
     ],
     hdrs = [
+        "client_socket.h",
         "simulated_socket.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
+        "//:uWebSockets",
         "//drivacy/io:abstract_socket",
+        "//drivacy/protocol:protocol",
+        "//drivacy/types:config_cc_proto",  # TODO
         "//drivacy/types:messages_cc_proto",
+        "//drivacy/types:types",
     ],
 )

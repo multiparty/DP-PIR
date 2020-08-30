@@ -7,17 +7,35 @@ configure_make(
     visibility = ["//visibility:public"],
 )
 
-# uWebSockets using make.
+# uSockets and uWebSockets using make.
 load("@rules_foreign_cc//tools/build_defs:make.bzl", "make")
+
+make(
+    name = "uSockets",
+    lib_source = "@uSockets//:all",
+    make_commands = [
+        # make
+        "CXXFLAGS=\"-DUWS_NO_ZLIB -DLIBUS_NO_SSL\" make -C $EXT_BUILD_ROOT/external/uSockets",
+        # what should have been make install, but uSockets does not have it!
+        "mkdir -p $INSTALLDIR/include $INSTALLDIR/lib",
+        # headers
+        "cp -r $EXT_BUILD_ROOT/external/uSockets/src/* $INSTALLDIR/include/",
+        # static .a library
+        "cp -r $EXT_BUILD_ROOT/external/uSockets/uSockets.a $INSTALLDIR/lib/",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 make(
     name = "uWebSockets",
     headers_only = True,
     lib_source = "@uWebSockets//:all",
     make_commands = [
-        # make
-        "CXXFLAGS=\"-DUWS_NO_ZLIB -DLIBUS_NO_SSL\" make -C $EXT_BUILD_ROOT/external/uWebSockets",
         # make install
         "make -C $EXT_BUILD_ROOT/external/uWebSockets install prefix=$INSTALLDIR",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+      ":uSockets",
+    ],
 )
