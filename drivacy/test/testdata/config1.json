@@ -2,12 +2,26 @@
  "parties": 2,
  "keys": {
   "1": {
-   "public_key": "saDuiVwGXLER0C1WafFYhLqgtx2QHVHPwNh6omDIzl8=",
-   "secret_key": "UoFjJwtSOo4ZpNn58XQqer5v8cfIJD/BzExkFjybqfo="
+   "public_key": "Ubo/so/4SYJX/IVKu6vRjeEtwMGslSoXrHoW+smWpS4=",
+   "secret_key": "QJOLRyBSZWcW/TVOjNUShU3qrK2D4+8pMqneFoXngVY="
   },
   "2": {
-   "public_key": "po8R+sqflZXEE5vxYlARkst40w3fohdB/g/3Ab/UqBI=",
-   "secret_key": "wdnJ7slwtRS08oi7V5JqN1VLnvGn1895+FLtBDzT3K0="
+   "public_key": "v0SGWoBzHcnOndU/CR6iLWh2CmANjLMnSi4AZBrdl2s=",
+   "secret_key": "KOROAjgVxGiFZ+LyjbHPxK+/YbBfjogu86Fcj2DHPIc="
+  }
+ },
+ "network": {
+  "1": {
+   "ip": "127.0.0.1",
+   "socket_port_1": -1,
+   "socket_port_2": 3003,
+   "webserver_port": 3000
+  },
+  "2": {
+   "ip": "127.0.0.1",
+   "socket_port_1": 3004,
+   "socket_port_2": -1,
+   "webserver_port": -1
   }
  }
 }

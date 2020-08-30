@@ -41,6 +41,18 @@ int main(int argc, char *argv[]) {
         {party_id, drivacy::primitives::crypto::GenerateEncryptionKeyPair()});
   }
 
+  // Handle the networking configuration.
+  for (uint32_t party_id = 1; party_id <= parties; party_id++) {
+    drivacy::types::PartyNetworkConfig party_config;
+    party_config.set_ip("127.0.0.1");
+    party_config.set_socket_port_1(
+        party_id > 1 ? (3000 + party_id * 2) : -1);
+    party_config.set_socket_port_2(
+        party_id != parties ? (3000 + party_id * 2 + 1) : -1);
+    party_config.set_webserver_port(party_id == 1 ? 3000 : -1);
+    config.mutable_network()->insert({party_id, party_config});
+  }
+
   // Make sure JSON is nice to read.
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;

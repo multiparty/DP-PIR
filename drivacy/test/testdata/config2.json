@@ -2,24 +2,57 @@
  "parties": 5,
  "keys": {
   "1": {
-   "public_key": "OWApb0l2c+ARYBz3UI8+CF3SqJzRxrodvcJYkHZTkmE=",
-   "secret_key": "Nc+B6hiqWWcJ/PT0kr9n2M9xgah38ND8E1MtBqQUbNQ="
+   "public_key": "/TLiTUh7To+6ly2DUSGMYKdYLPMhaPkKhrQQ78MWMDg=",
+   "secret_key": "5+d6At0+eSsBpv1dSjzpjg5VmIjFZ0t1xuD/czunFr4="
   },
   "2": {
-   "public_key": "xhwlr4Dpr8FcBddXH8aJuzz/YC2Lw7w7uOmYzF9z6T4=",
-   "secret_key": "9Gnrv/4zmZ/Nifz1ZxCwAAkcLORoV9Oh0pUZqxwaguo="
+   "public_key": "rEdtKlTkCkcXHYonXjSdK4XfRIRnIcjV62Nm7halIgk=",
+   "secret_key": "tFDhcc9o/Go1W5si0Bi3ITFwK4unS5C+Wdk2px2dvdc="
   },
   "3": {
-   "public_key": "1/d/vu73d2aTmUPLg9oSS9Eu+sLPgzVVHIDKFf/OsmQ=",
-   "secret_key": "TLXk5B/ICfRJMPSaAAqfAki+UA1QykhDTb9vzl0iVd4="
+   "public_key": "XR2wZoR1rESGrfF1yNwOpUpB+ZYo43rpEUFia/78QF8=",
+   "secret_key": "uJUpvB1deCeHio1PDqZsZhjZNoNtanW3e6rFH2z3UTc="
   },
   "4": {
-   "public_key": "nEwpAcJq0ctoYCgrzClolWj0E8z2cxzwm4HhcqmMjC0=",
-   "secret_key": "PylSOzIXP4tuoo/eSQofcUMiF2zsjOQAftnaTQJ3VvE="
+   "public_key": "JZIjpssJ+XUMgacCc637E0aEZj2EY8xbOygh46h0nEc=",
+   "secret_key": "ylfKwKFt+k6yxYMr30k5fi1WyBlYR7HROAtuSkpVeYs="
   },
   "5": {
-   "public_key": "EjFlWenXgdETFGpPA6cBq97GYESW/p+MPsbJ8wXrVhs=",
-   "secret_key": "UoH16BspRdvPpTyyuF7d4fB/5rMXWMkv7qi+Z6WrDa4="
+   "public_key": "zW/FZinc0RTp2nCZ8MYvQo9tgbKlYQHV1DA0KRxkYyM=",
+   "secret_key": "VI9nPCm3IECtqiR2o3LCEDaKImPCv4G5vasy9jgOUhI="
+  }
+ },
+ "network": {
+  "2": {
+   "ip": "127.0.0.1",
+   "socket_port_1": 3004,
+   "socket_port_2": 3005,
+   "webserver_port": -1
+  },
+  "3": {
+   "ip": "127.0.0.1",
+   "socket_port_1": 3006,
+   "socket_port_2": 3007,
+   "webserver_port": -1
+  },
+  "4": {
+   "ip": "127.0.0.1",
+   "socket_port_1": 3008,
+   "socket_port_2": 3009,
+   "webserver_port": -1
+  },
+  "5": {
+   "ip": "127.0.0.1",
+   "socket_port_1": 3010,
+   "socket_port_2": -1,
+   "webserver_port": -1
+  },
+  "1": {
+   "ip": "127.0.0.1",
+   "socket_port_1": -1,
+   "socket_port_2": 3003,
+   "webserver_port": 3000
   }
  }
 }
+
