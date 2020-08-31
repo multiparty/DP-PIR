@@ -1,4 +1,55 @@
 /* global TOTAL_COUNT, getPointById */
+let prime = 27644437;
+
+const mod = function(a, modulus){
+  return a % modulus > 0 ? a : a + modulus;
+}
+
+const incrementalShareGenerate = function(query, numparty){
+  let shares = [];
+
+  let t = 1;
+  for (let i = 0; i < numparty - 1; i++) {
+    let share = new Object()
+    let x = Math.random() % prime;
+    let y = Math.random() % prime;
+    t = (t * y + x) % prime;
+    share.x = x;
+    share.y = y;
+    shares.push(share);
+  }
+  let share = new Object();
+  let last_y = Math.random() % prime;
+  let last_x = mod(query - t * last_y, prime);
+  share.x = last_x;
+  share.y = last_y;
+  shares.push(share);
+
+  return shares;
+
+}
+
+const additiveShareGenerate = function(query, numparty){
+  let shares = [];
+
+  let t = 0;
+  for (let i = 0; i < numparty - 1; i++) {
+    let x = Math.random() % prime;
+    t = t + x % prime;
+    shares.push(x);
+  }
+  let last_x = mod(query - t, prime);
+  shares.push(last_x);
+
+  return shares;
+
+}
+
+const additiveShareReconstruct= function(tally, share){
+  return (tally + share) % prime;
+}
+
+
 const makeQuery = function (query) {
   return new Promise(function (resolve) {
     let socket = new WebSocket("ws://localhost:3000/");
@@ -33,4 +84,3 @@ const protocol = function (src, dst) {
         "Internal Error: response returned unrecognizable hash " + response);
   });
 }
-
