@@ -1,0 +1,4 @@
+**/node_modules/
+js/
+proto/*_pb.js
+proto/drivacy.js

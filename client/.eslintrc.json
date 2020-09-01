@@ -18,28 +18,19 @@
       "asyncArrow": "always"
     }],
     "no-console": 0,
-    "space-before-blocks": [2, "always"],
-    "requirejs/no-invalid-define": 2,
-    "requirejs/no-multiple-define": 2,
-    "requirejs/no-named-define": 2,
-    "requirejs/no-commonjs-wrapper": 2,
-    "requirejs/no-object-define": 1
+    "space-before-blocks": [2, "always"]
   },
   "env": {
     "browser": true,
     "jquery": true,
     "node": true,
-    "amd":true,
+    "amd": true,
     "es6": true
   },
-
   "parserOptions":{
-    "ecmaVersion": 6,
+    "ecmaVersion": 2017,
     "ecmaFeatures": {
       "experimentalObjectRestSpread": true
     }
-  },
-  "plugins": [
-    "requirejs"
-  ]
+  }
 }

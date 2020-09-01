@@ -12,8 +12,8 @@ namespace primitives {
 namespace util {
 
 inline uint64_t Prime() {
-  // 2^64 - 59 is the largest prime that fits in 64 bits.
-  return 0xffffffffffffffff - 58;
+  // 26 bits prime.
+  return 67108859;
 }
 
 inline uint64_t Mod(uint64_t a, uint64_t modulus) {

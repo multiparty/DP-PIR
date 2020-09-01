@@ -8,6 +8,6 @@ const hash = function (elements, domainSize) {
   return indexInCrossProduct;
 }
 
-if (typeof exports !== "undefined") {
+if (typeof exports !== 'undefined') {
   module.exports = hash;
 }
