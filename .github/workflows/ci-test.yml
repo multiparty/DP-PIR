@@ -14,5 +14,13 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Information
+      run: |
+        bazel --version
+        g++ --version
+
+    - name: Build all
+      run: bazel build ...
+
     - name: Test all
       run: bazel test //drivacy/... --test_output=errors
