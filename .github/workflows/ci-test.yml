@@ -14,13 +14,22 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Install gcc-9
+      run: |
+        sudo apt-get install software-properties-common
+        sudo add-apt-repository ppa:jonathonf/gcc-9.0
+        sudo apt-get update
+        sudo apt-get install -y gcc-9 g++-9
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+        sudo update-alternatives --set gcc "/usr/bin/gcc-9"
+        
     - name: Information
       run: |
         bazel --version
         g++ --version
 
     - name: Build all
-      run: bazel build ...
+      run: bazel build //drivacy/...
 
     - name: Test all
       run: bazel test //drivacy/... --test_output=errors
