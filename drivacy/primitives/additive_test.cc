@@ -46,7 +46,7 @@ int main() {
     }
   }
 
-  std::cout << "All test pass!" << std::endl;
+  std::cout << "All tests passed!" << std::endl;
 
   return 0;
 }

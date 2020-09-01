@@ -14,7 +14,6 @@
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
-#include "drivacy/types/config.pb.h"  // TODO remove
 #include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
@@ -24,8 +23,7 @@ namespace socket {
 class SimulatedSocket : public AbstractSocket {
  public:
   SimulatedSocket(uint32_t party_id, QueryListener query_listener,
-                  ResponseListener response_listener,
-                  const types::Configuration &_);
+                  ResponseListener response_listener);
   ~SimulatedSocket() override;
 
   void SendQuery(uint32_t party, const types::Query &query) const override;
@@ -36,6 +34,28 @@ class SimulatedSocket : public AbstractSocket {
 
  private:
   static std::unordered_map<uint32_t, SimulatedSocket *> sockets_;
+
+  uint32_t party_id_;
+  QueryListener query_listener_;
+  ResponseListener response_listener_;
+};
+
+// Similar to the above class, but used by the first server/party to simulate
+// communication with clients.
+class SimulatedClientSocket : public AbstractSocket {
+ public:
+  SimulatedClientSocket(uint32_t party_id, QueryListener query_listener,
+                        ResponseListener response_listener);
+  ~SimulatedClientSocket() override;
+
+  void SendQuery(uint32_t party, const types::Query &query) const override;
+  void SendResponse(uint32_t party,
+                    const types::Response &response) const override;
+
+  void Listen() override {}
+
+ private:
+  static std::unordered_map<uint32_t, SimulatedClientSocket *> sockets_;
 
   uint32_t party_id_;
   QueryListener query_listener_;

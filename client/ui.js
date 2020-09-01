@@ -63,8 +63,8 @@
   }).addTo(leaflet);
 
   const pointsSelected = async function () {
-    const src = window.localStorage.getItem('StartPointId');
-    const dst = window.localStorage.getItem('StopPointId');
+    const src = parseInt(window.localStorage.getItem('StartPointId'));
+    const dst = parseInt(window.localStorage.getItem('StopPointId'));
 
     try {
       await window.protocol(src, dst);

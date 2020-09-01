@@ -18,7 +18,7 @@ std::vector<uint64_t> GenerateAdditiveSecretShares(uint64_t query,
   uint64_t t = 0;
   for (size_t i = 0; i < numparty - 1; i++) {
     uint64_t x = std::rand() % util::Prime();
-    t = t + x % util::Prime();
+    t = (t + x) % util::Prime();
     shares.push_back(x);
   }
   uint64_t last_x = util::Mod(query - t, util::Prime());

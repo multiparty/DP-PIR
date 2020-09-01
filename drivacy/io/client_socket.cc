@@ -9,12 +9,20 @@
 
 #include "drivacy/io/client_socket.h"
 
-#include "drivacy/protocol/client.h"
 #include "uWebSockets/App.h"
 
 namespace drivacy {
 namespace io {
 namespace socket {
+
+namespace {
+
+struct PerSocketData {
+  uint32_t client_id;
+  uint64_t tag;
+};
+
+}  // namespace
 
 void ClientSocket::Listen() {
   // Set up the socket server.
@@ -30,10 +38,10 @@ void ClientSocket::Listen() {
                },
            .message =
                [this](auto *ws, std::string_view message, uWS::OpCode op_code) {
-                 assert(op_code == uWS::OpCode::TEXT);
-                 this->HandleQuery(
-                     std::string(message),
-                     static_cast<PerSocketData *>(ws->getUserData()));
+                 assert(op_code == uWS::OpCode::BINARY);
+                 PerSocketData *data =
+                     static_cast<PerSocketData *>(ws->getUserData());
+                 this->HandleQuery(std::string(message), data->client_id);
                },
            .close =
                [this](auto *ws, int code, std::string_view message) {
@@ -45,24 +53,25 @@ void ClientSocket::Listen() {
       .run();
 }
 
-void ClientSocket::HandleQuery(std::string message, PerSocketData *data) const {
-  uint64_t value = std::stoull(message);
-  types::Query query =
-      protocol::client::CreateQuery(value, this->config_, &data->state);
-  data->tag = query.tag();
-  query.set_tag(data->client_id);
-  this->query_listener_(data->client_id, query);
+void ClientSocket::HandleQuery(std::string message, uint32_t client_id) const {
+  // Parse protobuf query.
+  types::Query query;
+  assert(query.ParseFromString(message));
+  // Set the client id as the tag.
+  query.set_tag(client_id);
+  this->query_listener_(client_id, query);
 }
 
-void ClientSocket::SendResponse(uint32_t client,
+void ClientSocket::SendResponse(uint32_t client_id,
                                 const types::Response &response) const {
-  auto *ws = this->sockets_.at(client);
+  auto *ws = this->sockets_.at(client_id);
   PerSocketData *data = static_cast<PerSocketData *>(ws->getUserData());
   types::Response response_ = response;
   response_.set_tag(data->tag);
-  const auto &[query, value] =
-      protocol::client::ReconstructResponse(response_, &data->state);
-  ws->send(std::to_string(value), uWS::OpCode::TEXT, false);
+
+  std::string bits;
+  assert(response_.SerializeToString(&bits));
+  ws->send(bits, uWS::OpCode::BINARY, false);
 }
 
 }  // namespace socket

@@ -17,7 +17,7 @@ inline uint64_t Prime() {
 }
 
 inline uint64_t Mod(uint64_t a, uint64_t modulus) {
-  return a % modulus > 0 ? a : a + modulus;
+  return a < 0 ? (a % modulus + modulus) : a + modulus;
 }
 
 }  // namespace util

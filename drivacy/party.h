@@ -54,12 +54,13 @@ class Party {
       : party_id_(party), config_(config), table_(table), state_(party) {
     this->socket_ = std::make_unique<S1>(
         this->party_id_, absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
-        absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this), config);
+        absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this));
 
     if (config.network().at(party).webserver_port() > -1) {
       this->client_socket_ = std::make_unique<S2>(
-          100, absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
-          absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this), config);
+          this->party_id_,
+          absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
+          absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this));
     }
   }
 

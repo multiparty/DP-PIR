@@ -1,16 +1,38 @@
-/* global UI, hash */
+/* global UI, hash, config, drivacy */
 (function () {
   // Sends a query over a web socket, and returning a promise to the service's
   // response.
-  const makeQuery = function (query) {
+  const makeQuery = function (queryValue) {
     return new Promise(function (resolve) {
       let socket = new WebSocket('ws://localhost:3000/');
-      socket.onmessage = function (event) {
-        socket.close();
-        resolve(parseInt(event.data));
-      };
       socket.addEventListener('open', function () {
-        socket.send(query.toString());
+        // Incremental sharing of query.
+        const shares = window.incrementalShareGenerate(queryValue, config.parties);
+
+        // Additive sharing of 0.
+        const preshares = window.additiveShareGenerate(0, config.parties + 1);
+        const storedPreshare = preshares.pop();
+
+        // Onion encrypt shares.
+        const encrypted = window.OnionEncrypt(shares, preshares, config);
+
+        // Make query object.
+        const query = new drivacy.messages.Query();
+        query.setTag(0);
+        query.setTally(1);
+        query.setShares(encrypted);
+
+        // Handle the response
+        socket.onmessage = async function (event) {
+          socket.close();
+          // De-serialize response.
+          const bytes = await event.data.arrayBuffer();
+          const response = drivacy.messages.Response.deserializeBinary(bytes);
+          const value = window.additiveShareReconstruct(response.getTally(), storedPreshare);
+          resolve(value);
+        };
+
+        socket.send(query.serializeBinary());
       });
     });
   };

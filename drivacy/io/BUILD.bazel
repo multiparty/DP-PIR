@@ -47,9 +47,6 @@ cc_library(
     deps = [
         "//:uWebSockets",
         "//drivacy/io:abstract_socket",
-        "//drivacy/protocol:protocol",
-        "//drivacy/types:config_cc_proto",  # TODO
         "//drivacy/types:messages_cc_proto",
-        "//drivacy/types:types",
     ],
 )

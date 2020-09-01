@@ -32,7 +32,7 @@ absl::Status Test(const drivacy::types::Configuration &config,
   std::cout << "Testing..." << std::endl;
 
   // Create a client.
-  drivacy::Client<drivacy::io::socket::SimulatedSocket> client(config);
+  drivacy::Client<drivacy::io::socket::SimulatedClientSocket> client(config);
 
   // Verify correctness of query / response.
   uint64_t last_query;
@@ -46,6 +46,8 @@ absl::Status Test(const drivacy::types::Configuration &config,
     last_query = query;
     client.MakeQuery(query);
   }
+
+  std::cout << "All tests passed!" << std::endl;
 
   return absl::OkStatus();
 }
@@ -66,7 +68,7 @@ absl::Status Setup(const std::string &table_path,
 
   // Setup parties.
   std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket,
-                           drivacy::io::socket::SimulatedSocket>>
+                           drivacy::io::socket::SimulatedClientSocket>>
       parties;
   for (uint32_t party_id = 1; party_id <= config.parties(); party_id++) {
     parties.emplace_back(party_id, config, table);
