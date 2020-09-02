@@ -38,7 +38,7 @@ struct PartyState {
   uint64_t party_id;
   uint64_t tag;  // Current tag: used to create new unique tags.
   std::unordered_map<uint64_t, QueryState> tag_to_query_state;
-  PartyState(uint64_t party_id) : party_id(party_id) { tag = 0; }
+  explicit PartyState(uint64_t party_id) : party_id(party_id) { tag = 0; }
 };
 
 // A client state. This survives between a query and its response.

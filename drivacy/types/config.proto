@@ -21,8 +21,7 @@ message PartyNetworkConfig {
   // party i port 2 connects to party i+1 port 1.
   // Port set to -1 means it has no socket, e.g. party 1 port 1.
   string ip = 1;
-  int32 socket_port_1 = 2;
-  int32 socket_port_2 = 3;
+  int32 socket_port = 2;
   // -1 means no web server
-  int32 webserver_port = 4;
+  int32 webserver_port = 3;
 }

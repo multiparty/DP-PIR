@@ -13,14 +13,12 @@
  "network": {
   "1": {
    "ip": "127.0.0.1",
-   "socket_port_1": -1,
-   "socket_port_2": 3003,
+   "socket_port": 3001,
    "webserver_port": 3000
   },
   "2": {
    "ip": "127.0.0.1",
-   "socket_port_1": 3004,
-   "socket_port_2": -1,
+   "socket_port": 3002,
    "webserver_port": -1
   }
  }

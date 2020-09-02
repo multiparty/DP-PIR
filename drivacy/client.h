@@ -46,7 +46,7 @@ class Client {
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  Client(const types::Configuration &config) : config_(config) {
+  explicit Client(const types::Configuration &config) : config_(config) {
     this->socket_ = std::make_unique<S>(
         0, absl::bind_front(&Client<S>::Unused, this),
         absl::bind_front(&Client<S>::OnReceiveResponse, this));

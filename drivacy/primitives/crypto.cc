@@ -4,7 +4,7 @@
 
 #include "drivacy/primitives/crypto.h"
 
-#include <string.h>
+#include <string>
 
 #include "sodium.h"
 

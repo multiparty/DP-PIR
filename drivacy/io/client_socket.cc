@@ -17,6 +17,10 @@ namespace socket {
 
 namespace {
 
+// Allows us to stop listening later.
+struct us_listen_socket_t *listening_socket;
+
+// Data attached to each socket upon opening.
 struct PerSocketData {
   uint32_t client_id;
   uint64_t tag;
@@ -24,6 +28,9 @@ struct PerSocketData {
 
 }  // namespace
 
+// Listening: starts the socket server which spawns new sockets everytime
+// a client opens a connection with the server.
+// This function never returns until ClientSocket::Close() is called.
 void ClientSocket::Listen(const types::Configuration &config) {
   // Set up the socket server.
   int32_t port = config.network().at(this->party_id_).webserver_port();
@@ -50,9 +57,17 @@ void ClientSocket::Listen(const types::Configuration &config) {
                      static_cast<PerSocketData *>(ws->getUserData())->client_id;
                  this->sockets_.erase(client_id);
                }})
-      .listen(port, [](auto *token) { assert(token); })
+      .listen(port,
+              [](auto *token) {
+                assert(token);
+                listening_socket = token;
+              })
       .run();
 }
+
+// Gracefully closes the socket server (waits until all spawned sockets are
+// closed).
+void ClientSocket::Close() { us_listen_socket_close(0, listening_socket); }
 
 void ClientSocket::HandleQuery(std::string message, uint32_t client_id) const {
   // Parse protobuf query.
@@ -73,6 +88,7 @@ void ClientSocket::SendResponse(uint32_t client_id,
   std::string bits;
   assert(response_.SerializeToString(&bits));
   ws->send(bits, uWS::OpCode::BINARY, false);
+  ws->close();
 }
 
 }  // namespace socket

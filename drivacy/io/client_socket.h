@@ -41,6 +41,7 @@ class ClientSocket : public AbstractSocket {
                     const types::Response &response) const override;
 
   void Listen(const types::Configuration &config) override;
+  void Close() override;
 
  private:
   uint32_t party_id_;

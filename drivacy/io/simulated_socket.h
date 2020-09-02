@@ -32,6 +32,7 @@ class SimulatedSocket : public AbstractSocket {
                     const types::Response &response) const override;
 
   void Listen(const types::Configuration &config) override {}
+  void Close() override {}
 
  private:
   static std::unordered_map<uint32_t, SimulatedSocket *> sockets_;
@@ -54,6 +55,7 @@ class SimulatedClientSocket : public AbstractSocket {
                     const types::Response &response) const override;
 
   void Listen(const types::Configuration &config) override {}
+  void Close() override {}
 
  private:
   static std::unordered_map<uint32_t, SimulatedClientSocket *> sockets_;

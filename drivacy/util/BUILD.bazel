@@ -14,3 +14,14 @@ cc_library(
         "@com_google_absl//absl/types:optional",
     ],
 )
+
+
+cc_library(
+    name = "socket_iterator",
+    srcs = [],
+    hdrs = [
+        "socket_iterator.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [],
+)

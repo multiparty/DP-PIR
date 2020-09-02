@@ -19,7 +19,7 @@
 #include "drivacy/client.h"
 #include "drivacy/io/client_socket.h"
 #include "drivacy/io/file.h"
-#include "drivacy/io/simulated_socket.h"
+#include "drivacy/io/socket.h"
 #include "drivacy/party.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -27,8 +27,9 @@
 
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
+ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
 
-absl::Status Setup(const std::string &table_path,
+absl::Status Setup(uint32_t party_id, const std::string &table_path,
                    const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
@@ -40,16 +41,17 @@ absl::Status Setup(const std::string &table_path,
   ASSIGN_OR_RETURN(drivacy::types::Table table,
                    drivacy::io::file::ParseTable(json));
 
-  // Setup parties.
-  std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket,
-                           drivacy::io::socket::ClientSocket>>
-      parties;
-  for (uint32_t party_id = 1; party_id <= config.parties(); party_id++) {
-    parties.emplace_back(party_id, config, table);
+  // Setup party and listen to incoming queries and responses.
+  if (party_id == 1) {
+    drivacy::PartyHead<drivacy::io::socket::UDPSocket,
+                       drivacy::io::socket::ClientSocket>
+        party(party_id, config, table);
+    party.Listen();
+  } else {
+    drivacy::Party<drivacy::io::socket::UDPSocket> party(party_id, config,
+                                                         table);
+    party.Listen();
   }
-
-  // listen on the websocket server.
-  parties.front().Listen();
 
   // Will never really get here...
   return absl::OkStatus();
@@ -62,12 +64,14 @@ int main(int argc, char *argv[]) {
   // Command line usage message.
   absl::SetProgramUsageMessage(absl::StrFormat("usage: %s %s", argv[0],
                                                "--table=path/to/table.json "
-                                               "--config=path/to/config.json"));
+                                               "--config=path/to/config.json "
+                                               "--party=<id>"));
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
+  uint32_t party_id = absl::GetFlag(FLAGS_party);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
               << std::endl;
@@ -78,9 +82,13 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
+  if (party_id == 0) {
+    std::cout << "Please provide a valid party id using --party" << std::endl;
+    return 1;
+  }
 
   // Execute mock protocol.
-  absl::Status output = Setup(table_path, config_path);
+  absl::Status output = Setup(party_id, table_path, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

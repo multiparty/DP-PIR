@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <thread>
 #include <type_traits>
 
 #include "absl/functional/bind_front.h"
@@ -29,13 +30,11 @@
 
 namespace drivacy {
 
-template <typename S1, typename S2>
+template <typename S>
 class Party {
-  // Ensure S1 and S2 inherit from AbstractSocket.
-  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S1>::value,
-                "S1 must inherit from AbstractSocket");
-  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S2>::value,
-                "S2 must inherit from AbstractSocket");
+  // Ensure S inherits from AbstractSocket.
+  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S>::value,
+                "S must inherit from AbstractSocket");
 
  public:
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -52,22 +51,16 @@ class Party {
   Party(uint32_t party, const types::Configuration &config,
         const types::Table &table)
       : party_id_(party), config_(config), table_(table), state_(party) {
-    this->socket_ = std::make_unique<S1>(
-        this->party_id_, absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
-        absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this));
-
-    if (config.network().at(party).webserver_port() > -1) {
-      this->client_socket_ = std::make_unique<S2>(
-          this->party_id_,
-          absl::bind_front(&Party<S1, S2>::OnReceiveQuery, this),
-          absl::bind_front(&Party<S1, S2>::OnReceiveResponse, this));
-    }
+    this->socket_ = std::make_unique<S>(
+        this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
+        // virtual funtion binds to correct subclass.
+        absl::bind_front(&Party<S>::OnReceiveResponse, this));
   }
 
-  uint32_t party_id() const { return this->party_id_; }
-  void Listen() { this->client_socket_->Listen(this->config_); }
+  virtual void Listen() { this->socket_->Listen(this->config_); }
+  virtual void Close() { this->socket_->Close(); }
 
- private:
+ protected:
   // Called by the socket when a query is received.
   void OnReceiveQuery(uint32_t party, const types::Query &query) {
     if (this->party_id_ == this->config_.parties()) {
@@ -82,22 +75,65 @@ class Party {
   }
 
   // Called by the socket when a response is received.
-  void OnReceiveResponse(uint32_t party, const types::Response &response) {
+  virtual void OnReceiveResponse(uint32_t party,
+                                 const types::Response &response) {
     types::Response next_response =
         protocol::response::ProcessResponse(response, &this->state_);
-    if (this->party_id_ == 1) {
-      this->client_socket_->SendResponse(next_response.tag(), next_response);
-    } else {
-      this->socket_->SendResponse(this->party_id_ - 1, next_response);
-    }
+    this->socket_->SendResponse(this->party_id_ - 1, next_response);
   }
 
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
-  std::unique_ptr<S1> socket_;
-  std::unique_ptr<S2> client_socket_;
+  std::unique_ptr<S> socket_;
   types::PartyState state_;
+};
+
+// PartyHead is the special first party, which is responsible for communicating
+// with other parties as well as clients!
+template <typename S1, typename S2>
+class PartyHead : public Party<S1> {
+  // Ensure S1 and S2 inherit from AbstractSocket.
+  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S1>::value,
+                "S1 must inherit from AbstractSocket");
+  static_assert(std::is_base_of<drivacy::io::socket::AbstractSocket, S2>::value,
+                "S2 must inherit from AbstractSocket");
+
+ public:
+  PartyHead(PartyHead &&other) = delete;
+  PartyHead &operator=(PartyHead &&other) = delete;
+  PartyHead(const PartyHead &) = delete;
+  PartyHead &operator=(const PartyHead &) = delete;
+
+  PartyHead(uint32_t party, const types::Configuration &config,
+            const types::Table &table)
+      : Party<S1>(party, config, table) {
+    this->client_socket_ = std::make_unique<S2>(
+        this->party_id_,
+        absl::bind_front(&PartyHead<S1, S2>::OnReceiveQuery, this),
+        absl::bind_front(&PartyHead<S1, S2>::OnReceiveResponse, this));
+  }
+
+  void Listen() override {
+    std::thread t([this] { Party<S1>::Listen(); });
+    this->client_socket_->Listen(this->config_);
+  }
+
+  void Close() override {
+    Party<S1>::Close();
+    this->client_socket_->Close();
+  }
+
+ protected:
+  // Called by the socket when a response is received.
+  void OnReceiveResponse(uint32_t party,
+                         const types::Response &response) override {
+    types::Response next_response =
+        protocol::response::ProcessResponse(response, &this->state_);
+    this->client_socket_->SendResponse(next_response.tag(), next_response);
+  }
+
+  std::unique_ptr<S2> client_socket_;
 };
 
 }  // namespace drivacy

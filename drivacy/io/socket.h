@@ -15,53 +15,40 @@
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
+#include "drivacy/util/socket_iterator.h"
+
+#define QUERY_MSG_TYPE 0
+#define RESPONSE_MSG_TYPE 1
 
 namespace drivacy {
 namespace io {
 namespace socket {
 
-class ServerSideSocket : public AbstractSocket {
+class UDPSocket : public AbstractSocket {
  public:
-  ServerSideSocket(uint32_t party_id, QueryListener query_listener,
-                   ResponseListener response_listener)
+  UDPSocket(uint32_t party_id, QueryListener query_listener,
+            ResponseListener response_listener)
       : party_id_(party_id),
         query_listener_(query_listener),
         response_listener_(response_listener) {}
 
-  void SendQuery(uint32_t client, const types::Query &query) const override;
-  void SendResponse(uint32_t client_id,
+  void SendQuery(uint32_t party_id, const types::Query &query) const override;
+  void SendResponse(uint32_t party_id,
                     const types::Response &response) const override;
 
   void Listen(const types::Configuration &config) override;
+  void Close() override {
+    this->on_ = false;
+    this->socket_iterator_.Close();
+  }
 
  private:
   uint32_t party_id_;
   QueryListener query_listener_;
   ResponseListener response_listener_;
-
-  void HandleQuery(std::string message, uint32_t client_id) const;
-};
-
-class ClientSideSocket : public AbstractSocket {
- public:
-  ClientSideSocket(uint32_t party_id, QueryListener query_listener,
-                   ResponseListener response_listener)
-      : party_id_(party_id),
-        query_listener_(query_listener),
-        response_listener_(response_listener) {}
-
-  void SendQuery(uint32_t client, const types::Query &query) const override;
-  void SendResponse(uint32_t client_id,
-                    const types::Response &response) const override;
-
-  void Listen(const types::Configuration &config) override;
-
- private:
-  uint32_t party_id_;
-  QueryListener query_listener_;
-  ResponseListener response_listener_;
-
-  void HandleQuery(std::string message, uint32_t client_id) const;
+  bool on_;
+  types::Configuration config_;
+  util::SocketIterator socket_iterator_;
 };
 
 }  // namespace socket

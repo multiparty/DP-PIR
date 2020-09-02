@@ -52,5 +52,6 @@ cc_library(
         "//drivacy/types:config_cc_proto",
         "//drivacy/io:abstract_socket",
         "//drivacy/types:messages_cc_proto",
+        "//drivacy/util:socket_iterator",
     ],
 )
