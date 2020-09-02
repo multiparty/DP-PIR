@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 #include "uWebSockets/App.h"
 
@@ -24,8 +25,11 @@ namespace socket {
 
 class ClientSocket : public AbstractSocket {
  public:
-  ClientSocket(uint32_t _, QueryListener query_listener, ResponseListener __)
-      : query_listener_(query_listener), client_counter_(0) {}
+  ClientSocket(uint32_t party_id, QueryListener query_listener,
+               ResponseListener _)
+      : party_id_(party_id),
+        query_listener_(query_listener),
+        client_counter_(0) {}
 
   // We can never send queries to clients!
   void SendQuery(uint32_t client, const types::Query &query) const override {
@@ -36,9 +40,10 @@ class ClientSocket : public AbstractSocket {
   void SendResponse(uint32_t client_id,
                     const types::Response &response) const override;
 
-  void Listen() override;
+  void Listen(const types::Configuration &config) override;
 
  private:
+  uint32_t party_id_;
   QueryListener query_listener_;
 
   // Used to generate unique ids for new clients.

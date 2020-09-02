@@ -29,6 +29,7 @@ cc_library(
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
+        "//drivacy/types:config_cc_proto",
         "//drivacy/types:messages_cc_proto",
     ],
 )
@@ -36,16 +37,19 @@ cc_library(
 cc_library(
     name = "socket",
     srcs = [
+        "socket.cc",
         "client_socket.cc",
         "simulated_socket.cc",
     ],
     hdrs = [
+        "socket.h",
         "client_socket.h",
         "simulated_socket.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "//:uWebSockets",
+        "//drivacy/types:config_cc_proto",
         "//drivacy/io:abstract_socket",
         "//drivacy/types:messages_cc_proto",
     ],

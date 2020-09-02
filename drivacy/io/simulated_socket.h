@@ -14,6 +14,7 @@
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
@@ -30,7 +31,7 @@ class SimulatedSocket : public AbstractSocket {
   void SendResponse(uint32_t party,
                     const types::Response &response) const override;
 
-  void Listen() override {}
+  void Listen(const types::Configuration &config) override {}
 
  private:
   static std::unordered_map<uint32_t, SimulatedSocket *> sockets_;
@@ -52,7 +53,7 @@ class SimulatedClientSocket : public AbstractSocket {
   void SendResponse(uint32_t party,
                     const types::Response &response) const override;
 
-  void Listen() override {}
+  void Listen(const types::Configuration &config) override {}
 
  private:
   static std::unordered_map<uint32_t, SimulatedClientSocket *> sockets_;

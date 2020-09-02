@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 
+#include "drivacy/types/config.pb.h"
 #include "drivacy/types/messages.pb.h"
 
 namespace drivacy {
@@ -23,7 +24,7 @@ using ResponseListener =
 
 class AbstractSocket {
  public:
-  virtual void Listen() = 0;
+  virtual void Listen(const types::Configuration &config) = 0;
   virtual void SendQuery(uint32_t party, const types::Query &query) const = 0;
   virtual void SendResponse(uint32_t party,
                             const types::Response &response) const = 0;

@@ -65,7 +65,7 @@ class Party {
   }
 
   uint32_t party_id() const { return this->party_id_; }
-  void Listen() { this->client_socket_->Listen(); }
+  void Listen() { this->client_socket_->Listen(this->config_); }
 
  private:
   // Called by the socket when a query is received.

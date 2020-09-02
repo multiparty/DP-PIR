@@ -24,8 +24,9 @@ struct PerSocketData {
 
 }  // namespace
 
-void ClientSocket::Listen() {
+void ClientSocket::Listen(const types::Configuration &config) {
   // Set up the socket server.
+  int32_t port = config.network().at(this->party_id_).webserver_port();
   uWS::App()
       .ws<PerSocketData>(
           "/*",
@@ -49,7 +50,7 @@ void ClientSocket::Listen() {
                      static_cast<PerSocketData *>(ws->getUserData())->client_id;
                  this->sockets_.erase(client_id);
                }})
-      .listen(3000, [](auto *token) { assert(token); })
+      .listen(port, [](auto *token) { assert(token); })
       .run();
 }
 
