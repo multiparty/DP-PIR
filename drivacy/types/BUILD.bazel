@@ -31,6 +31,20 @@ proto_library(
     ],
 )
 
+# batch.h
+cc_library(
+    name = "batch",
+    srcs = [],
+    hdrs = [
+        "batch.h",
+    ],
+    deps = [
+      ":types",
+      "//drivacy:protocol:protocol",
+    ]
+    visibility = ["//drivacy:__subpackages__"],
+)
+
 # table.h
 cc_library(
     name = "types",
