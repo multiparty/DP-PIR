@@ -13,6 +13,11 @@ namespace drivacy {
 namespace protocol {
 namespace query {
 
+uint32_t QuerySize(uint32_t party_id, uint32_t party_count) {
+  return sizeof(uint32_t) +
+         primitives::crypto::OnionCipherSize(party_id, party_count);
+}
+
 types::Query ProcessQuery(const types::Query &query,
                           const types::Configuration &config,
                           types::PartyState *state) {

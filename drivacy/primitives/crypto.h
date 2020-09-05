@@ -19,6 +19,8 @@ namespace crypto {
 // Generate key pair for encryption.
 types::KeyPair GenerateEncryptionKeyPair();
 
+uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count);
+
 void OnionEncrypt(const std::vector<types::QueryShare> &shares,
                   const types::Configuration &config,
                   types::Query *target_query);

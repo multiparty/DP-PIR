@@ -33,6 +33,12 @@ types::KeyPair GenerateEncryptionKeyPair() {
   return keypair;
 }
 
+uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count) {
+  uint32_t single_size = sizeof(types::QueryShare) + crypto_box_SEALBYTES;
+  uint32_t layers_count = party_count - party_id;
+  return single_size * layers_count;
+}
+
 void OnionEncrypt(const std::vector<types::QueryShare> &shares,
                   const types::Configuration &config,
                   types::Query *target_query) {

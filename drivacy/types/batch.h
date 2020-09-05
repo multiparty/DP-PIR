@@ -16,19 +16,20 @@
 #ifndef DRIVACY_TYPES_BATCH_H_
 #define DRIVACY_TYPES_BATCH_H_
 
-#include "drivacy/protocol/query.h"
-#include "drivacy/types/types.h"
-
 #include <cstring>
 #include <utility>
+
+#include "drivacy/protocol/query.h"
+#include "drivacy/types/types.h"
 
 namespace drivacy {
 namespace types {
 
 class Batch {
  public:
-  Batch(uint32_t party_id) : party_id_(party_id) {
-    this->single_process_query_size_ = protocol::query::QuerySize(party_id);
+  Batch(uint32_t party_id, uint32_t party_count) : party_id_(party_id) {
+    this->single_process_query_size_ =
+        protocol::query::QuerySize(party_id, party_count);
     this->single_process_response_size_ = sizeof(uint64_t);
     this->processed_queries_ = nullptr;
     this->processed_responses_ = nullptr;
@@ -79,8 +80,7 @@ class Batch {
     uint32_t actual_index = index * this->single_process_query_size_;
     unsigned char *query_ptr = this->processed_queries_ + actual_index;
     return QueryHolder{*reinterpret_cast<uint32_t *>(query_ptr),
-                       query_state->preshare,
-                       query_ptr + sizeof(uint32_t)};
+                       query_state->preshare, query_ptr + sizeof(uint32_t)};
   }
 
   // Serializes all contigous available queries from the current serialization
@@ -88,11 +88,12 @@ class Batch {
   std::pair<unsigned char *, uint32_t> SerializeQuery() {
     uint32_t size = 0;
     unsigned char *ptr =
-        this->processed_queries_ + (this->query_serialize_index_ * this->single_process_query_size_);
+        this->processed_queries_ +
+        (this->query_serialize_index_ * this->single_process_query_size_);
     while (this->query_serialize_index_ < this->query_count_ &&
            this->IsStored(this->query_stored_, this->query_serialize_index_)) {
-      this->query_serialize_index_ += 1
-      size += this->single_process_query_size_;
+      this->query_serialize_index_ += 1 size +=
+          this->single_process_query_size_;
     }
     return std::make_pair(ptr, size);
   }
@@ -104,7 +105,7 @@ class Batch {
   }
 
   // Get the stored query state to process its associated response.
-  QueryState* GetQueryState() {
+  QueryState *GetQueryState() {
     assert(this->current_response_count_ < this->query_count_);
     QueryState *ptr = this->query_states_[this->current_response_count_];
     this->current_response_count_++;
@@ -126,11 +127,13 @@ class Batch {
   std::pair<unsigned char *, uint32_t> SerializeQuery() {
     uint32_t size = 0;
     unsigned char *ptr =
-        this->processed_responses_ + (this->response_serialize_index_ * this->single_process_response_size_);
+        this->processed_responses_ +
+        (this->response_serialize_index_ * this->single_process_response_size_);
     while (this->response_serialize_index_ < this->query_count_ &&
-           this->IsStored(this->responsed_stored_, this->response_serialize_index_)) {
-      this->response_serialize_index_ += 1
-      size += this->single_process_response_size_;
+           this->IsStored(this->responsed_stored_,
+                          this->response_serialize_index_)) {
+      this->response_serialize_index_ += 1 size +=
+          this->single_process_response_size_;
     }
     return std::make_pair(ptr, size);
   }
@@ -178,24 +181,24 @@ class Batch {
   // must always be <= query_count_.
   uint32_t current_query_count_;
   uint32_t current_response_count_;
-  
+
   // Check if processed query has a stored query at
   // (index * single_process_query_size_).
   bool IsStored(unsigned char *bitmask, uint32_t index) {
     uint32_t stored_index = index / 8;
     unsigned char mask_index = index % 8;
     unsigned char mask = 1 << mask_index;
-    unsigned char masked = bitmask[stored_index] & mask; 
+    unsigned char masked = bitmask[stored_index] & mask;
     return (masked >> mask_index) == 1;
   }
-  
+
   // Check if processed query has a stored query at
   // (index * single_process_query_size_).
   void MarkStored(unsigned char *bitmask, uint32_t index) {
     uint32_t stored_index = index / 8;
     unsigned char mask_index = index % 8;
     unsigned char mask = 1 << mask_index;
-    bitmask[stored_index] |= mask; 
+    bitmask[stored_index] |= mask;
   }
 };
 
