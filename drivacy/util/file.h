@@ -2,8 +2,8 @@
 
 // Helpers for file and file protobuf IO.
 
-#ifndef DRIVACY_IO_FILE_H_
-#define DRIVACY_IO_FILE_H_
+#ifndef DRIVACY_UTIL_FILE_H_
+#define DRIVACY_UTIL_FILE_H_
 
 #include <string>
 
@@ -12,7 +12,7 @@
 #include "drivacy/util/status.h"
 
 namespace drivacy {
-namespace io {
+namespace util {
 namespace file {
 
 util::OutputStatus<std::string> ReadFile(const std::string &path);
@@ -26,7 +26,7 @@ template <typename T>
 absl::Status ReadProtobufFromJson(const std::string &path, T *protobuf);
 
 }  // namespace file
-}  // namespace io
+}  // namespace util
 }  // namespace drivacy
 
-#endif  // DRIVACY_IO_FILE_H_
+#endif  // DRIVACY_UTIL_FILE_H_

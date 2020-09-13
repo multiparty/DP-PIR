@@ -3,20 +3,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 
-# messages.proto
-cc_proto_library(
-    name = "messages_cc_proto",
-    visibility = ["//drivacy:__subpackages__"],
-    deps = [":messages_proto"],
-)
-
-proto_library(
-    name = "messages_proto",
-    srcs = [
-        "messages.proto",
-    ],
-)
-
 # config.proto
 cc_proto_library(
     name = "config_cc_proto",
@@ -31,26 +17,24 @@ proto_library(
     ],
 )
 
-# batch.h
+# types.h|cc
 cc_library(
-    name = "batch",
-    srcs = [],
-    hdrs = [
-        "batch.h",
-    ],
-    deps = [
-      ":types",
-      "//drivacy:protocol:protocol",
-    ]
-    visibility = ["//drivacy:__subpackages__"],
-)
-
-# table.h
-cc_library(
-    name = "types",
+    name = "types_definitions",
     srcs = [],
     hdrs = [
         "types.h",
+    ],
+    deps = [],
+    visibility = ["//drivacy:__subpackages__"],
+)
+cc_library(
+    name = "types",
+    srcs = [
+        "types.cc"
+    ],
+    deps = [
+        "//drivacy/types:types_definitions",
+        "//drivacy/primitives:crypto",
     ],
     visibility = ["//drivacy:__subpackages__"],
 )

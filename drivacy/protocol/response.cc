@@ -13,23 +13,10 @@ namespace protocol {
 namespace response {
 
 types::Response ProcessResponse(const types::Response &response,
-                                types::PartyState *state) {
-  const types::QueryState &query_state =
-      state->tag_to_query_state.at(response.tag());
-
+                                uint64_t preshare) {
   // Find next tally.
-  uint64_t next_tally =
-      primitives::AdditiveReconstruct(response.tally(), query_state.preshare);
-
-  // Construct next response object.
-  types::Response next_response;
-  next_response.set_tag(query_state.tag);
-  next_response.set_tally(next_tally);
-
-  // Free up state.
-  state->tag_to_query_state.erase(response.tag());
-
-  return next_response;
+  uint64_t tally = primitives::AdditiveReconstruct(response.tally(), preshare);
+  return types::Response(tally);
 }
 
 }  // namespace response

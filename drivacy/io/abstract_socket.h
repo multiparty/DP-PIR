@@ -10,28 +10,38 @@
 #include <functional>
 
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
+#include "drivacy/types/types.h"
 
 namespace drivacy {
 namespace io {
 namespace socket {
 
-using QueryListener =
-    std::function<void(uint32_t, const drivacy::types::Query &)>;
+using QueryListener = std::function<void(const types::IncomingQuery &)>;
 
-using ResponseListener =
-    std::function<void(uint32_t, const drivacy::types::Response &)>;
+using ResponseListener = std::function<void(const types::Response &)>;
 
 class AbstractSocket {
  public:
-  virtual void Listen(const types::Configuration &config) = 0;
-  virtual void Close() = 0;
-  virtual void SendQuery(uint32_t party, const types::Query &query) const = 0;
-  virtual void SendResponse(uint32_t party,
-                            const types::Response &response) const = 0;
+  virtual void Listen() = 0;
+  virtual void SendQuery(const types::OutgoingQuery &query) = 0;
+  virtual void SendResponse(const types::Response &response) = 0;
 
-  AbstractSocket() {}
-  virtual ~AbstractSocket() = default;
+  AbstractSocket(uint32_t party_id, QueryListener query_listener,
+                 ResponseListener response_listener,
+                 const types::Configuration &config)
+      : party_id_(party_id),
+        query_listener_(query_listener),
+        response_listener_(response_listener),
+        config_(config) {
+    this->party_count_ = config.parties();
+  }
+
+ protected:
+  uint32_t party_id_;
+  uint32_t party_count_;
+  QueryListener query_listener_;
+  ResponseListener response_listener_;
+  types::Configuration config_;
 };
 
 }  // namespace socket

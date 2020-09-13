@@ -16,28 +16,23 @@ namespace socket {
 // SimulatedSocket.
 SimulatedSocket::SimulatedSocket(uint32_t party_id,
                                  QueryListener query_listener,
-                                 ResponseListener response_listener)
-    : party_id_(party_id),
-      query_listener_(query_listener),
-      response_listener_(response_listener) {
+                                 ResponseListener response_listener,
+                                 const types::Configuration &config)
+    : AbstractSocket(party_id, query_listener, response_listener, config) {
   assert(SimulatedSocket::sockets_.count(party_id) == 0);
   SimulatedSocket::sockets_.insert({party_id, this});
 }
 
-SimulatedSocket::~SimulatedSocket() {
-  SimulatedSocket::sockets_.erase(this->party_id_);
+void SimulatedSocket::SendQuery(const types::OutgoingQuery &query) {
+  auto [buffer, size] = query.Serialize();
+  SimulatedSocket *socket = SimulatedSocket::sockets_.at(this->party_id_ + 1);
+  socket->query_listener_(types::IncomingQuery::Deserialize(buffer, size));
 }
 
-void SimulatedSocket::SendQuery(uint32_t party,
-                                const drivacy::types::Query &query) const {
-  SimulatedSocket *socket = SimulatedSocket::sockets_.at(party);
-  socket->query_listener_(this->party_id_, query);
-}
-
-void SimulatedSocket::SendResponse(
-    uint32_t party, const drivacy::types::Response &response) const {
-  SimulatedSocket *socket = SimulatedSocket::sockets_.at(party);
-  socket->response_listener_(this->party_id_, response);
+void SimulatedSocket::SendResponse(const types::Response &response) {
+  auto [buffer, _] = response.Serialize();
+  SimulatedSocket *socket = SimulatedSocket::sockets_.at(this->party_id_ - 1);
+  socket->response_listener_(types::Response::Deserialize(buffer));
 }
 
 std::unordered_map<uint32_t, SimulatedSocket *> SimulatedSocket::sockets_ = {};
@@ -45,30 +40,25 @@ std::unordered_map<uint32_t, SimulatedSocket *> SimulatedSocket::sockets_ = {};
 // SimulatedClientSocket.
 SimulatedClientSocket::SimulatedClientSocket(uint32_t party_id,
                                              QueryListener query_listener,
-                                             ResponseListener response_listener)
-    : party_id_(party_id),
-      query_listener_(query_listener),
-      response_listener_(response_listener) {
+                                             ResponseListener response_listener,
+                                             const types::Configuration &config)
+    : AbstractSocket(party_id, query_listener, response_listener, config) {
   assert(SimulatedClientSocket::sockets_.count(party_id) == 0);
   SimulatedClientSocket::sockets_.insert({party_id, this});
 }
 
-SimulatedClientSocket::~SimulatedClientSocket() {
-  SimulatedClientSocket::sockets_.erase(this->party_id_);
-}
-
-void SimulatedClientSocket::SendQuery(
-    uint32_t party, const drivacy::types::Query &query) const {
+void SimulatedClientSocket::SendQuery(const types::OutgoingQuery &query) {
   assert(this->party_id_ == 0);
-  SimulatedClientSocket *socket = SimulatedClientSocket::sockets_.at(party);
-  socket->query_listener_(this->party_id_, query);
+  auto [buffer, size] = query.Serialize();
+  SimulatedClientSocket *socket = SimulatedClientSocket::sockets_.at(1);
+  socket->query_listener_(types::IncomingQuery::Deserialize(buffer, size));
 }
 
-void SimulatedClientSocket::SendResponse(
-    uint32_t party, const drivacy::types::Response &response) const {
-  assert(this->party_id_ > 0);
+void SimulatedClientSocket::SendResponse(const types::Response &response) {
+  assert(this->party_id_ == 1);
+  auto [buffer, _] = response.Serialize();
   SimulatedClientSocket *socket = SimulatedClientSocket::sockets_.at(0);
-  socket->response_listener_(this->party_id_, response);
+  socket->response_listener_(types::Response::Deserialize(buffer));
 }
 
 std::unordered_map<uint32_t, SimulatedClientSocket *>

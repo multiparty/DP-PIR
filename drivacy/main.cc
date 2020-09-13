@@ -18,11 +18,11 @@
 #include "absl/strings/str_format.h"
 #include "drivacy/client.h"
 #include "drivacy/io/client_socket.h"
-#include "drivacy/io/file.h"
 #include "drivacy/io/socket.h"
 #include "drivacy/party.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
+#include "drivacy/util/file.h"
 #include "drivacy/util/status.h"
 
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
@@ -33,13 +33,13 @@ absl::Status Setup(uint32_t party_id, const std::string &table_path,
                    const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
-  CHECK_STATUS(drivacy::io::file::ReadProtobufFromJson(config_path, &config));
+  CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
 
   // Read input table.
   ASSIGN_OR_RETURN(std::string json,
-                   drivacy::io::file::ReadFile(table_path.c_str()));
+                   drivacy::util::file::ReadFile(table_path.c_str()));
   ASSIGN_OR_RETURN(drivacy::types::Table table,
-                   drivacy::io::file::ParseTable(json));
+                   drivacy::util::file::ParseTable(json));
 
   // Setup party and listen to incoming queries and responses.
   if (party_id == 1) {

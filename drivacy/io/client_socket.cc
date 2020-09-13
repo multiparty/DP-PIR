@@ -17,78 +17,45 @@ namespace socket {
 
 namespace {
 
-// Allows us to stop listening later.
-struct us_listen_socket_t *listening_socket;
-
 // Data attached to each socket upon opening.
-struct PerSocketData {
-  uint32_t client_id;
-  uint64_t tag;
-};
+struct PerSocketData {};
 
 }  // namespace
 
 // Listening: starts the socket server which spawns new sockets everytime
 // a client opens a connection with the server.
 // This function never returns until ClientSocket::Close() is called.
-void ClientSocket::Listen(const types::Configuration &config) {
+void ClientSocket::Listen() {
   // Set up the socket server.
-  int32_t port = config.network().at(this->party_id_).webserver_port();
+  int32_t port = this->config_.network().at(this->party_id_).webserver_port();
   uWS::App()
-      .ws<PerSocketData>(
-          "/*",
-          {.open =
-               [this](auto *ws) {
-                 uint32_t client_id = this->client_counter_++;
-                 static_cast<PerSocketData *>(ws->getUserData())->client_id =
-                     client_id;
-                 this->sockets_.insert({client_id, ws});
-               },
-           .message =
-               [this](auto *ws, std::string_view message, uWS::OpCode op_code) {
-                 assert(op_code == uWS::OpCode::BINARY);
-                 PerSocketData *data =
-                     static_cast<PerSocketData *>(ws->getUserData());
-                 this->HandleQuery(std::string(message), data->client_id);
-               },
-           .close =
-               [this](auto *ws, int code, std::string_view message) {
-                 uint32_t client_id =
-                     static_cast<PerSocketData *>(ws->getUserData())->client_id;
-                 this->sockets_.erase(client_id);
-               }})
-      .listen(port,
-              [](auto *token) {
-                assert(token);
-                listening_socket = token;
-              })
+      .ws<PerSocketData>("/*", {.message =
+                                    [this](auto *ws, std::string_view message,
+                                           uWS::OpCode op_code) {
+                                      assert(op_code == uWS::OpCode::BINARY);
+                                      this->sockets_.push_back(ws);
+                                      this->HandleQuery(std::string(message));
+                                    }})
+      .listen(port, [](auto *token) { assert(token); })
       .run();
 }
 
-// Gracefully closes the socket server (waits until all spawned sockets are
-// closed).
-void ClientSocket::Close() { us_listen_socket_close(0, listening_socket); }
-
-void ClientSocket::HandleQuery(std::string message, uint32_t client_id) const {
-  // Parse protobuf query.
-  types::Query query;
-  assert(query.ParseFromString(message));
-  // Set the client id as the tag.
-  query.set_tag(client_id);
-  this->query_listener_(client_id, query);
+void ClientSocket::HandleQuery(const std::string &message) const {
+  uint32_t buffer_size =
+      types::IncomingQuery::Size(this->party_id_, this->party_count_);
+  assert(buffer_size == message.size());
+  const unsigned char *buffer =
+      reinterpret_cast<const unsigned char *>(message.c_str());
+  this->query_listener_(types::IncomingQuery::Deserialize(buffer, buffer_size));
 }
 
-void ClientSocket::SendResponse(uint32_t client_id,
-                                const types::Response &response) const {
-  auto *ws = this->sockets_.at(client_id);
-  PerSocketData *data = static_cast<PerSocketData *>(ws->getUserData());
-  types::Response response_ = response;
-  response_.set_tag(data->tag);
-
-  std::string bits;
-  assert(response_.SerializeToString(&bits));
-  ws->send(bits, uWS::OpCode::BINARY, false);
+void ClientSocket::SendResponse(const types::Response &response) {
+  auto *ws = this->sockets_.front();
+  auto [buffer, size] = response.Serialize();
+  ws->send(std::string(reinterpret_cast<const char *>(buffer), size),
+           uWS::OpCode::BINARY, false);
   ws->close();
+  this->sockets_.pop_front();
 }
 
 }  // namespace socket

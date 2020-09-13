@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
 namespace drivacy {
@@ -22,13 +21,11 @@ types::KeyPair GenerateEncryptionKeyPair();
 uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count);
 
 void OnionEncrypt(const std::vector<types::QueryShare> &shares,
-                  const types::Configuration &config,
-                  types::Query *target_query);
+                  const types::Configuration &config, unsigned char *cipher);
 
-types::QueryShare SingleLayerOnionDecrypt(uint32_t party_id,
-                                          const types::Query &query,
-                                          const types::Configuration &config,
-                                          types::Query *target_query);
+void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
+                             const types::Configuration &config,
+                             unsigned char *plain);
 
 }  // namespace crypto
 }  // namespace primitives

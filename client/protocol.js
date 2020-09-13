@@ -1,5 +1,15 @@
-/* global UI, hash, config, drivacy */
+/* global UI, hash, config */
 (function () {
+  const bufferToNumber = function (buffer) {
+    // Little endian...
+    let result = 0;
+    for (let i = buffer.length - 1; i >= 0; i--) {
+      offset = i * 8;
+      result += (buffer[i] << offset);
+    }
+    return result;
+  };
+
   // Sends a query over a web socket, and returning a promise to the service's
   // response.
   const makeQuery = function (queryValue) {
@@ -12,27 +22,29 @@
         // Additive sharing of 0.
         const preshares = window.additiveShareGenerate(0, config.parties + 1);
         const storedPreshare = preshares.pop();
+        console.log(shares);
+        console.log(preshares);
 
         // Onion encrypt shares.
         const encrypted = window.OnionEncrypt(shares, preshares, config);
 
         // Make query object.
-        const query = new drivacy.messages.Query();
-        query.setTag(0);
-        query.setTally(1);
-        query.setShares(encrypted);
+        const query = new Uint8Array(8 + encrypted.length);
+        // Little endian encoding of tally = 1.
+        query.set([1, 0, 0, 0, 0, 0, 0, 0], encrypted.length);
+        query.set(encrypted, 0);
 
         // Handle the response
         socket.onmessage = async function (event) {
           socket.close();
           // De-serialize response.
           const bytes = await event.data.arrayBuffer();
-          const response = drivacy.messages.Response.deserializeBinary(bytes);
-          const value = window.additiveShareReconstruct(response.getTally(), storedPreshare);
+          const response = bufferToNumber(new Uint8Array(bytes));
+          const value = window.additiveShareReconstruct(response, storedPreshare);
           resolve(value);
         };
 
-        socket.send(query.serializeBinary());
+        socket.send(query);
       });
     });
   };

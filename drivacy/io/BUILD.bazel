@@ -3,26 +3,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "file",
-    srcs = [
-        "file.cc",
-    ],
-    hdrs = [
-        "file.h",
-    ],
-    visibility = ["//drivacy:__subpackages__"],
-    deps = [
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
-        "@com_google_protobuf//:protobuf_headers",
-        "//drivacy/types:config_cc_proto",
-        "//drivacy/types:types",
-        "//drivacy/util:status",
-        "//third_party:rapidjson"
-    ],
-)
-
-cc_library(
     name = "abstract_socket",
     hdrs = [
         "abstract_socket.h",
@@ -30,7 +10,7 @@ cc_library(
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "//drivacy/types:config_cc_proto",
-        "//drivacy/types:messages_cc_proto",
+        "//drivacy/types:types",
     ],
 )
 
@@ -48,10 +28,10 @@ cc_library(
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
+        "@com_google_absl//absl/functional:bind_front",
         "//:uWebSockets",
         "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
         "//drivacy/io:abstract_socket",
-        "//drivacy/types:messages_cc_proto",
-        "//drivacy/util:socket_iterator",
     ],
 )

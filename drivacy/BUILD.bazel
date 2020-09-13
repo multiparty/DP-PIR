@@ -15,10 +15,10 @@ cc_binary(
         "@com_google_absl//absl/strings",
         "//drivacy:client",
         "//drivacy:party",
-        "//drivacy/io:file",
         "//drivacy/io:socket",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
+        "//drivacy/util:file",
         "//drivacy/util:status",
     ],
 )
@@ -49,9 +49,8 @@ cc_library(
     deps = [
         "@com_google_absl//absl/functional:bind_front",
         "//drivacy/io:abstract_socket",
-        "//drivacy/protocol:protocol",
+        "//drivacy/protocol:client",
         "//drivacy/types:config_cc_proto",
-        "//drivacy/types:messages_cc_proto",
         "//drivacy/types:types",
     ],
 )
@@ -68,7 +67,6 @@ cc_library(
         "//drivacy/io:abstract_socket",
         "//drivacy/protocol:protocol",
         "//drivacy/types:config_cc_proto",
-        "//drivacy/types:messages_cc_proto",
         "//drivacy/types:types",
     ],
 )

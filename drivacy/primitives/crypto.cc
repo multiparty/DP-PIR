@@ -4,8 +4,10 @@
 
 #include "drivacy/primitives/crypto.h"
 
+#include <cstring>
 #include <string>
 
+// NOLINTNEXTLINE
 #include "sodium.h"
 
 namespace drivacy {
@@ -40,8 +42,7 @@ uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count) {
 }
 
 void OnionEncrypt(const std::vector<types::QueryShare> &shares,
-                  const types::Configuration &config,
-                  types::Query *target_query) {
+                  const types::Configuration &config, unsigned char *cipher) {
   // Compute how large the whole onion cipher is.
   size_t single_size = sizeof(types::QueryShare);
   size_t single_overhead = crypto_box_SEALBYTES;
@@ -74,26 +75,17 @@ void OnionEncrypt(const std::vector<types::QueryShare> &shares,
   assert(current_size = total_size);
 
   // Set the result in the query.
-  target_query->set_shares(onioncipher1, current_size);
+  memcpy(cipher, onioncipher1, current_size);
 }
 
-types::QueryShare SingleLayerOnionDecrypt(uint32_t party_id,
-                                          const types::Query &query,
-                                          const types::Configuration &config,
-                                          types::Query *target_query) {
+void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
+                             const types::Configuration &config,
+                             unsigned char *plain) {
   // Compute how large the whole onion cipher is.
   size_t single_size = sizeof(types::QueryShare);
   size_t single_overhead = crypto_box_SEALBYTES;
   size_t total_size =
       (single_size + single_overhead) * (config.parties() - party_id + 1);
-
-  // Reinterpret the cipher string as a buffer.
-  const unsigned char *onioncipher = ProtobufStringToByteBuffer(query.shares());
-
-  // Allocate buffer for the plain text, which itself may contain more layers
-  // of onion ciphers.
-  size_t plain_size = total_size - single_overhead;
-  unsigned char plain[plain_size];
 
   // Extract keys.
   const unsigned char *pk =
@@ -102,14 +94,7 @@ types::QueryShare SingleLayerOnionDecrypt(uint32_t party_id,
       ProtobufStringToByteBuffer(config.keys().at(party_id).secret_key());
 
   // Decrypt one layer.
-  assert(crypto_box_seal_open(plain, onioncipher, total_size, pk, sk) == 0);
-
-  // Extract plain text and inner layer onion cipher.
-  if (target_query != nullptr) {
-    target_query->set_shares(plain + single_size, plain_size - single_size);
-  }
-
-  return *reinterpret_cast<types::QueryShare *>(plain);
+  assert(crypto_box_seal_open(plain, cipher, total_size, pk, sk) == 0);
 }
 
 }  // namespace crypto

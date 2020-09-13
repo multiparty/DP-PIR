@@ -33,8 +33,7 @@ cc_library(
     deps = [
         "//:libsodium",
         "//drivacy/types:config_cc_proto",
-        "//drivacy/types:messages_cc_proto",
-        "//drivacy/types:types",
+        "//drivacy/types:types_definitions",
     ],
 )
 

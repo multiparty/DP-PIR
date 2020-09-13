@@ -16,30 +16,28 @@ namespace drivacy {
 namespace protocol {
 namespace backend {
 
-types::Response QueryToResponse(const types::Query &query,
+types::Response QueryToResponse(const types::IncomingQuery &query,
                                 const types::Configuration &config,
-                                const types::Table &table,
-                                types::PartyState *state) {
+                                const types::Table &table) {
+  uint32_t party_id = config.parties();
   // No nested onion cipher: we are at the backend, we got to the very inner
   // layer of the onion encryption.
-  types::QueryShare share = primitives::crypto::SingleLayerOnionDecrypt(
-      state->party_id, query, config, nullptr);
+  types::QueryShare query_share;
+  unsigned char *ptr = reinterpret_cast<unsigned char *>(&query_share);
+  primitives::crypto::SingleLayerOnionDecrypt(party_id, query.cipher(), config,
+                                              ptr);
 
   // Reconstruct the query, and find the response.
+  uint64_t tally = query.tally();
   uint64_t query_value =
-      primitives::IncrementalReconstruct(query.tally(), {share.x, share.y});
+      primitives::IncrementalReconstruct(tally, {query_share.x, query_share.y});
   uint64_t response_value = table.at(query_value);
 
   // Share response value using preshare from query.
   uint64_t response_tally =
-      primitives::AdditiveReconstruct(response_value, share.preshare);
+      primitives::AdditiveReconstruct(response_value, query_share.preshare);
 
-  // Construct response object.
-  types::Response response;
-  response.set_tag(query.tag());
-  response.set_tally(response_tally);
-
-  return response;
+  return types::Response(response_tally);
 }
 
 }  // namespace backend

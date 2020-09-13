@@ -2,7 +2,7 @@
 
 // Helpers for file and file protobuf IO.
 
-#include "drivacy/io/file.h"
+#include "drivacy/util/file.h"
 
 #include <cerrno>
 #include <fstream>
@@ -15,7 +15,7 @@
 #include "rapidjson/document.h"
 
 namespace drivacy {
-namespace io {
+namespace util {
 namespace file {
 
 util::OutputStatus<std::string> ReadFile(const std::string &path) {
@@ -90,5 +90,5 @@ template absl::Status ReadProtobufFromJson<>(const std::string &,
                                              drivacy::types::Configuration *);
 
 }  // namespace file
-}  // namespace io
+}  // namespace util
 }  // namespace drivacy

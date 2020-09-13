@@ -17,7 +17,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <istream>
+#include <iostream>
+
+#include "absl/functional/bind_front.h"
 
 namespace drivacy {
 namespace io {
@@ -25,95 +27,113 @@ namespace socket {
 
 namespace {
 
-void SocketSend(uint32_t type, const std::string &msg, uint32_t port) {
-  int sockfd;
-  struct sockaddr_in servaddr;
-  memset(&servaddr, 0, sizeof(servaddr));
-
-  // Creating socket file descriptor
-  sockfd = ::socket(AF_INET, SOCK_DGRAM, 0);
-  assert(sockfd >= 0);
-
-  // Filling server information
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_port = htons(port);
-  servaddr.sin_addr.s_addr = INADDR_ANY;
-
-  // Send size+type prefix first.
-  uint32_t size = msg.size();
-  size += (type << 31);
-  sendto(sockfd, reinterpret_cast<char *>(&size), 4, MSG_CONFIRM,
-         (const struct sockaddr *)&servaddr, sizeof(servaddr));
-
-  // Send the message.
-  sendto(sockfd, msg.c_str(), msg.size(), MSG_CONFIRM,
-         (const struct sockaddr *)&servaddr, sizeof(servaddr));
-}
-
-int SocketBind(int32_t port) {
-  // Store addresses.
-  struct sockaddr_in servaddr;
-  memset(&servaddr, 0, sizeof(servaddr));
-
+int SocketServer(uint16_t port) {
   // Creating socket file descriptor.
-  int sockfd = ::socket(AF_INET, SOCK_DGRAM, 0);
-  assert(sockfd >= 0);
+  int serverfd = ::socket(AF_INET, SOCK_STREAM, 0);
+  assert(serverfd >= 0);
 
   // Filling server information.
+  struct sockaddr_in servaddr;
   servaddr.sin_family = AF_INET;  // IPv4
   servaddr.sin_addr.s_addr = INADDR_ANY;
   servaddr.sin_port = htons(port);
 
-  // Bind the socket with the server address.
-  assert(bind(sockfd, reinterpret_cast<sockaddr *>(&servaddr),
+  // Bind the socket to the port address.
+  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr),
               sizeof(servaddr)) >= 0);
+
+  // Listen for only 1 connection.
+  std::cout << "Waiting for client..." << std::endl;
+  assert(listen(serverfd, 1) >= 0);
+  std::cout << "Client connected to our server socket!" << std::endl;
+
+  // Accept the connection.
+  auto servaddr_len = static_cast<socklen_t>(sizeof(servaddr));
+  int sockfd =
+      accept(serverfd, reinterpret_cast<sockaddr *>(&servaddr), &servaddr_len);
+  assert(sockfd >= 0);
+  return sockfd;
+}
+
+int SocketClient(uint16_t port, const std::string &serverip) {
+  // Creating socket file descriptor.
+  int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
+  assert(sockfd >= 0);
+
+  // Filling server information.
+  struct sockaddr_in servaddr;
+  servaddr.sin_family = AF_INET;  // IPv4
+  servaddr.sin_port = htons(port);
+  assert(inet_pton(AF_INET, serverip.c_str(), &servaddr.sin_addr) >= 0);
+
+  // Connect to the server.
+  std::cout << "Connecting to server..." << std::endl;
+  while (connect(sockfd, reinterpret_cast<sockaddr *>(&servaddr),
+                 sizeof(servaddr)) < 0) {
+    sleep(1);
+  }
+  std::cout << "Connected!" << std::endl;
+
   return sockfd;
 }
 
 }  // namespace
 
-// UDPSocket.
-void UDPSocket::Listen(const types::Configuration &config) {
-  // Read config.
-  this->config_ = config;
-  int32_t port = config.network().at(this->party_id_).socket_port();
-
-  // Create socket stream on bound socket.
-  this->socket_iterator_.Initialize(SocketBind(port));
-  while (this->socket_iterator_.HasNext()) {
-    const auto [buffer, size, type] = this->socket_iterator_.Next();
-    std::string msg(buffer, size);
-    if (type == QUERY_MSG_TYPE) {
-      types::Query query;
-      query.ParseFromString(msg);
-      this->query_listener_(this->party_id_ - 1, query);
-      continue;
-    }
-    if (type == RESPONSE_MSG_TYPE) {
-      types::Response response;
-      response.ParseFromString(msg);
-      this->response_listener_(this->party_id_ + 1, response);
-      continue;
-    }
-    assert(false);
+// Socket(s) setup ...
+void UDPSocket::Listen() {
+  // Read ports from config.
+  int32_t this_port = this->config_.network().at(this->party_id_).socket_port();
+  int32_t next_port = -1;
+  std::string next_ip;
+  if (this->party_id_ < this->config_.parties()) {
+    next_port = this->config_.network().at(this->party_id_ + 1).socket_port();
+    next_ip = this->config_.network().at(this->party_id_ + 1).ip();
   }
 
-  assert(!this->on_);
+  // Create socket client to the next party (for responses).
+  if (next_port != -1) {
+    this->upper_socket_ = SocketClient(next_port, next_ip);
+    this->thread_ = std::thread(
+        absl::bind_front(&UDPSocket::ListenToIncomingResponses, this));
+  }
+
+  // Create socket server to the previous party (for queries).
+  if (this_port != -1) {
+    this->lower_socket_ = SocketServer(this_port);
+    this->ListenToIncomingQueries();
+  }
 }
 
-void UDPSocket::SendQuery(uint32_t party_id, const types::Query &query) const {
-  int32_t port = this->config_.network().at(party_id).socket_port();
-  std::string serialized;
-  assert(query.SerializeToString(&serialized));
-  SocketSend(QUERY_MSG_TYPE, serialized, port);
+// Reading messages ...
+void UDPSocket::ListenToIncomingQueries() {
+  uint32_t buffer_size =
+      types::IncomingQuery::Size(this->party_id_, this->party_count_);
+  unsigned char *buffer = new unsigned char[buffer_size];
+  while (true) {
+    read(this->lower_socket_, buffer, buffer_size);
+    this->query_listener_(
+        types::IncomingQuery::Deserialize(buffer, buffer_size));
+  }
 }
 
-void UDPSocket::SendResponse(uint32_t party_id,
-                             const types::Response &response) const {
-  int32_t port = this->config_.network().at(party_id).socket_port();
-  std::string serialized;
-  assert(response.SerializeToString(&serialized));
-  SocketSend(RESPONSE_MSG_TYPE, serialized, port);
+void UDPSocket::ListenToIncomingResponses() {
+  uint32_t buffer_size = types::Response::Size();
+  unsigned char *buffer = new unsigned char[buffer_size];
+  while (true) {
+    read(this->upper_socket_, buffer, buffer_size);
+    this->response_listener_(types::Response::Deserialize(buffer));
+  }
+}
+
+// Sending messages ...
+void UDPSocket::SendQuery(const types::OutgoingQuery &query) {
+  auto [buffer, size] = query.Serialize();
+  send(this->upper_socket_, buffer, size, 0);
+}
+
+void UDPSocket::SendResponse(const types::Response &response) {
+  auto [buffer, size] = response.Serialize();
+  send(this->lower_socket_, buffer, size, 0);
 }
 
 }  // namespace socket

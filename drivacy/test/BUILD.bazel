@@ -9,10 +9,10 @@ MAIN_DEPS = [
     "@com_google_absl//absl/strings",
     "//drivacy:client",
     "//drivacy:party",
-    "//drivacy/io:file",
     "//drivacy/io:socket",
     "//drivacy/types:config_cc_proto",
     "//drivacy/types:types",
+    "//drivacy/util:file",
     "//drivacy/util:status",
 ]
 

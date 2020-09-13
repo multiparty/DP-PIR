@@ -3,6 +3,26 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "file",
+    srcs = [
+        "file.cc",
+    ],
+    hdrs = [
+        "file.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "@com_google_protobuf//:protobuf_headers",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+        "//drivacy/util:status",
+        "//third_party:rapidjson"
+    ],
+)
+
+cc_library(
     name = "status",
     srcs = [],
     hdrs = [
@@ -13,15 +33,4 @@ cc_library(
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/types:optional",
     ],
-)
-
-
-cc_library(
-    name = "socket_iterator",
-    srcs = [],
-    hdrs = [
-        "socket_iterator.h",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [],
 )

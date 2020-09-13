@@ -20,7 +20,6 @@
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/protocol/client.h"
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
 namespace drivacy {
@@ -49,26 +48,37 @@ class Client {
   explicit Client(const types::Configuration &config) : config_(config) {
     this->socket_ = std::make_unique<S>(
         0, absl::bind_front(&Client<S>::Unused, this),
-        absl::bind_front(&Client<S>::OnReceiveResponse, this));
+        absl::bind_front(&Client<S>::OnReceiveResponse, this), config);
   }
 
-  uint32_t party_id() const { return this->party_id_; }
   void SetOnResponseHandler(ResponseHandler response_handler) {
     this->response_handler_ = response_handler;
   }
 
   void MakeQuery(uint64_t value) {
-    types::Query query =
-        protocol::client::CreateQuery(value, this->config_, &this->state_);
-    this->socket_->SendQuery(1, query);
+    // Create query via client protocol.
+    types::OutgoingQuery query =
+        protocol::client::CreateQuery(value, this->config_);
+    // Store state to use for when reconstructing corresponding response.
+    this->state_.queries.push_back(value);
+    this->state_.preshares.push_back(query.preshare());
+    // Send via socket.
+    this->socket_->SendQuery(query);
   }
 
  private:
-  void Unused(uint32_t party, const types::Query &query) { assert(false); }
-  void OnReceiveResponse(uint32_t party, const types::Response &response) {
-    const auto &[q, r] =
-        protocol::client::ReconstructResponse(response, &this->state_);
-    this->response_handler_(q, r);
+  void Unused(const types::IncomingQuery &_) { assert(false); }
+  void OnReceiveResponse(const types::Response &response) {
+    // Retrieve stored state for this response.
+    uint64_t query = this->state_.queries.front();
+    uint64_t preshare = this->state_.preshares.front();
+    // Remove the stored state belonging to this response.
+    this->state_.queries.pop_front();
+    this->state_.preshares.pop_front();
+    // Reconstruct response using client protocol.
+    uint64_t response_value =
+        protocol::client::ReconstructResponse(response, preshare);
+    this->response_handler_(query, response_value);
   }
 
   const types::Configuration &config_;

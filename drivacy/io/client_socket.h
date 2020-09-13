@@ -11,12 +11,13 @@
 #define DRIVACY_IO_CLIENT_SOCKET_H_
 
 #include <cstdint>
+#include <list>
 #include <string>
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
+#include "drivacy/types/types.h"
 #include "uWebSockets/App.h"
 
 namespace drivacy {
@@ -26,35 +27,24 @@ namespace socket {
 class ClientSocket : public AbstractSocket {
  public:
   ClientSocket(uint32_t party_id, QueryListener query_listener,
-               ResponseListener _)
-      : party_id_(party_id),
-        query_listener_(query_listener),
-        client_counter_(0) {}
+               ResponseListener _, const types::Configuration &config)
+      : AbstractSocket(party_id, query_listener, _, config) {}
 
   // We can never send queries to clients!
-  void SendQuery(uint32_t client, const types::Query &query) const override {
-    assert(false);
-  };
+  void SendQuery(const types::OutgoingQuery &query) override { assert(false); }
 
   // We can send responses to clients!
-  void SendResponse(uint32_t client_id,
-                    const types::Response &response) const override;
+  void SendResponse(const types::Response &response) override;
 
-  void Listen(const types::Configuration &config) override;
-  void Close() override;
+  // We need to explicitly listen to incoming connections: blocking.
+  void Listen() override;
 
  private:
-  uint32_t party_id_;
-  QueryListener query_listener_;
-
-  // Used to generate unique ids for new clients.
-  uint32_t client_counter_;
-
-  // Client id to its socket!
-  std::unordered_map<uint32_t, uWS::WebSocket<false, true> *> sockets_;
+  // Client sockets in order of receiving queries (not connecting).
+  std::list<uWS::WebSocket<false, true> *> sockets_;
 
   // Handle incoming query from a client (parses and then calls QueryListener).
-  void HandleQuery(std::string message, uint32_t client_id) const;
+  void HandleQuery(const std::string &msg) const;
 };
 
 }  // namespace socket

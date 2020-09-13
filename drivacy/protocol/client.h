@@ -7,21 +7,19 @@
 #define DRIVACY_PROTOCOL_CLIENT_H_
 
 #include <cstdint>
-#include <utility>
 
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
 namespace drivacy {
 namespace protocol {
 namespace client {
 
-types::Query CreateQuery(uint64_t value, const types::Configuration &config,
-                         types::ClientState *state);
+types::OutgoingQuery CreateQuery(uint64_t value,
+                                 const types::Configuration &config);
 
-std::pair<uint64_t, uint64_t> ReconstructResponse(
-    const types::Response &response, types::ClientState *state);
+uint64_t ReconstructResponse(const types::Response &response,
+                             uint64_t preshare);
 
 }  // namespace client
 }  // namespace protocol

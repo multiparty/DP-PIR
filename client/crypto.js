@@ -1,6 +1,5 @@
 /* global sodium */
 (function () {
-
   const numberToBytes = function (x) {
     let bitString = x.toString(2);
     while (bitString.length < 64) {

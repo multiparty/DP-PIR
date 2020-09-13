@@ -15,17 +15,14 @@
 
 #include <cstdint>
 #include <memory>
-#include <thread>
 #include <type_traits>
 
 #include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/protocol/backend.h"
-#include "drivacy/protocol/client.h"
 #include "drivacy/protocol/query.h"
 #include "drivacy/protocol/response.h"
 #include "drivacy/types/config.pb.h"
-#include "drivacy/types/messages.pb.h"
 #include "drivacy/types/types.h"
 
 namespace drivacy {
@@ -48,45 +45,49 @@ class Party {
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  Party(uint32_t party, const types::Configuration &config,
+  Party(uint32_t party_id, const types::Configuration &config,
         const types::Table &table)
-      : party_id_(party), config_(config), table_(table), state_(party) {
+      : party_id_(party_id), config_(config), table_(table) {
     this->socket_ = std::make_unique<S>(
         this->party_id_, absl::bind_front(&Party<S>::OnReceiveQuery, this),
         // virtual funtion binds to correct subclass.
-        absl::bind_front(&Party<S>::OnReceiveResponse, this));
+        absl::bind_front(&Party<S>::OnReceiveResponse, this), this->config_);
   }
 
-  virtual void Listen() { this->socket_->Listen(this->config_); }
-  virtual void Close() { this->socket_->Close(); }
+  virtual void Listen() { this->socket_->Listen(); }
 
  protected:
-  // Called by the socket when a query is received.
-  void OnReceiveQuery(uint32_t party, const types::Query &query) {
-    if (this->party_id_ == this->config_.parties()) {
-      types::Response response = protocol::backend::QueryToResponse(
-          query, this->config_, this->table_, &this->state_);
-      this->socket_->SendResponse(this->party_id_ - 1, response);
-    } else {
-      types::Query next_query =
-          protocol::query::ProcessQuery(query, this->config_, &this->state_);
-      this->socket_->SendQuery(this->party_id_ + 1, next_query);
-    }
-  }
-
-  // Called by the socket when a response is received.
-  virtual void OnReceiveResponse(uint32_t party,
-                                 const types::Response &response) {
-    types::Response next_response =
-        protocol::response::ProcessResponse(response, &this->state_);
-    this->socket_->SendResponse(this->party_id_ - 1, next_response);
-  }
-
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<S> socket_;
-  types::PartyState state_;
+  types::QueryState query_state_;
+
+  // Called by the socket when a query is received.
+  void OnReceiveQuery(const types::IncomingQuery &query) {
+    if (this->party_id_ < this->config_.parties()) {
+      // Process query.
+      types::OutgoingQuery outgoing_query =
+          protocol::query::ProcessQuery(this->party_id_, query, this->config_);
+      // Store the query state.
+      query_state_.preshare = outgoing_query.preshare();
+      // Send the query over socket.
+      this->socket_->SendQuery(outgoing_query);
+    } else {
+      // Process query creating a response, send it over socket.
+      types::Response response =
+          protocol::backend::QueryToResponse(query, config_, table_);
+      this->socket_->SendResponse(response);
+    }
+  }
+
+  // Called by the socket when a response is received.
+  virtual void OnReceiveResponse(const types::Response &response) {
+    uint64_t preshare = this->query_state_.preshare;
+    types::Response outgoing_response =
+        protocol::response::ProcessResponse(response, preshare);
+    this->socket_->SendResponse(outgoing_response);
+  }
 };
 
 // PartyHead is the special first party, which is responsible for communicating
@@ -111,29 +112,25 @@ class PartyHead : public Party<S1> {
     this->client_socket_ = std::make_unique<S2>(
         this->party_id_,
         absl::bind_front(&PartyHead<S1, S2>::OnReceiveQuery, this),
-        absl::bind_front(&PartyHead<S1, S2>::OnReceiveResponse, this));
+        absl::bind_front(&PartyHead<S1, S2>::OnReceiveResponse, this),
+        this->config_);
   }
 
   void Listen() override {
-    std::thread t([this] { Party<S1>::Listen(); });
-    this->client_socket_->Listen(this->config_);
-  }
-
-  void Close() override {
-    Party<S1>::Close();
-    this->client_socket_->Close();
+    Party<S1>::Listen();
+    this->client_socket_->Listen();
   }
 
  protected:
-  // Called by the socket when a response is received.
-  void OnReceiveResponse(uint32_t party,
-                         const types::Response &response) override {
-    types::Response next_response =
-        protocol::response::ProcessResponse(response, &this->state_);
-    this->client_socket_->SendResponse(next_response.tag(), next_response);
-  }
-
   std::unique_ptr<S2> client_socket_;
+
+  // Called by the socket when a response is received.
+  void OnReceiveResponse(const types::Response &response) override {
+    uint64_t preshare = this->query_state_.preshare;
+    types::Response outgoing_response =
+        protocol::response::ProcessResponse(response, preshare);
+    this->client_socket_->SendResponse(outgoing_response);
+  }
 };
 
 }  // namespace drivacy
