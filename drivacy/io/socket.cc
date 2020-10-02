@@ -80,7 +80,7 @@ int SocketClient(uint16_t port, const std::string &serverip) {
 }  // namespace
 
 // Socket(s) setup ...
-void UDPSocket::Listen() {
+void TCPSocket::Listen() {
   // Read ports from config.
   int32_t this_port = this->config_.network().at(this->party_id_).socket_port();
   int32_t next_port = -1;
@@ -94,7 +94,7 @@ void UDPSocket::Listen() {
   if (next_port != -1) {
     this->upper_socket_ = SocketClient(next_port, next_ip);
     this->thread_ = std::thread(
-        absl::bind_front(&UDPSocket::ListenToIncomingResponses, this));
+        absl::bind_front(&TCPSocket::ListenToIncomingResponses, this));
   }
 
   // Create socket server to the previous party (for queries).
@@ -105,7 +105,7 @@ void UDPSocket::Listen() {
 }
 
 // Reading messages ...
-void UDPSocket::ListenToIncomingQueries() {
+void TCPSocket::ListenToIncomingQueries() {
   uint32_t buffer_size =
       types::IncomingQuery::Size(this->party_id_, this->party_count_);
   unsigned char *buffer = new unsigned char[buffer_size];
@@ -116,7 +116,7 @@ void UDPSocket::ListenToIncomingQueries() {
   }
 }
 
-void UDPSocket::ListenToIncomingResponses() {
+void TCPSocket::ListenToIncomingResponses() {
   uint32_t buffer_size = types::Response::Size();
   unsigned char *buffer = new unsigned char[buffer_size];
   while (true) {
@@ -126,12 +126,12 @@ void UDPSocket::ListenToIncomingResponses() {
 }
 
 // Sending messages ...
-void UDPSocket::SendQuery(const types::OutgoingQuery &query) {
+void TCPSocket::SendQuery(const types::OutgoingQuery &query) {
   auto [buffer, size] = query.Serialize();
   send(this->upper_socket_, buffer, size, 0);
 }
 
-void UDPSocket::SendResponse(const types::Response &response) {
+void TCPSocket::SendResponse(const types::Response &response) {
   auto [buffer, size] = response.Serialize();
   send(this->lower_socket_, buffer, size, 0);
 }

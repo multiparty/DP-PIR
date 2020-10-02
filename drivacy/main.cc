@@ -16,10 +16,10 @@
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "drivacy/client.h"
 #include "drivacy/io/client_socket.h"
 #include "drivacy/io/socket.h"
-#include "drivacy/party.h"
+#include "drivacy/parties/head_party.h"
+#include "drivacy/parties/party.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
 #include "drivacy/util/file.h"
@@ -43,13 +43,13 @@ absl::Status Setup(uint32_t party_id, const std::string &table_path,
 
   // Setup party and listen to incoming queries and responses.
   if (party_id == 1) {
-    drivacy::PartyHead<drivacy::io::socket::UDPSocket,
-                       drivacy::io::socket::ClientSocket>
-        party(party_id, config, table);
+    drivacy::parties::HeadParty party(
+        party_id, config, table, drivacy::io::socket::TCPSocket::Factory,
+        drivacy::io::socket::ClientSocket::Factory);
     party.Listen();
   } else {
-    drivacy::Party<drivacy::io::socket::UDPSocket> party(party_id, config,
-                                                         table);
+    drivacy::parties::Party party(party_id, config, table,
+                                  drivacy::io::socket::TCPSocket::Factory);
     party.Listen();
   }
 

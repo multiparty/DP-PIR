@@ -16,9 +16,10 @@
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "drivacy/client.h"
 #include "drivacy/io/simulated_socket.h"
-#include "drivacy/party.h"
+#include "drivacy/parties/client.h"
+#include "drivacy/parties/head_party.h"
+#include "drivacy/parties/party.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
 #include "drivacy/util/file.h"
@@ -32,7 +33,8 @@ absl::Status Test(const drivacy::types::Configuration &config,
   std::cout << "Testing..." << std::endl;
 
   // Create a client.
-  drivacy::Client<drivacy::io::socket::SimulatedClientSocket> client(config);
+  drivacy::parties::Client client(
+      config, drivacy::io::socket::SimulatedClientSocket::Factory);
 
   // Verify correctness of query / response.
   uint64_t last_query;
@@ -67,12 +69,13 @@ absl::Status Setup(const std::string &table_path,
                    drivacy::util::file::ParseTable(json));
 
   // Setup parties.
-  drivacy::PartyHead<drivacy::io::socket::SimulatedSocket,
-                     drivacy::io::socket::SimulatedClientSocket>
-      first_party(1, config, table);
-  std::list<drivacy::Party<drivacy::io::socket::SimulatedSocket>> parties;
+  drivacy::parties::HeadParty head_party(
+      1, config, table, drivacy::io::socket::SimulatedSocket::Factory,
+      drivacy::io::socket::SimulatedClientSocket::Factory);
+  std::list<drivacy::parties::Party> parties;
   for (uint32_t party_id = 2; party_id <= config.parties(); party_id++) {
-    parties.emplace_back(party_id, config, table);
+    parties.emplace_back(party_id, config, table,
+                         drivacy::io::socket::SimulatedSocket::Factory);
   }
 
   // Make a query.

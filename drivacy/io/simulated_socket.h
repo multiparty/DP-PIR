@@ -11,6 +11,7 @@
 #define DRIVACY_IO_SIMULATED_SOCKET_H_
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
@@ -24,7 +25,15 @@ namespace socket {
 class SimulatedSocket : public AbstractSocket {
  public:
   SimulatedSocket(uint32_t party_id, QueryListener query_listener,
-                  ResponseListener _, const types::Configuration &config);
+                  ResponseListener response_listener,
+                  const types::Configuration &config);
+
+  static std::unique_ptr<AbstractSocket> Factory(
+      uint32_t party_id, QueryListener query_listener,
+      ResponseListener response_listener, const types::Configuration &config) {
+    return std::make_unique<SimulatedSocket>(party_id, query_listener,
+                                             response_listener, config);
+  }
 
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
@@ -40,7 +49,15 @@ class SimulatedSocket : public AbstractSocket {
 class SimulatedClientSocket : public AbstractSocket {
  public:
   SimulatedClientSocket(uint32_t party_id, QueryListener query_listener,
-                        ResponseListener _, const types::Configuration &config);
+                        ResponseListener response_listener,
+                        const types::Configuration &config);
+
+  static std::unique_ptr<AbstractSocket> Factory(
+      uint32_t party_id, QueryListener query_listener,
+      ResponseListener response_listener, const types::Configuration &config) {
+    return std::make_unique<SimulatedClientSocket>(party_id, query_listener,
+                                                   response_listener, config);
+  }
 
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;

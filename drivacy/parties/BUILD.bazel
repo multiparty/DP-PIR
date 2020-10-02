@@ -1,0 +1,41 @@
+# Copyright 2020 multiparty.org
+
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+
+cc_library(
+    name = "client",
+    srcs = [
+        "client.cc"
+    ],
+    hdrs = [
+        "client.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/functional:bind_front",
+        "//drivacy/io:abstract_socket",
+        "//drivacy/protocol:client",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+    ],
+)
+
+cc_library(
+    name = "party",
+    srcs = [
+        "head_party.cc",
+        "party.cc",
+    ],
+    hdrs = [
+        "head_party.h",
+        "party.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "@com_google_absl//absl/functional:bind_front",
+        "//drivacy/io:abstract_socket",
+        "//drivacy/protocol:protocol",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+    ],
+)

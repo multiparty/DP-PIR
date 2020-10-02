@@ -13,8 +13,7 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "//drivacy:client",
-        "//drivacy:party",
+        "//drivacy/parties:party",
         "//drivacy/io:socket",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
@@ -36,37 +35,5 @@ cc_binary(
         "@com_google_protobuf//:protobuf_headers",
         "//drivacy/primitives:crypto",
         "//drivacy/types:config_cc_proto",
-    ],
-)
-
-cc_library(
-    name = "client",
-    srcs = [],
-    hdrs = [
-        "client.h",
-    ],
-    visibility = ["//drivacy:__subpackages__"],
-    deps = [
-        "@com_google_absl//absl/functional:bind_front",
-        "//drivacy/io:abstract_socket",
-        "//drivacy/protocol:client",
-        "//drivacy/types:config_cc_proto",
-        "//drivacy/types:types",
-    ],
-)
-
-cc_library(
-    name = "party",
-    srcs = [],
-    hdrs = [
-        "party.h",
-    ],
-    visibility = ["//drivacy:__subpackages__"],
-    deps = [
-        "@com_google_absl//absl/functional:bind_front",
-        "//drivacy/io:abstract_socket",
-        "//drivacy/protocol:protocol",
-        "//drivacy/types:config_cc_proto",
-        "//drivacy/types:types",
     ],
 )

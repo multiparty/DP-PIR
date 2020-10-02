@@ -10,6 +10,7 @@
 #define DRIVACY_IO_SOCKET_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 // NOLINTNEXTLINE
 #include <thread>
@@ -25,12 +26,19 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-class UDPSocket : public AbstractSocket {
+class TCPSocket : public AbstractSocket {
  public:
-  UDPSocket(uint32_t party_id, QueryListener query_listener,
+  TCPSocket(uint32_t party_id, QueryListener query_listener,
             ResponseListener response_listener,
             const types::Configuration &config)
       : AbstractSocket(party_id, query_listener, response_listener, config) {}
+
+  static std::unique_ptr<AbstractSocket> Factory(
+      uint32_t party_id, QueryListener query_listener,
+      ResponseListener response_listener, const types::Configuration &config) {
+    return std::make_unique<TCPSocket>(party_id, query_listener,
+                                       response_listener, config);
+  }
 
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;

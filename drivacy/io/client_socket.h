@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -27,8 +28,17 @@ namespace socket {
 class ClientSocket : public AbstractSocket {
  public:
   ClientSocket(uint32_t party_id, QueryListener query_listener,
-               ResponseListener _, const types::Configuration &config)
-      : AbstractSocket(party_id, query_listener, _, config) {}
+               ResponseListener response_listener,
+               const types::Configuration &config)
+      : AbstractSocket(party_id, query_listener, response_listener, config) {}
+
+  // Factory function used to simplify construction of inheriting sockets.
+  static std::unique_ptr<AbstractSocket> Factory(
+      uint32_t party_id, QueryListener query_listener,
+      ResponseListener response_listener, const types::Configuration &config) {
+    return std::make_unique<ClientSocket>(party_id, query_listener,
+                                          response_listener, config);
+  }
 
   // We can never send queries to clients!
   void SendQuery(const types::OutgoingQuery &query) override { assert(false); }

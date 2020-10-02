@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -17,7 +18,6 @@ namespace io {
 namespace socket {
 
 using QueryListener = std::function<void(const types::IncomingQuery &)>;
-
 using ResponseListener = std::function<void(const types::Response &)>;
 
 class AbstractSocket {
@@ -43,6 +43,9 @@ class AbstractSocket {
   ResponseListener response_listener_;
   types::Configuration config_;
 };
+
+using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
+    uint32_t, QueryListener, ResponseListener, const types::Configuration &)>;
 
 }  // namespace socket
 }  // namespace io
