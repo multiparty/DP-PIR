@@ -38,6 +38,9 @@ class SimulatedSocket : public AbstractSocket {
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
+  void FlushQueries() override {}
+  void FlushResponses() override {}
+
   void Listen() override {}
 
  private:
@@ -61,6 +64,9 @@ class SimulatedClientSocket : public AbstractSocket {
 
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
+
+  void FlushQueries() override {}
+  void FlushResponses() override {}
 
   void Listen() override {}
 

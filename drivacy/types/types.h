@@ -30,6 +30,10 @@ struct QueryShare {
   uint64_t preshare;
 };
 
+// The state to keep from processing a query to use during processing its
+// response: just the preshare.
+using QueryState = uint64_t;
+
 // This class represents a single read-only incoming query deserialized
 // from a socket buffer.
 class IncomingQuery {
@@ -68,7 +72,7 @@ class OutgoingQuery {
   unsigned char *buffer() const;
   void set_tally(uint64_t tally);
   void set_preshare(uint64_t preshare);
-  uint64_t preshare() const;
+  QueryState query_state() const;
   QueryShare share() const;
 
   // After the placeholder has been filled, this produces a processed query!
@@ -101,15 +105,6 @@ class Response {
 
  private:
   uint64_t tally_;
-};
-
-// The state to keep from processing a query to use during processing its
-// response.
-struct QueryState {
-  // The preshare for use while responding to the query.
-  uint64_t preshare;
-  // The original index of the corresponding query prior to shuffle.
-  uint32_t index;
 };
 
 // A client state. This survives between a query and its response.

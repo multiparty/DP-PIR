@@ -18,6 +18,7 @@
 
 #include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
+#include "drivacy/protocol/shuffle.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
 
@@ -36,6 +37,9 @@ class Party {
     this->socket_ = socket_factory(
         this->party_id_, absl::bind_front(&Party::OnReceiveQuery, this),
         absl::bind_front(&Party::OnReceiveResponse, this), this->config_);
+
+    this->size_ = 3;
+    this->shuffler_.Initialize(this->size_);
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -54,7 +58,8 @@ class Party {
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
-  types::QueryState query_state_;
+  protocol::Shuffler shuffler_;
+  uint32_t size_;
 
   // Called by the socket when a query is received.
   void OnReceiveQuery(const types::IncomingQuery &query);

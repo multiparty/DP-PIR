@@ -6,6 +6,7 @@
 #define DRIVACY_PRIMITIVES_UTIL_H_
 
 #include <cstdint>
+#include <cstdlib>
 
 namespace drivacy {
 namespace primitives {
@@ -18,6 +19,14 @@ inline uint64_t Prime() {
 
 inline uint64_t Mod(uint64_t a, uint64_t modulus) {
   return a < 0 ? (a % modulus + modulus) : a + modulus;
+}
+
+inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {
+  return (std::rand() % (upper_bound - lower_bound)) + lower_bound;
+}
+
+inline uint32_t Rand32(uint32_t lower_bound, uint32_t upper_bound) {
+  return (std::rand() % (upper_bound - lower_bound)) + lower_bound;
 }
 
 }  // namespace util

@@ -19,10 +19,20 @@ void HeadParty::Listen() {
 }
 
 void HeadParty::OnReceiveResponse(const types::Response &response) {
-  uint64_t preshare = this->query_state_.preshare;
+  // Process response.
+  types::QueryState query_state = this->shuffler_.NextQueryState();
   types::Response outgoing_response =
-      protocol::response::ProcessResponse(response, preshare);
-  this->client_socket_->SendResponse(outgoing_response);
+      protocol::response::ProcessResponse(response, query_state);
+
+  // Deshuffle response.
+  bool done = this->shuffler_.DeshuffleResponse(outgoing_response);
+  if (!done) return;
+
+  // Send the responses over socket.
+  for (uint32_t i = 0; i < this->size_; i++) {
+    outgoing_response = this->shuffler_.NextResponse();
+    this->client_socket_->SendResponse(outgoing_response);
+  }
 }
 
 }  // namespace parties

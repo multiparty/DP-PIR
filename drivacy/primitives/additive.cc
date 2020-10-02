@@ -4,8 +4,6 @@
 
 #include "drivacy/primitives/additive.h"
 
-#include <cstdlib>
-
 #include "drivacy/primitives/util.h"
 
 namespace drivacy {
@@ -17,7 +15,7 @@ std::vector<uint64_t> GenerateAdditiveSecretShares(uint64_t query,
 
   uint64_t t = 0;
   for (size_t i = 0; i < numparty - 1; i++) {
-    uint64_t x = std::rand() % util::Prime();
+    uint64_t x = util::Rand64(0, util::Prime());
     t = (t + x) % util::Prime();
     shares.push_back(x);
   }

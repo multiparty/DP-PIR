@@ -22,10 +22,6 @@ using ResponseListener = std::function<void(const types::Response &)>;
 
 class AbstractSocket {
  public:
-  virtual void Listen() = 0;
-  virtual void SendQuery(const types::OutgoingQuery &query) = 0;
-  virtual void SendResponse(const types::Response &response) = 0;
-
   AbstractSocket(uint32_t party_id, QueryListener query_listener,
                  ResponseListener response_listener,
                  const types::Configuration &config)
@@ -35,6 +31,14 @@ class AbstractSocket {
         config_(config) {
     this->party_count_ = config.parties();
   }
+
+  virtual void Listen() = 0;
+
+  virtual void SendQuery(const types::OutgoingQuery &query) = 0;
+  virtual void SendResponse(const types::Response &response) = 0;
+
+  virtual void FlushQueries() = 0;
+  virtual void FlushResponses() = 0;
 
  protected:
   uint32_t party_id_;

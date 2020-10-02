@@ -7,16 +7,19 @@ cc_library(
         "backend.cc",
         "query.cc",
         "response.cc",
+        "shuffle.cc",
     ],
     hdrs = [
         "backend.h",
         "query.h",
         "response.h",
+        "shuffle.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "//drivacy/primitives:crypto",
         "//drivacy/primitives:sharing",
+        "//drivacy/primitives:util",
         "//drivacy/types:types",
     ],
 )

@@ -26,10 +26,15 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
     // Process query.
     types::OutgoingQuery outgoing_query =
         protocol::query::ProcessQuery(this->party_id_, query, this->config_);
-    // Store the query state.
-    query_state_.preshare = outgoing_query.preshare();
-    // Send the query over socket.
-    this->socket_->SendQuery(outgoing_query);
+
+    // Shuffle and store query state.
+    bool done = this->shuffler_.ShuffleQuery(outgoing_query);
+    if (!done) return;
+
+    // Send the queries over socket.
+    for (uint32_t i = 0; i < this->size_; i++) {
+      this->socket_->SendQuery(this->shuffler_.NextQuery());
+    }
   } else {
     // Process query creating a response, send it over socket.
     types::Response response =
@@ -39,10 +44,20 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
 }
 
 void Party::OnReceiveResponse(const types::Response &response) {
-  uint64_t preshare = this->query_state_.preshare;
+  // Process response.
+  types::QueryState query_state = this->shuffler_.NextQueryState();
   types::Response outgoing_response =
-      protocol::response::ProcessResponse(response, preshare);
-  this->socket_->SendResponse(outgoing_response);
+      protocol::response::ProcessResponse(response, query_state);
+
+  // Deshuffle response.
+  bool done = this->shuffler_.DeshuffleResponse(outgoing_response);
+  if (!done) return;
+
+  // Send the responses over socket.
+  for (uint32_t i = 0; i < this->size_; i++) {
+    outgoing_response = this->shuffler_.NextResponse();
+    this->socket_->SendResponse(outgoing_response);
+  }
 }
 
 }  // namespace parties

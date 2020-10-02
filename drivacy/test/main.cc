@@ -37,18 +37,21 @@ absl::Status Test(const drivacy::types::Configuration &config,
       config, drivacy::io::socket::SimulatedClientSocket::Factory);
 
   // Verify correctness of query / response.
-  uint64_t last_query;
+  std::list<uint64_t> queries;
   client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
-    assert(query == last_query);
+    assert(query == queries.front());
     assert(response == table.at(query));
+    queries.pop_front();
   });
 
   // Query everything in the table.
   for (const auto &[query, response] : table) {
-    last_query = query;
+    queries.push_back(query);
     client.MakeQuery(query);
   }
 
+  // Make sure all queries were handled.
+  assert(queries.size() == 0);
   std::cout << "All tests passed!" << std::endl;
 
   return absl::OkStatus();

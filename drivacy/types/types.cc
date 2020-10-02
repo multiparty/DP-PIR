@@ -52,7 +52,7 @@ void OutgoingQuery::set_preshare(uint64_t preshare) {
   this->preshare_ = preshare;
 }
 
-uint64_t OutgoingQuery::preshare() const { return this->preshare_; }
+QueryState OutgoingQuery::query_state() const { return this->preshare_; }
 
 QueryShare OutgoingQuery::share() const {
   return *reinterpret_cast<QueryShare *>(this->buffer_);

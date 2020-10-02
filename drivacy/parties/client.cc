@@ -34,7 +34,7 @@ void Client::MakeQuery(uint64_t value) {
       protocol::client::CreateQuery(value, this->config_);
   // Store state to use for when reconstructing corresponding response.
   this->state_.queries.push_back(value);
-  this->state_.preshares.push_back(query.preshare());
+  this->state_.preshares.push_back(query.query_state());
   // Send via socket.
   this->socket_->SendQuery(query);
 }
