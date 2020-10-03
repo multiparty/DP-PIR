@@ -7,7 +7,7 @@
 // logical entities. They communicate via this file's API, which is identical
 // to the API of the real over-the-wire socket API.
 
-#include "drivacy/io/client_socket.h"
+#include "drivacy/io/websocket_server.h"
 
 #include "uWebSockets/App.h"
 
@@ -24,8 +24,7 @@ struct PerSocketData {};
 
 // Listening: starts the socket server which spawns new sockets everytime
 // a client opens a connection with the server.
-// This function never returns until ClientSocket::Close() is called.
-void ClientSocket::Listen() {
+void WebSocketServer::Listen() {
   // Set up the socket server.
   int32_t port = this->config_.network().at(this->party_id_).webserver_port();
   uWS::App()
@@ -40,7 +39,7 @@ void ClientSocket::Listen() {
       .run();
 }
 
-void ClientSocket::HandleQuery(const std::string &message) const {
+void WebSocketServer::HandleQuery(const std::string &message) const {
   uint32_t buffer_size =
       types::IncomingQuery::Size(this->party_id_, this->party_count_);
   assert(buffer_size == message.size());
@@ -49,7 +48,7 @@ void ClientSocket::HandleQuery(const std::string &message) const {
   this->query_listener_(types::IncomingQuery::Deserialize(buffer, buffer_size));
 }
 
-void ClientSocket::SendResponse(const types::Response &response) {
+void WebSocketServer::SendResponse(const types::Response &response) {
   auto *ws = this->sockets_.front();
   auto [buffer, size] = response.Serialize();
   ws->send(std::string(reinterpret_cast<const char *>(buffer), size),

@@ -16,8 +16,8 @@
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "drivacy/io/client_socket.h"
 #include "drivacy/io/socket.h"
+#include "drivacy/io/websocket_server.h"
 #include "drivacy/parties/head_party.h"
 #include "drivacy/parties/party.h"
 #include "drivacy/types/config.pb.h"
@@ -45,7 +45,7 @@ absl::Status Setup(uint32_t party_id, const std::string &table_path,
   if (party_id == 1) {
     drivacy::parties::HeadParty party(
         party_id, config, table, drivacy::io::socket::TCPSocket::Factory,
-        drivacy::io::socket::ClientSocket::Factory);
+        drivacy::io::socket::WebSocketServer::Factory);
     party.Listen();
   } else {
     drivacy::parties::Party party(party_id, config, table,

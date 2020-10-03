@@ -22,8 +22,6 @@
         // Additive sharing of 0.
         const preshares = window.additiveShareGenerate(0, config.parties + 1);
         const storedPreshare = preshares.pop();
-        console.log(shares);
-        console.log(preshares);
 
         // Onion encrypt shares.
         const encrypted = window.OnionEncrypt(shares, preshares, config);

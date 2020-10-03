@@ -18,12 +18,12 @@ cc_library(
     name = "socket",
     srcs = [
         "socket.cc",
-        "client_socket.cc",
+        "websocket_server.cc",
         "simulated_socket.cc",
     ],
     hdrs = [
         "socket.h",
-        "client_socket.h",
+        "websocket_server.h",
         "simulated_socket.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
