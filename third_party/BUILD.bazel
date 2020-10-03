@@ -7,3 +7,14 @@ cc_library(
     visibility = ["//visibility:public"],
     includes = ["rapidjson/include"],
 )
+
+cc_library(
+    name = "easywsclient",
+    srcs = [
+      "easywsclient/easywsclient.cpp",
+    ],
+    hdrs = [
+      "easywsclient/easywsclient.hpp",
+    ],
+    visibility = ["//visibility:public"],
+)

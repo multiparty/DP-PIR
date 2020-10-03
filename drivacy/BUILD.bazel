@@ -23,6 +23,26 @@ cc_binary(
 )
 
 cc_binary(
+    name = "client",
+    srcs = [
+        "client.cc",
+    ],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/parties:client",
+        "//drivacy/io:socket",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+        "//drivacy/util:file",
+        "//drivacy/util:status",
+    ],
+)
+
+cc_binary(
     name = "config",
     srcs = [
         "config.cc",

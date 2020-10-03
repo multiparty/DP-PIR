@@ -5,5 +5,5 @@ logs/
 node_modules/
 
 .idea/
-
+*.log
 bazel-*

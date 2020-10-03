@@ -17,21 +17,25 @@ cc_library(
 cc_library(
     name = "socket",
     srcs = [
-        "socket.cc",
-        "websocket_server.cc",
         "simulated_socket.cc",
+        "socket.cc",
+        "websocket_client.cc",
+        "websocket_server.cc",
     ],
     hdrs = [
-        "socket.h",
-        "websocket_server.h",
         "simulated_socket.h",
+        "socket.h",
+        "websocket_client.h",
+        "websocket_server.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "@com_google_absl//absl/functional:bind_front",
+        "@com_google_absl//absl/strings:str_format",
         "//:uWebSockets",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/io:abstract_socket",
+        "//third_party:easywsclient",
     ],
 )

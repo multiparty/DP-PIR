@@ -33,6 +33,7 @@ void WebSocketServer::Listen() {
                                            uWS::OpCode op_code) {
                                       assert(op_code == uWS::OpCode::BINARY);
                                       this->sockets_.push_back(ws);
+                                      this->socket_counts_[ws]++;
                                       this->HandleQuery(std::string(message));
                                     }})
       .listen(port, [](auto *token) { assert(token); })
@@ -50,11 +51,15 @@ void WebSocketServer::HandleQuery(const std::string &message) const {
 
 void WebSocketServer::SendResponse(const types::Response &response) {
   auto *ws = this->sockets_.front();
+  this->sockets_.pop_front();
+
   auto [buffer, size] = response.Serialize();
   ws->send(std::string(reinterpret_cast<const char *>(buffer), size),
            uWS::OpCode::BINARY, false);
-  ws->close();
-  this->sockets_.pop_front();
+  this->socket_counts_[ws]--;
+  if (this->socket_counts_[ws] == 0) {
+    ws->close();
+  }
 }
 
 }  // namespace socket

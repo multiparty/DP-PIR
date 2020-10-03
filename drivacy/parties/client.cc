@@ -28,6 +28,8 @@ Client::Client(const types::Configuration &config,
       0, Unused, absl::bind_front(&Client::OnReceiveResponse, this), config);
 }
 
+void Client::Listen() { this->socket_->Listen(); }
+
 void Client::MakeQuery(uint64_t value) {
   // Create query via client protocol.
   types::OutgoingQuery query =

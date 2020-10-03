@@ -47,6 +47,9 @@ class Client {
     this->response_handler_ = response_handler;
   }
 
+  // Called to start the listening on the socket (blocking!)
+  void Listen();
+
   // Make and send a query using our protocol targeting key = value.
   void MakeQuery(uint64_t value);
 

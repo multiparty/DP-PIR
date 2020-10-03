@@ -28,16 +28,15 @@ namespace socket {
 class WebSocketServer : public AbstractSocket {
  public:
   WebSocketServer(uint32_t party_id, QueryListener query_listener,
-               ResponseListener response_listener,
-               const types::Configuration &config)
-      : AbstractSocket(party_id, query_listener, response_listener, config) {}
+                  ResponseListener _, const types::Configuration &config)
+      : AbstractSocket(party_id, query_listener, _, config) {}
 
   // Factory function used to simplify construction of inheriting sockets.
   static std::unique_ptr<AbstractSocket> Factory(
       uint32_t party_id, QueryListener query_listener,
       ResponseListener response_listener, const types::Configuration &config) {
     return std::make_unique<WebSocketServer>(party_id, query_listener,
-                                          response_listener, config);
+                                             response_listener, config);
   }
 
   // We can never send queries to clients!
@@ -56,6 +55,7 @@ class WebSocketServer : public AbstractSocket {
  private:
   // Client sockets in order of receiving queries (not connecting).
   std::list<uWS::WebSocket<false, true> *> sockets_;
+  std::unordered_map<uWS::WebSocket<false, true> *, uint32_t> socket_counts_;
 
   // Handle incoming query from a client (parses and then calls QueryListener).
   void HandleQuery(const std::string &msg) const;
