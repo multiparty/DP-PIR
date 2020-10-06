@@ -15,7 +15,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
