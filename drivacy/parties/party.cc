@@ -12,7 +12,6 @@
 
 #include "drivacy/parties/party.h"
 
-#include "drivacy/protocol/backend.h"
 #include "drivacy/protocol/query.h"
 #include "drivacy/protocol/response.h"
 
@@ -22,31 +21,18 @@ namespace parties {
 void Party::Listen() { this->socket_->Listen(); }
 
 void Party::OnReceiveBatch(uint32_t batch_size) {
-  std::cout << "OnReceiveBatch: " << batch_size << std::endl;
   this->batch_size_ = batch_size;
   this->shuffler_.Initialize(this->batch_size_);
 }
 
 void Party::OnReceiveQuery(const types::IncomingQuery &query) {
-  if (this->party_id_ < this->config_.parties()) {
-    // Process query.
-    types::OutgoingQuery outgoing_query =
-        protocol::query::ProcessQuery(this->party_id_, query, this->config_);
+  // Process query.
+  types::OutgoingQuery outgoing_query =
+      protocol::query::ProcessQuery(this->party_id_, query, this->config_);
 
-    // Shuffle and store query state.
-    bool done = this->shuffler_.ShuffleQuery(outgoing_query);
-    if (!done) return;
-
-    // Send the queries over socket.
-    this->socket_->SendBatch(this->batch_size_);
-    for (uint32_t i = 0; i < this->batch_size_; i++) {
-      this->socket_->SendQuery(this->shuffler_.NextQuery());
-    }
-  } else {
-    // Process query creating a response, send it over socket.
-    types::Response response =
-        protocol::backend::QueryToResponse(query, config_, table_);
-    this->socket_->SendResponse(response);
+  // Shuffle and store query state.
+  if (this->shuffler_.ShuffleQuery(outgoing_query)) {
+    this->SendQueries();
   }
 }
 
@@ -57,14 +43,24 @@ void Party::OnReceiveResponse(const types::Response &response) {
       protocol::response::ProcessResponse(response, query_state);
 
   // Deshuffle response.
-  bool done = this->shuffler_.DeshuffleResponse(outgoing_response);
-  if (!done) return;
-
-  // Send the responses over socket.
-  for (uint32_t i = 0; i < this->batch_size_; i++) {
-    outgoing_response = this->shuffler_.NextResponse();
-    this->socket_->SendResponse(outgoing_response);
+  if (this->shuffler_.DeshuffleResponse(outgoing_response)) {
+    this->SendResponses();
   }
+}
+
+void Party::SendQueries() {
+  this->socket_->SendBatch(this->batch_size_);
+  for (uint32_t i = 0; i < this->batch_size_; i++) {
+    this->socket_->SendQuery(this->shuffler_.NextQuery());
+  }
+  this->socket_->FlushQueries();
+}
+
+void Party::SendResponses() {
+  for (uint32_t i = 0; i < this->batch_size_; i++) {
+    this->socket_->SendResponse(this->shuffler_.NextResponse());
+  }
+  this->socket_->FlushResponses();
 }
 
 }  // namespace parties

@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/parties/party.h"
 #include "drivacy/types/config.pb.h"
@@ -44,8 +43,8 @@ class HeadParty : public Party {
   // Start listening on the sockets (blocking!)
   void Listen() override;
 
-  // Called by the socket when a response is received.
-  void OnReceiveResponse(const types::Response &response) override;
+  // Send responses via the client socket instead of the default socket!
+  void SendResponses() override;
 
  protected:
   std::unique_ptr<io::socket::AbstractSocket> client_socket_;

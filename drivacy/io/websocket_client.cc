@@ -39,8 +39,9 @@ void WebSocketClient::Listen() {
 }
 
 void WebSocketClient::SendQuery(const types::OutgoingQuery &query) {
-  auto [buffer, size] = query.Serialize();
-  std::string msg(reinterpret_cast<const char *>(buffer), size);
+  const unsigned char *buffer = query.Serialize();
+  std::string msg(reinterpret_cast<const char *>(buffer),
+                  this->query_msg_size_);
   this->socket_->sendBinary(msg);
   this->socket_->poll();
 }

@@ -58,9 +58,8 @@ QueryShare OutgoingQuery::share() const {
   return *reinterpret_cast<QueryShare *>(this->buffer_);
 }
 
-std::pair<const unsigned char *, uint32_t> OutgoingQuery::Serialize() const {
-  return std::make_pair(this->buffer_ + sizeof(QueryShare),
-                        this->cipher_size_ + sizeof(uint64_t));
+const unsigned char *OutgoingQuery::Serialize() const {
+  return this->buffer_ + sizeof(QueryShare);
 }
 
 // Response.
@@ -68,9 +67,8 @@ uint32_t Response::Size() { return sizeof(uint64_t); }
 
 uint64_t Response::tally() const { return this->tally_; }
 
-std::pair<const unsigned char *, uint32_t> Response::Serialize() const {
-  return std::make_pair(reinterpret_cast<const unsigned char *>(&this->tally_),
-                        Response::Size());
+const unsigned char *Response::Serialize() const {
+  return reinterpret_cast<const unsigned char *>(&this->tally_);
 }
 
 Response Response::Deserialize(const unsigned char *buffer) {

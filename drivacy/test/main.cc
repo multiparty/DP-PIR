@@ -19,6 +19,7 @@
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
 #include "drivacy/io/simulated_socket.h"
+#include "drivacy/parties/backend_party.h"
 #include "drivacy/parties/client.h"
 #include "drivacy/parties/head_party.h"
 #include "drivacy/parties/party.h"
@@ -77,11 +78,16 @@ absl::Status Setup(const std::string &table_path,
   drivacy::parties::HeadParty head_party(
       1, config, table, drivacy::io::socket::SimulatedSocket::Factory,
       drivacy::io::socket::SimulatedClientSocket::Factory, BATCH_SIZE);
+
   std::list<drivacy::parties::Party> parties;
-  for (uint32_t party_id = 2; party_id <= config.parties(); party_id++) {
+  for (uint32_t party_id = 2; party_id < config.parties(); party_id++) {
     parties.emplace_back(party_id, config, table,
                          drivacy::io::socket::SimulatedSocket::Factory);
   }
+
+  drivacy::parties::BackendParty backend_party(
+      config.parties(), config, table,
+      drivacy::io::socket::SimulatedSocket::Factory);
 
   // Make a query.
   return Test(config, table);

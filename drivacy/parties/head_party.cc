@@ -8,8 +8,6 @@
 
 #include "drivacy/parties/head_party.h"
 
-#include "drivacy/protocol/response.h"
-
 namespace drivacy {
 namespace parties {
 
@@ -18,20 +16,9 @@ void HeadParty::Listen() {
   this->client_socket_->Listen();
 }
 
-void HeadParty::OnReceiveResponse(const types::Response &response) {
-  // Process response.
-  types::QueryState query_state = this->shuffler_.NextQueryState();
-  types::Response outgoing_response =
-      protocol::response::ProcessResponse(response, query_state);
-
-  // Deshuffle response.
-  bool done = this->shuffler_.DeshuffleResponse(outgoing_response);
-  if (!done) return;
-
-  // Send the responses over socket.
+void HeadParty::SendResponses() {
   for (uint32_t i = 0; i < this->batch_size_; i++) {
-    outgoing_response = this->shuffler_.NextResponse();
-    this->client_socket_->SendResponse(outgoing_response);
+    this->client_socket_->SendResponse(this->shuffler_.NextResponse());
   }
 }
 

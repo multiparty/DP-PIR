@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cstring>
 #include <iostream>
 
 #include "absl/functional/bind_front.h"
@@ -141,13 +142,43 @@ void TCPSocket::SendBatch(uint32_t batch_size) {
 }
 
 void TCPSocket::SendQuery(const types::OutgoingQuery &query) {
-  auto [buffer, size] = query.Serialize();
-  send(this->upper_socket_, buffer, size, 0);
+  // Write message to out buffer.
+  const unsigned char *buffer = query.Serialize();
+  uint32_t offset = this->queries_written_ * this->query_msg_size_;
+  memcpy(this->query_buffer_ + offset, buffer, this->query_msg_size_);
+  this->queries_written_++;
+  // Flush out buffer when full.
+  if (this->queries_written_ == BUFFER_MESSAGE_COUNT) {
+    this->FlushQueries();
+  }
+}
+
+void TCPSocket::FlushQueries() {
+  if (this->queries_written_ > 0) {
+    send(this->upper_socket_, this->query_buffer_,
+         this->queries_written_ * this->query_msg_size_, 0);
+    this->queries_written_ = 0;
+  }
 }
 
 void TCPSocket::SendResponse(const types::Response &response) {
-  auto [buffer, size] = response.Serialize();
-  send(this->lower_socket_, buffer, size, 0);
+  // Write message to out buffer.
+  const unsigned char *buffer = response.Serialize();
+  uint32_t offset = this->responses_written_ * this->response_msg_size_;
+  memcpy(this->response_buffer_ + offset, buffer, this->response_msg_size_);
+  this->responses_written_++;
+  // Flush out buffer when full.
+  if (this->responses_written_ == BUFFER_MESSAGE_COUNT) {
+    this->FlushResponses();
+  }
+}
+
+void TCPSocket::FlushResponses() {
+  if (this->responses_written_ > 0) {
+    send(this->lower_socket_, this->response_buffer_,
+         this->responses_written_ * this->response_msg_size_, 0);
+    this->responses_written_ = 0;
+  }
 }
 
 }  // namespace socket

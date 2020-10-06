@@ -9,7 +9,6 @@
 #include <list>
 #include <memory>
 #include <unordered_map>
-#include <utility>
 
 namespace drivacy {
 namespace types {
@@ -65,6 +64,9 @@ class IncomingQuery {
 // some incoming query.
 class OutgoingQuery {
  public:
+  // Static functions for figuring out sizes of serialized queries.
+  static uint32_t Size(uint32_t party_id, uint32_t party_count);
+
   // Constructs an empty outgoing query (allocates memory for buffers).
   OutgoingQuery(uint32_t party_id, uint32_t party_count);
 
@@ -76,11 +78,17 @@ class OutgoingQuery {
   QueryShare share() const;
 
   // After the placeholder has been filled, this produces a processed query!
-  std::pair<const unsigned char *, uint32_t> Serialize() const;
+  // TODO(babman): after benchmarking against no copy no write buffer sockets,
+  //       if we are keepng the buffer sockets solution, then
+  //       we should transform Serialize() to take the buffer region as
+  //       parameter, write to it, and free internal buffer.
+  //       Same with response.
+  //       If we are not keeping this design, and we go back to a no buffer
+  //       no flush approach, we should explicitly delete the buffer after
+  //       sending, or alternatively return the buffer as a unique_ptr.
+  const unsigned char *Serialize() const;
 
  private:
-  // Static functions for figuring out sizes of serialized queries.
-  static uint32_t Size(uint32_t party_id, uint32_t party_count);
   // Stores the preshare_ from the corresponding IncomingQuery.
   uint64_t preshare_;
   // One decrypted layer of the onion cipher, followed by the remaining
@@ -100,7 +108,7 @@ class Response {
   // Accessors.
   uint64_t tally() const;
   // Serialization.
-  std::pair<const unsigned char *, uint32_t> Serialize() const;
+  const unsigned char *Serialize() const;
   static Response Deserialize(const unsigned char *buffer);
 
  private:

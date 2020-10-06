@@ -23,16 +23,17 @@ cc_library(
 cc_library(
     name = "party",
     srcs = [
+        "backend_party.cc",
         "head_party.cc",
         "party.cc",
     ],
     hdrs = [
+        "backend_party.h",
         "head_party.h",
         "party.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
     deps = [
-        "@com_google_absl//absl/functional:bind_front",
         "//drivacy/io:abstract_socket",
         "//drivacy/protocol:protocol",
         "//drivacy/types:config_cc_proto",

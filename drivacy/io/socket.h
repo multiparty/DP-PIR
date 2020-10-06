@@ -9,6 +9,8 @@
 #ifndef DRIVACY_IO_SOCKET_H_
 #define DRIVACY_IO_SOCKET_H_
 
+#define BUFFER_MESSAGE_COUNT 25
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -19,9 +21,6 @@
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
 
-#define QUERY_MSG_TYPE 0
-#define RESPONSE_MSG_TYPE 1
-
 namespace drivacy {
 namespace io {
 namespace socket {
@@ -30,7 +29,20 @@ class TCPSocket : public AbstractSocket {
  public:
   TCPSocket(uint32_t party_id, const types::Configuration &config,
             SocketListener *listener)
-      : AbstractSocket(party_id, config, listener) {}
+      : AbstractSocket(party_id, config, listener) {
+    this->queries_written_ = 0;
+    this->responses_written_ = 0;
+    this->query_buffer_ =
+        new unsigned char[BUFFER_MESSAGE_COUNT * this->query_msg_size_];
+    this->response_buffer_ =
+        new unsigned char[BUFFER_MESSAGE_COUNT * this->response_msg_size_];
+  }
+
+  // Free internal write buffers.
+  ~TCPSocket() {
+    delete this->query_buffer_;
+    delete this->response_buffer_;
+  }
 
   static std::unique_ptr<AbstractSocket> Factory(
       uint32_t party_id, const types::Configuration &config,
@@ -42,8 +54,8 @@ class TCPSocket : public AbstractSocket {
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
-  void FlushQueries() override {}
-  void FlushResponses() override {}
+  void FlushQueries() override;
+  void FlushResponses() override;
 
   void Listen() override;
 
@@ -61,6 +73,13 @@ class TCPSocket : public AbstractSocket {
   // the upper socket listening is done in a separate thread stored here.
   // Otherwise, this thread is empty.
   std::thread thread_;
+  // Buffer to store messages being written so that a batch of messages
+  // are sent all at once, instead of one at a time.
+  unsigned char *query_buffer_;
+  unsigned char *response_buffer_;
+  // Tracks how many messages have been written to the internal write buffer.
+  uint32_t queries_written_;
+  uint32_t responses_written_;
 };
 
 }  // namespace socket

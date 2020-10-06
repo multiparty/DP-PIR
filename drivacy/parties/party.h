@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <memory>
 
-#include "absl/functional/bind_front.h"
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/protocol/shuffle.h"
 #include "drivacy/types/config.pb.h"
@@ -35,6 +34,8 @@ class Party : public io::socket::SocketListener {
       : party_id_(party_id), config_(config), table_(table) {
     // virtual funtion binds to correct subclass.
     this->socket_ = socket_factory(this->party_id_, this->config_, this);
+    this->processed_queries_ = 0;
+    this->processed_responses_ = 0;
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -61,6 +62,12 @@ class Party : public io::socket::SocketListener {
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   protocol::Shuffler shuffler_;
   uint32_t batch_size_;
+  // Tracks the number of processed queries and responses.
+  uint32_t processed_queries_;
+  uint32_t processed_responses_;
+  // Send the processed queries/responses over socket.
+  virtual void SendQueries();
+  virtual void SendResponses();
 };
 
 }  // namespace parties

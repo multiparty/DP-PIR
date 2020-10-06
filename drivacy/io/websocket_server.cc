@@ -54,8 +54,9 @@ void WebSocketServer::SendResponse(const types::Response &response) {
   auto *ws = this->sockets_.front();
   this->sockets_.pop_front();
 
-  auto [buffer, size] = response.Serialize();
-  ws->send(std::string(reinterpret_cast<const char *>(buffer), size),
+  const unsigned char *buffer = response.Serialize();
+  ws->send(std::string(reinterpret_cast<const char *>(buffer),
+                       this->response_msg_size_),
            uWS::OpCode::BINARY, false);
   this->socket_counts_[ws]--;
   if (this->socket_counts_[ws] == 0) {
