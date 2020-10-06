@@ -28,18 +28,17 @@ namespace socket {
 
 class TCPSocket : public AbstractSocket {
  public:
-  TCPSocket(uint32_t party_id, QueryListener query_listener,
-            ResponseListener response_listener,
-            const types::Configuration &config)
-      : AbstractSocket(party_id, query_listener, response_listener, config) {}
+  TCPSocket(uint32_t party_id, const types::Configuration &config,
+            SocketListener *listener)
+      : AbstractSocket(party_id, config, listener) {}
 
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, QueryListener query_listener,
-      ResponseListener response_listener, const types::Configuration &config) {
-    return std::make_unique<TCPSocket>(party_id, query_listener,
-                                       response_listener, config);
+      uint32_t party_id, const types::Configuration &config,
+      SocketListener *listener) {
+    return std::make_unique<TCPSocket>(party_id, config, listener);
   }
 
+  void SendBatch(uint32_t batch_size) override;
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
 

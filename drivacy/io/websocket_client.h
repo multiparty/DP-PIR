@@ -25,22 +25,21 @@ namespace socket {
 
 class WebSocketClient : public AbstractSocket {
  public:
-  WebSocketClient(uint32_t party_id, QueryListener _,
-                  ResponseListener response_listener,
-                  const types::Configuration &config);
+  WebSocketClient(uint32_t party_id, const types::Configuration &config,
+                  SocketListener *listener);
 
   // Factory function used to simplify construction of inheriting sockets.
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, QueryListener query_listener,
-      ResponseListener response_listener, const types::Configuration &config) {
-    return std::make_unique<WebSocketClient>(party_id, query_listener,
-                                             response_listener, config);
+      uint32_t party_id, const types::Configuration &config,
+      SocketListener *listener) {
+    return std::make_unique<WebSocketClient>(party_id, config, listener);
   }
 
   // This is how we send queries to the frontend party!
   void SendQuery(const types::OutgoingQuery &query) override;
 
-  // We can never send responses as a client.
+  // We can never send responses (or batch sizes) as a client.
+  void SendBatch(uint32_t batch_size) override { assert(false); }
   void SendResponse(const types::Response &response) override { assert(false); }
 
   // Start the socket and listen to messages: blocking.

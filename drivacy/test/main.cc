@@ -7,6 +7,8 @@
 // The server's configurations, including which party it belongs to, is
 // set by the input configuration file passed to it via the command line.
 
+#define BATCH_SIZE 3
+
 #include <cstdint>
 #include <iostream>
 #include <list>
@@ -74,7 +76,7 @@ absl::Status Setup(const std::string &table_path,
   // Setup parties.
   drivacy::parties::HeadParty head_party(
       1, config, table, drivacy::io::socket::SimulatedSocket::Factory,
-      drivacy::io::socket::SimulatedClientSocket::Factory);
+      drivacy::io::socket::SimulatedClientSocket::Factory, BATCH_SIZE);
   std::list<drivacy::parties::Party> parties;
   for (uint32_t party_id = 2; party_id <= config.parties(); party_id++) {
     parties.emplace_back(party_id, config, table,

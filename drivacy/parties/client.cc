@@ -16,16 +16,10 @@
 namespace drivacy {
 namespace parties {
 
-namespace {
-// Useless function that should never be called
-void Unused(const types::IncomingQuery &_) { assert(false); }
-}  // namespace
-
 Client::Client(const types::Configuration &config,
                io::socket::SocketFactory socket_factory)
     : config_(config) {
-  this->socket_ = socket_factory(
-      0, Unused, absl::bind_front(&Client::OnReceiveResponse, this), config);
+  this->socket_ = socket_factory(0, config, this);
 }
 
 void Client::Listen() { this->socket_->Listen(); }

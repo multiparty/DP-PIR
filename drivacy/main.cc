@@ -28,9 +28,10 @@
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
-
+ABSL_FLAG(uint32_t, batch, 1,
+          "The size of a query batch (used only for party=1)");
 absl::Status Setup(uint32_t party_id, const std::string &table_path,
-                   const std::string &config_path) {
+                   const std::string &config_path, uint32_t batch_size) {
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
@@ -45,7 +46,7 @@ absl::Status Setup(uint32_t party_id, const std::string &table_path,
   if (party_id == 1) {
     drivacy::parties::HeadParty party(
         party_id, config, table, drivacy::io::socket::TCPSocket::Factory,
-        drivacy::io::socket::WebSocketServer::Factory);
+        drivacy::io::socket::WebSocketServer::Factory, batch_size);
     party.Listen();
   } else {
     drivacy::parties::Party party(party_id, config, table,
@@ -72,6 +73,7 @@ int main(int argc, char *argv[]) {
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t party_id = absl::GetFlag(FLAGS_party);
+  uint32_t batch_size = absl::GetFlag(FLAGS_batch);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
               << std::endl;
@@ -88,7 +90,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(party_id, table_path, config_path);
+  absl::Status output = Setup(party_id, table_path, config_path, batch_size);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

@@ -46,7 +46,8 @@ void WebSocketServer::HandleQuery(const std::string &message) const {
   assert(buffer_size == message.size());
   const unsigned char *buffer =
       reinterpret_cast<const unsigned char *>(message.c_str());
-  this->query_listener_(types::IncomingQuery::Deserialize(buffer, buffer_size));
+  this->listener_->OnReceiveQuery(
+      types::IncomingQuery::Deserialize(buffer, buffer_size));
 }
 
 void WebSocketServer::SendResponse(const types::Response &response) {

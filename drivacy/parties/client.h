@@ -26,7 +26,7 @@ namespace parties {
 // A function taking two arguments: the original query and its response values.
 using ResponseHandler = std::function<void(uint64_t, uint64_t)>;
 
-class Client {
+class Client : public io::socket::SocketListener {
  public:
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
@@ -53,14 +53,16 @@ class Client {
   // Make and send a query using our protocol targeting key = value.
   void MakeQuery(uint64_t value);
 
+  // Executed when a batch size, query, or response are received.
+  void OnReceiveBatch(uint32_t _) override { assert(false); }
+  void OnReceiveQuery(const types::IncomingQuery &_) override { assert(false); }
+  void OnReceiveResponse(const types::Response &response) override;
+
  private:
   const types::Configuration &config_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   types::ClientState state_;
   ResponseHandler response_handler_;
-
-  // Executed when a response is received, ends up calling response handler.
-  void OnReceiveResponse(const types::Response &response);
 };
 
 }  // namespace parties

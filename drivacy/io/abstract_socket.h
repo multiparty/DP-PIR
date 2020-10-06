@@ -17,23 +17,27 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-using QueryListener = std::function<void(const types::IncomingQuery &)>;
-using ResponseListener = std::function<void(const types::Response &)>;
+class SocketListener {
+ public:
+  // Indicates that a batch start message was received specifying the
+  // size of the batch.
+  virtual void OnReceiveBatch(uint32_t batch_size) = 0;
+  // Handlers for when a query or response are received.
+  virtual void OnReceiveQuery(const types::IncomingQuery &query) = 0;
+  virtual void OnReceiveResponse(const types::Response &response) = 0;
+};
 
 class AbstractSocket {
  public:
-  AbstractSocket(uint32_t party_id, QueryListener query_listener,
-                 ResponseListener response_listener,
-                 const types::Configuration &config)
-      : party_id_(party_id),
-        query_listener_(query_listener),
-        response_listener_(response_listener),
-        config_(config) {
+  AbstractSocket(uint32_t party_id, const types::Configuration &config,
+                 SocketListener *listener)
+      : party_id_(party_id), config_(config), listener_(listener) {
     this->party_count_ = config.parties();
   }
 
   virtual void Listen() = 0;
 
+  virtual void SendBatch(uint32_t batch_size) = 0;
   virtual void SendQuery(const types::OutgoingQuery &query) = 0;
   virtual void SendResponse(const types::Response &response) = 0;
 
@@ -43,13 +47,12 @@ class AbstractSocket {
  protected:
   uint32_t party_id_;
   uint32_t party_count_;
-  QueryListener query_listener_;
-  ResponseListener response_listener_;
   types::Configuration config_;
+  SocketListener *listener_;
 };
 
 using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
-    uint32_t, QueryListener, ResponseListener, const types::Configuration &)>;
+    uint32_t, const types::Configuration &, SocketListener *)>;
 
 }  // namespace socket
 }  // namespace io

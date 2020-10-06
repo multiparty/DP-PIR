@@ -24,17 +24,16 @@ namespace socket {
 
 class SimulatedSocket : public AbstractSocket {
  public:
-  SimulatedSocket(uint32_t party_id, QueryListener query_listener,
-                  ResponseListener response_listener,
-                  const types::Configuration &config);
+  SimulatedSocket(uint32_t party_id, const types::Configuration &config,
+                  SocketListener *listener);
 
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, QueryListener query_listener,
-      ResponseListener response_listener, const types::Configuration &config) {
-    return std::make_unique<SimulatedSocket>(party_id, query_listener,
-                                             response_listener, config);
+      uint32_t party_id, const types::Configuration &config,
+      SocketListener *listener) {
+    return std::make_unique<SimulatedSocket>(party_id, config, listener);
   }
 
+  void SendBatch(uint32_t batch_size) override;
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
@@ -51,17 +50,16 @@ class SimulatedSocket : public AbstractSocket {
 // communication with clients.
 class SimulatedClientSocket : public AbstractSocket {
  public:
-  SimulatedClientSocket(uint32_t party_id, QueryListener query_listener,
-                        ResponseListener response_listener,
-                        const types::Configuration &config);
+  SimulatedClientSocket(uint32_t party_id, const types::Configuration &config,
+                        SocketListener *listener);
 
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, QueryListener query_listener,
-      ResponseListener response_listener, const types::Configuration &config) {
-    return std::make_unique<SimulatedClientSocket>(party_id, query_listener,
-                                                   response_listener, config);
+      uint32_t party_id, const types::Configuration &config,
+      SocketListener *listener) {
+    return std::make_unique<SimulatedClientSocket>(party_id, config, listener);
   }
 
+  void SendBatch(uint32_t batch_size) override { assert(false); }
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
 

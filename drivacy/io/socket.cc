@@ -106,13 +106,22 @@ void TCPSocket::Listen() {
 
 // Reading messages ...
 void TCPSocket::ListenToIncomingQueries() {
+  uint32_t batch_size;
   uint32_t buffer_size =
       types::IncomingQuery::Size(this->party_id_, this->party_count_);
   unsigned char *buffer = new unsigned char[buffer_size];
   while (true) {
-    read(this->lower_socket_, buffer, buffer_size);
-    this->query_listener_(
-        types::IncomingQuery::Deserialize(buffer, buffer_size));
+    // First, listen to a setup message that defines the size of the batch.
+    read(this->lower_socket_, reinterpret_cast<unsigned char *>(&batch_size),
+         sizeof(uint32_t));
+    this->listener_->OnReceiveBatch(batch_size);
+
+    // Then, expect to read that many queries.
+    for (uint32_t i = 0; i < batch_size; i++) {
+      read(this->lower_socket_, buffer, buffer_size);
+      this->listener_->OnReceiveQuery(
+          types::IncomingQuery::Deserialize(buffer, buffer_size));
+    }
   }
 }
 
@@ -121,11 +130,16 @@ void TCPSocket::ListenToIncomingResponses() {
   unsigned char *buffer = new unsigned char[buffer_size];
   while (true) {
     read(this->upper_socket_, buffer, buffer_size);
-    this->response_listener_(types::Response::Deserialize(buffer));
+    this->listener_->OnReceiveResponse(types::Response::Deserialize(buffer));
   }
 }
 
 // Sending messages ...
+void TCPSocket::SendBatch(uint32_t batch_size) {
+  unsigned char *buffer = reinterpret_cast<unsigned char *>(&batch_size);
+  send(this->upper_socket_, buffer, sizeof(uint32_t), 0);
+}
+
 void TCPSocket::SendQuery(const types::OutgoingQuery &query) {
   auto [buffer, size] = query.Serialize();
   send(this->upper_socket_, buffer, size, 0);

@@ -27,11 +27,12 @@ class HeadParty : public Party {
  public:
   HeadParty(uint32_t party, const types::Configuration &config,
             const types::Table &table, io::socket::SocketFactory socket_factory,
-            io::socket::SocketFactory client_socket_factory)
+            io::socket::SocketFactory client_socket_factory,
+            uint32_t batch_size)
       : Party(party, config, table, socket_factory) {
-    this->client_socket_ = client_socket_factory(
-        this->party_id_, absl::bind_front(&HeadParty::OnReceiveQuery, this),
-        absl::bind_front(&HeadParty::OnReceiveResponse, this), this->config_);
+    this->client_socket_ =
+        client_socket_factory(this->party_id_, this->config_, this);
+    this->OnReceiveBatch(batch_size);
   }
 
   // Not copyable or movable!
@@ -43,11 +44,11 @@ class HeadParty : public Party {
   // Start listening on the sockets (blocking!)
   void Listen() override;
 
- protected:
-  std::unique_ptr<io::socket::AbstractSocket> client_socket_;
-
   // Called by the socket when a response is received.
   void OnReceiveResponse(const types::Response &response) override;
+
+ protected:
+  std::unique_ptr<io::socket::AbstractSocket> client_socket_;
 };
 
 }  // namespace parties

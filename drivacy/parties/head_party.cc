@@ -29,7 +29,7 @@ void HeadParty::OnReceiveResponse(const types::Response &response) {
   if (!done) return;
 
   // Send the responses over socket.
-  for (uint32_t i = 0; i < this->size_; i++) {
+  for (uint32_t i = 0; i < this->batch_size_; i++) {
     outgoing_response = this->shuffler_.NextResponse();
     this->client_socket_->SendResponse(outgoing_response);
   }

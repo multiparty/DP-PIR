@@ -25,7 +25,7 @@
 namespace drivacy {
 namespace parties {
 
-class Party {
+class Party : public io::socket::SocketListener {
  public:
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
@@ -34,12 +34,7 @@ class Party {
         const types::Table &table, io::socket::SocketFactory socket_factory)
       : party_id_(party_id), config_(config), table_(table) {
     // virtual funtion binds to correct subclass.
-    this->socket_ = socket_factory(
-        this->party_id_, absl::bind_front(&Party::OnReceiveQuery, this),
-        absl::bind_front(&Party::OnReceiveResponse, this), this->config_);
-
-    this->size_ = 3;
-    this->shuffler_.Initialize(this->size_);
+    this->socket_ = socket_factory(this->party_id_, this->config_, this);
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -53,18 +48,19 @@ class Party {
   // Called to start the listening on the socket (blocking!)
   virtual void Listen();
 
+  // Implementation of SocketListener, these functions are called by the
+  // socket when a batch size, query, or response is received on the socket.
+  void OnReceiveBatch(uint32_t batch_size) override;
+  void OnReceiveQuery(const types::IncomingQuery &query) override;
+  void OnReceiveResponse(const types::Response &response) override;
+
  protected:
   uint32_t party_id_;
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   protocol::Shuffler shuffler_;
-  uint32_t size_;
-
-  // Called by the socket when a query is received.
-  void OnReceiveQuery(const types::IncomingQuery &query);
-  // Called by the socket when a response is received.
-  virtual void OnReceiveResponse(const types::Response &response);
+  uint32_t batch_size_;
 };
 
 }  // namespace parties

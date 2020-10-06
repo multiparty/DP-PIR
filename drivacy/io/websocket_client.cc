@@ -15,10 +15,10 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-WebSocketClient::WebSocketClient(uint32_t party_id, QueryListener _,
-                                 ResponseListener response_listener,
-                                 const types::Configuration &config)
-    : AbstractSocket(party_id, _, response_listener, config) {
+WebSocketClient::WebSocketClient(uint32_t party_id,
+                                 const types::Configuration &config,
+                                 SocketListener *listener)
+    : AbstractSocket(party_id, config, listener) {
   // Find address of first frontend.
   uint32_t port = this->config_.network().at(1).webserver_port();
   const std::string &ip = this->config_.network().at(1).ip();
@@ -48,7 +48,7 @@ void WebSocketClient::SendQuery(const types::OutgoingQuery &query) {
 void WebSocketClient::HandleResponse(const std::vector<uint8_t> &msg) const {
   const unsigned char *buffer = &(msg[0]);
   types::Response response = types::Response::Deserialize(buffer);
-  this->response_listener_(response);
+  this->listener_->OnReceiveResponse(response);
 }
 
 }  // namespace socket
