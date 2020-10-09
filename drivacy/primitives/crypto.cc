@@ -78,8 +78,8 @@ void OnionEncrypt(const std::vector<types::QueryShare> &shares,
   memcpy(cipher, onioncipher1, current_size);
 
   // Memory clean up
-  delete onioncipher1;
-  delete onioncipher2;
+  delete[] onioncipher1;
+  delete[] onioncipher2;
 }
 
 void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,

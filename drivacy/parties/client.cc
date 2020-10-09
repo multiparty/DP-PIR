@@ -33,6 +33,7 @@ void Client::MakeQuery(uint64_t value) {
   this->state_.preshares.push_back(query.query_state());
   // Send via socket.
   this->socket_->SendQuery(query);
+  query.Free();
 }
 
 void Client::OnReceiveResponse(const types::Response &response) {

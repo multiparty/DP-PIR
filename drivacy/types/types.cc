@@ -62,7 +62,7 @@ const unsigned char *OutgoingQuery::Serialize() const {
   return this->buffer_ + sizeof(QueryShare);
 }
 
-void OutgoingQuery::Free() { delete this->buffer_; }
+void OutgoingQuery::Free() { delete[] this->buffer_; }
 
 // Response.
 uint32_t Response::Size() { return sizeof(uint64_t); }

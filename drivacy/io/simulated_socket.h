@@ -33,6 +33,8 @@ class SimulatedSocket : public AbstractSocket {
     return std::make_unique<SimulatedSocket>(party_id, config, listener);
   }
 
+  ~SimulatedSocket() { SimulatedSocket::sockets_.erase(this->party_id_); }
+
   void SendBatch(uint32_t batch_size) override;
   void SendQuery(const types::OutgoingQuery &query) override;
   void SendResponse(const types::Response &response) override;
@@ -52,6 +54,10 @@ class SimulatedClientSocket : public AbstractSocket {
  public:
   SimulatedClientSocket(uint32_t party_id, const types::Configuration &config,
                         SocketListener *listener);
+
+  ~SimulatedClientSocket() {
+    SimulatedClientSocket::sockets_.erase(this->party_id_);
+  }
 
   static std::unique_ptr<AbstractSocket> Factory(
       uint32_t party_id, const types::Configuration &config,

@@ -30,10 +30,10 @@ class TCPSocket : public AbstractSocket {
 
   // Free internal write buffers.
   ~TCPSocket() {
-    delete this->write_query_buffer_;
-    delete this->read_query_buffer_;
-    delete this->write_response_buffer_;
-    delete this->read_response_buffer_;
+    delete[] this->write_query_buffer_;
+    delete[] this->read_query_buffer_;
+    delete[] this->write_response_buffer_;
+    delete[] this->read_response_buffer_;
   }
 
   static std::unique_ptr<AbstractSocket> Factory(
