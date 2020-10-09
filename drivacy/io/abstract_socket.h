@@ -33,7 +33,9 @@ class AbstractSocket {
                  SocketListener *listener)
       : party_id_(party_id), config_(config), listener_(listener) {
     this->party_count_ = config.parties();
-    this->query_msg_size_ =
+    this->incoming_query_msg_size_ =
+        types::IncomingQuery::Size(party_id, this->party_count_);
+    this->outgoing_query_msg_size_ =
         types::OutgoingQuery::Size(party_id, this->party_count_);
     this->response_msg_size_ = types::Response::Size();
   }
@@ -53,7 +55,8 @@ class AbstractSocket {
   types::Configuration config_;
   SocketListener *listener_;
   // Stores the sizes of messages.
-  uint32_t query_msg_size_;
+  uint32_t incoming_query_msg_size_;
+  uint32_t outgoing_query_msg_size_;
   uint32_t response_msg_size_;
 };
 

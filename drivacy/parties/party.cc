@@ -51,14 +51,18 @@ void Party::OnReceiveResponse(const types::Response &response) {
 void Party::SendQueries() {
   this->socket_->SendBatch(this->batch_size_);
   for (uint32_t i = 0; i < this->batch_size_; i++) {
-    this->socket_->SendQuery(this->shuffler_.NextQuery());
+    types::OutgoingQuery query = this->shuffler_.NextQuery();
+    this->socket_->SendQuery(query);
+    query.Free();
   }
   this->socket_->FlushQueries();
 }
 
 void Party::SendResponses() {
   for (uint32_t i = 0; i < this->batch_size_; i++) {
-    this->socket_->SendResponse(this->shuffler_.NextResponse());
+    types::Response response = this->shuffler_.NextResponse();
+    this->socket_->SendResponse(response);
+    response.Free();
   }
   this->socket_->FlushResponses();
 }

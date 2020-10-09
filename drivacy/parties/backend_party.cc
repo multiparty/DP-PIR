@@ -19,6 +19,7 @@ void BackendParty::OnReceiveQuery(const types::IncomingQuery &query) {
   types::Response response =
       protocol::backend::QueryToResponse(query, config_, table_);
   this->socket_->SendResponse(response);
+  response.Free();
 
   // Flush socket when everything is done.
   this->processed_queries_++;

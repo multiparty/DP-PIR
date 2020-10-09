@@ -19,6 +19,8 @@ WebSocketClient::WebSocketClient(uint32_t party_id,
                                  const types::Configuration &config,
                                  SocketListener *listener)
     : AbstractSocket(party_id, config, listener) {
+  this->queries_sent_count_ = 0;
+
   // Find address of first frontend.
   uint32_t port = this->config_.network().at(1).webserver_port();
   const std::string &ip = this->config_.network().at(1).ip();
@@ -31,7 +33,8 @@ WebSocketClient::WebSocketClient(uint32_t party_id,
 
 void WebSocketClient::Listen() {
   // Block until a response is heard.
-  while (this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
+  while (this->queries_sent_count_ > 0 &&
+         this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
     this->socket_->poll(-1);
     this->socket_->dispatchBinary(
         absl::bind_front(&WebSocketClient::HandleResponse, this));
@@ -39,14 +42,16 @@ void WebSocketClient::Listen() {
 }
 
 void WebSocketClient::SendQuery(const types::OutgoingQuery &query) {
+  this->queries_sent_count_++;
   const unsigned char *buffer = query.Serialize();
   std::string msg(reinterpret_cast<const char *>(buffer),
-                  this->query_msg_size_);
+                  this->outgoing_query_msg_size_);
   this->socket_->sendBinary(msg);
   this->socket_->poll();
 }
 
-void WebSocketClient::HandleResponse(const std::vector<uint8_t> &msg) const {
+void WebSocketClient::HandleResponse(const std::vector<uint8_t> &msg) {
+  this->queries_sent_count_--;
   const unsigned char *buffer = &(msg[0]);
   types::Response response = types::Response::Deserialize(buffer);
   this->listener_->OnReceiveResponse(response);

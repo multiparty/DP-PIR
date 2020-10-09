@@ -78,15 +78,14 @@ class OutgoingQuery {
   QueryShare share() const;
 
   // After the placeholder has been filled, this produces a processed query!
-  // TODO(babman): after benchmarking against no copy no write buffer sockets,
-  //       if we are keepng the buffer sockets solution, then
-  //       we should transform Serialize() to take the buffer region as
-  //       parameter, write to it, and free internal buffer.
-  //       Same with response.
-  //       If we are not keeping this design, and we go back to a no buffer
-  //       no flush approach, we should explicitly delete the buffer after
-  //       sending, or alternatively return the buffer as a unique_ptr.
   const unsigned char *Serialize() const;
+
+  // Frees the underlying buffers in the instance.
+  // It is unsafe to use any of the functions related to the buffer after this
+  // function is called.
+  // Unsafe functions: buffer(), set_Tally(), and share().
+  // Safe functions: set_preshare() and query_state()
+  void Free();
 
  private:
   // Stores the preshare_ from the corresponding IncomingQuery.
@@ -110,6 +109,8 @@ class Response {
   // Serialization.
   const unsigned char *Serialize() const;
   static Response Deserialize(const unsigned char *buffer);
+  // Freeing.
+  void Free() {}
 
  private:
   uint64_t tally_;

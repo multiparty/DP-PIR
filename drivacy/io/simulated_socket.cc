@@ -30,8 +30,8 @@ void SimulatedSocket::SendBatch(uint32_t batch_size) {
 void SimulatedSocket::SendQuery(const types::OutgoingQuery &query) {
   const unsigned char *buffer = query.Serialize();
   SimulatedSocket *socket = SimulatedSocket::sockets_.at(this->party_id_ + 1);
-  socket->listener_->OnReceiveQuery(
-      types::IncomingQuery::Deserialize(buffer, this->query_msg_size_));
+  socket->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
+      buffer, this->outgoing_query_msg_size_));
 }
 
 void SimulatedSocket::SendResponse(const types::Response &response) {
@@ -55,8 +55,8 @@ void SimulatedClientSocket::SendQuery(const types::OutgoingQuery &query) {
   assert(this->party_id_ == 0);
   const unsigned char *buffer = query.Serialize();
   SimulatedClientSocket *socket = SimulatedClientSocket::sockets_.at(1);
-  socket->listener_->OnReceiveQuery(
-      types::IncomingQuery::Deserialize(buffer, this->query_msg_size_));
+  socket->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
+      buffer, this->outgoing_query_msg_size_));
 }
 
 void SimulatedClientSocket::SendResponse(const types::Response &response) {

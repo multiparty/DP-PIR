@@ -55,7 +55,6 @@ class WebSocketServer : public AbstractSocket {
  private:
   // Client sockets in order of receiving queries (not connecting).
   std::list<uWS::WebSocket<false, true> *> sockets_;
-  std::unordered_map<uWS::WebSocket<false, true> *, uint32_t> socket_counts_;
 
   // Handle incoming query from a client (parses and then calls QueryListener).
   void HandleQuery(const std::string &msg) const;

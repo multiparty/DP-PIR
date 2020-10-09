@@ -43,6 +43,10 @@ class HeadParty : public Party {
   // Start listening on the sockets (blocking!)
   void Listen() override;
 
+  // Queries are sent as usual, but after they are sent, we block the client
+  // socket and start listening for responses.
+  void SendQueries() override;
+
   // Send responses via the client socket instead of the default socket!
   void SendResponses() override;
 

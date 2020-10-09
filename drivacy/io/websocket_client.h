@@ -28,6 +28,12 @@ class WebSocketClient : public AbstractSocket {
   WebSocketClient(uint32_t party_id, const types::Configuration &config,
                   SocketListener *listener);
 
+  ~WebSocketClient() {
+    if (this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
+      this->socket_->close();
+    }
+  }
+
   // Factory function used to simplify construction of inheriting sockets.
   static std::unique_ptr<AbstractSocket> Factory(
       uint32_t party_id, const types::Configuration &config,
@@ -53,8 +59,11 @@ class WebSocketClient : public AbstractSocket {
   // The client socket.
   easywsclient::WebSocket *socket_;
 
+  // The total number of queries sent.
+  uint32_t queries_sent_count_;
+
   // Handle incoming responses from server (calls response_listener_).
-  void HandleResponse(const std::vector<uint8_t> &msg) const;
+  void HandleResponse(const std::vector<uint8_t> &msg);
 };
 
 }  // namespace socket

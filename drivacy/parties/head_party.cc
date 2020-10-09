@@ -12,13 +12,27 @@ namespace drivacy {
 namespace parties {
 
 void HeadParty::Listen() {
-  Party::Listen();
+  // Listen only for queries from clients, do not listen to responses yet.
+  // We will listen to responses *after* a query batch is processed,
+  // and after the response batch is processed, we will go back
+  // to listening for queries from clients.
   this->client_socket_->Listen();
+}
+
+void HeadParty::SendQueries() {
+  Party::SendQueries();
+  // This blocks until as many responses are received as queries, and then
+  // returns, causing SendQueries to return to Party::OnReceiveQuery,
+  // which in tern returns into the client_socket_ and starts listening again
+  // for queries from clients.
+  Party::Listen();
 }
 
 void HeadParty::SendResponses() {
   for (uint32_t i = 0; i < this->batch_size_; i++) {
-    this->client_socket_->SendResponse(this->shuffler_.NextResponse());
+    types::Response response = this->shuffler_.NextResponse();
+    this->client_socket_->SendResponse(response);
+    response.Free();
   }
 }
 
