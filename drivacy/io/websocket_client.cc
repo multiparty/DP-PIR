@@ -15,15 +15,16 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-WebSocketClient::WebSocketClient(uint32_t party_id,
+WebSocketClient::WebSocketClient(uint32_t party_id, uint32_t machine_id,
                                  const types::Configuration &config,
                                  SocketListener *listener)
-    : AbstractSocket(party_id, config, listener) {
+    : AbstractSocket(party_id, machine_id, config, listener) {
   this->queries_sent_count_ = 0;
 
   // Find address of first frontend.
-  uint32_t port = this->config_.network().at(1).webserver_port();
-  const std::string &ip = this->config_.network().at(1).ip();
+  const auto &network_config = config.network().at(1).machines().at(machine_id);
+  uint32_t port = network_config.webserver_port();
+  const std::string &ip = network_config.ip();
   std::string address = absl::StrFormat("ws://%s:%d", ip, port);
 
   // Create socket.

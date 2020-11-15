@@ -16,26 +16,36 @@
 #include "google/protobuf/util/json_util.h"
 
 ABSL_FLAG(uint32_t, parties, 0, "The number of parties (required)");
+ABSL_FLAG(uint32_t, parallelism, 0,
+          "The number of machines/cores per party (required)");
 
 int main(int argc, char *argv[]) {
   // Verify protobuf library was linked properly.
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Command line usage message.
-  absl::SetProgramUsageMessage(absl::StrFormat(
-      "usage: %s %s", argv[0], "--parties=<number of parties>"));
+  absl::SetProgramUsageMessage(
+      absl::StrFormat("usage: %s %s", argv[0],
+                      "--parties=<number of parties> "
+                      "--parallelism=<number of machines/cores per party>"));
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.
   uint32_t parties = absl::GetFlag(FLAGS_parties);
+  uint32_t parallelism = absl::GetFlag(FLAGS_parallelism);
   if (parties < 2) {
     std::cout << "You need at least 2 parties!" << std::endl;
+    return 1;
+  }
+  if (parallelism < 1) {
+    std::cout << "You need at least 1 machine per party!" << std::endl;
     return 1;
   }
 
   // Build configuration prototype.
   drivacy::types::Configuration config;
   config.set_parties(parties);
+  config.set_parallelism(parallelism);
   for (uint32_t party_id = 1; party_id <= parties; party_id++) {
     config.mutable_keys()->insert(
         {party_id, drivacy::primitives::crypto::GenerateEncryptionKeyPair()});
@@ -44,9 +54,19 @@ int main(int argc, char *argv[]) {
   // Handle the networking configuration.
   for (uint32_t party_id = 1; party_id <= parties; party_id++) {
     drivacy::types::PartyNetworkConfig party_config;
-    party_config.set_ip("127.0.0.1");
-    party_config.set_socket_port(party_id == 1 ? -1 : (3000 + party_id));
-    party_config.set_webserver_port(party_id == 1 ? 3000 : -1);
+    for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
+      drivacy::types::MachineNetworkConfig machine_config;
+      machine_config.set_ip("127.0.0.1");
+      // all ports must be unique for all <party_id, machine_id> pair, starting
+      // from port 3000.
+      int offset = (party_id - 1) * parallelism * 3 + (machine_id - 1) * 3;
+      offset += 3000;
+      machine_config.set_socket_port(party_id == 1 ? -1 : offset);
+      machine_config.set_webserver_port(party_id == 1 ? offset + 1 : -1);
+      machine_config.set_intraparty_port(
+          party_id < parties && machine_id > 1 ? offset + 2 : -1);
+      party_config.mutable_machines()->insert({machine_id, machine_config});
+    }
     config.mutable_network()->insert({party_id, party_config});
   }
 

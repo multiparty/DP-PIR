@@ -29,9 +29,11 @@
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
+ABSL_FLAG(uint32_t, machine, 0, "The id of the machine [1-p] (required)");
 ABSL_FLAG(uint32_t, batch, 1,
           "The size of a query batch (used only for party=1)");
-absl::Status Setup(uint32_t party_id, const std::string &table_path,
+absl::Status Setup(uint32_t party_id, uint32_t machine_id,
+                   const std::string &table_path,
                    const std::string &config_path, uint32_t batch_size) {
   // Read configuration.
   drivacy::types::Configuration config;
@@ -46,15 +48,17 @@ absl::Status Setup(uint32_t party_id, const std::string &table_path,
   // Setup party and listen to incoming queries and responses.
   if (party_id == 1) {
     drivacy::parties::HeadParty party(
-        party_id, config, table, drivacy::io::socket::TCPSocket::Factory,
+        party_id, machine_id, config, table,
+        drivacy::io::socket::TCPSocket::Factory,
         drivacy::io::socket::WebSocketServer::Factory, batch_size);
     party.Listen();
   } else if (party_id == config.parties()) {
     drivacy::parties::BackendParty party(
-        party_id, config, table, drivacy::io::socket::TCPSocket::Factory);
+        party_id, machine_id, config, table,
+        drivacy::io::socket::TCPSocket::Factory);
     party.Listen();
   } else {
-    drivacy::parties::Party party(party_id, config, table,
+    drivacy::parties::Party party(party_id, machine_id, config, table,
                                   drivacy::io::socket::TCPSocket::Factory);
     party.Listen();
   }
@@ -78,6 +82,7 @@ int main(int argc, char *argv[]) {
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t party_id = absl::GetFlag(FLAGS_party);
+  uint32_t machine_id = absl::GetFlag(FLAGS_machine);
   uint32_t batch_size = absl::GetFlag(FLAGS_batch);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
@@ -93,9 +98,15 @@ int main(int argc, char *argv[]) {
     std::cout << "Please provide a valid party id using --party" << std::endl;
     return 1;
   }
+  if (machine_id == 0) {
+    std::cout << "Please provide a valid machine id using --machine"
+              << std::endl;
+    return 1;
+  }
 
   // Execute mock protocol.
-  absl::Status output = Setup(party_id, table_path, config_path, batch_size);
+  absl::Status output =
+      Setup(party_id, machine_id, table_path, config_path, batch_size);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

@@ -25,8 +25,8 @@ namespace socket {
 
 class TCPSocket : public AbstractSocket {
  public:
-  TCPSocket(uint32_t party_id, const types::Configuration &config,
-            SocketListener *listener);
+  TCPSocket(uint32_t party_id, uint32_t machine_id,
+            const types::Configuration &config, SocketListener *listener);
 
   // Free internal write buffers.
   ~TCPSocket() {
@@ -37,9 +37,9 @@ class TCPSocket : public AbstractSocket {
   }
 
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, const types::Configuration &config,
-      SocketListener *listener) {
-    return std::make_unique<TCPSocket>(party_id, config, listener);
+      uint32_t party_id, uint32_t machine_id,
+      const types::Configuration &config, SocketListener *listener) {
+    return std::make_unique<TCPSocket>(party_id, machine_id, config, listener);
   }
 
   void SendBatch(uint32_t batch_size) override;

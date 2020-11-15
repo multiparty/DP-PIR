@@ -29,11 +29,15 @@ class Party : public io::socket::SocketListener {
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  Party(uint32_t party_id, const types::Configuration &config,
-        const types::Table &table, io::socket::SocketFactory socket_factory)
-      : party_id_(party_id), config_(config), table_(table) {
+  Party(uint32_t party_id, uint32_t machine_id,
+        const types::Configuration &config, const types::Table &table,
+        io::socket::SocketFactory socket_factory)
+      : party_id_(party_id),
+        machine_id_(machine_id),
+        config_(config),
+        table_(table) {
     // virtual funtion binds to correct subclass.
-    this->socket_ = socket_factory(this->party_id_, this->config_, this);
+    this->socket_ = socket_factory(party_id, machine_id, config, this);
     this->processed_queries_ = 0;
     this->processed_responses_ = 0;
   }
@@ -57,6 +61,7 @@ class Party : public io::socket::SocketListener {
 
  protected:
   uint32_t party_id_;
+  uint32_t machine_id_;
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;

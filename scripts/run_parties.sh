@@ -2,14 +2,17 @@
 
 # Display help
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
-  echo "Usage: ./run_parties.sh #parties #batch_size"
+  echo "Usage: ./run_parties.sh #parties #parallelism #batch_size"
   exit 0
 fi
 
 # Run parties
 for (( party=$1; party>0; party-- ))
 do
-  echo "Running party $party"
-  ./bazel-bin/drivacy/main --table=data/server-map.json --config=data/config.json --party=$party --batch=$2 > party$party.log 2>&1 &
-  sleep 1
+  for (( machine=1; machine<=$2; machine++ ))
+  do
+    echo "Running party $party-$machine"
+    ./bazel-bin/drivacy/main --table=data/server-map.json --config=data/config.json --party=$party --machine=$machine --batch=$3 > party$party-$machine.log 2>&1 &
+    sleep 1
+  done
 done

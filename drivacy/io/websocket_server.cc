@@ -26,7 +26,12 @@ struct PerSocketData {};
 // a client opens a connection with the server.
 void WebSocketServer::Listen() {
   // Set up the socket server.
-  int32_t port = this->config_.network().at(this->party_id_).webserver_port();
+  int32_t port = this->config_.network()
+                     .at(this->party_id_)
+                     .machines()
+                     .at(this->machine_id_)
+                     .webserver_port();
+  std::cout << "Listenting to client connections on port " << port << std::endl;
   uWS::App()
       .ws<PerSocketData>("/*", {.message =
                                     [this](auto *ws, std::string_view message,

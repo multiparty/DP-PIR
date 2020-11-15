@@ -25,8 +25,8 @@ namespace socket {
 
 class WebSocketClient : public AbstractSocket {
  public:
-  WebSocketClient(uint32_t party_id, const types::Configuration &config,
-                  SocketListener *listener);
+  WebSocketClient(uint32_t party_id, uint32_t machine_id,
+                  const types::Configuration &config, SocketListener *listener);
 
   ~WebSocketClient() {
     if (this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
@@ -36,9 +36,10 @@ class WebSocketClient : public AbstractSocket {
 
   // Factory function used to simplify construction of inheriting sockets.
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, const types::Configuration &config,
-      SocketListener *listener) {
-    return std::make_unique<WebSocketClient>(party_id, config, listener);
+      uint32_t party_id, uint32_t machine_id,
+      const types::Configuration &config, SocketListener *listener) {
+    return std::make_unique<WebSocketClient>(party_id, machine_id, config,
+                                             listener);
   }
 
   // This is how we send queries to the frontend party!

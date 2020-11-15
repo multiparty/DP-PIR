@@ -27,15 +27,16 @@ namespace socket {
 
 class WebSocketServer : public AbstractSocket {
  public:
-  WebSocketServer(uint32_t party_id, const types::Configuration &config,
-                  SocketListener *listener)
-      : AbstractSocket(party_id, config, listener) {}
+  WebSocketServer(uint32_t party_id, uint32_t machine_id,
+                  const types::Configuration &config, SocketListener *listener)
+      : AbstractSocket(party_id, machine_id, config, listener) {}
 
   // Factory function used to simplify construction of inheriting sockets.
   static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, const types::Configuration &config,
-      SocketListener *listener) {
-    return std::make_unique<WebSocketServer>(party_id, config, listener);
+      uint32_t party_id, uint32_t machine_id,
+      const types::Configuration &config, SocketListener *listener) {
+    return std::make_unique<WebSocketServer>(party_id, machine_id, config,
+                                             listener);
   }
 
   // We can never send queries (or batch sizes) to clients!

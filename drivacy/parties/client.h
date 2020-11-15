@@ -30,8 +30,8 @@ class Client : public io::socket::SocketListener {
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  explicit Client(const types::Configuration &config,
-                  io::socket::SocketFactory socket_factory);
+  Client(uint32_t machine_id, const types::Configuration &config,
+         io::socket::SocketFactory socket_factory);
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
   // is stored in the socket (e.g. look at io/simulated_socket.[cc|h]).
@@ -58,6 +58,7 @@ class Client : public io::socket::SocketListener {
   void OnReceiveResponse(const types::Response &response) override;
 
  private:
+  uint32_t machine_id_;
   const types::Configuration &config_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   types::ClientState state_;

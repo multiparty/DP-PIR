@@ -29,9 +29,12 @@ class SocketListener {
 
 class AbstractSocket {
  public:
-  AbstractSocket(uint32_t party_id, const types::Configuration &config,
-                 SocketListener *listener)
-      : party_id_(party_id), config_(config), listener_(listener) {
+  AbstractSocket(uint32_t party_id, uint32_t machine_id,
+                 const types::Configuration &config, SocketListener *listener)
+      : party_id_(party_id),
+        machine_id_(machine_id),
+        config_(config),
+        listener_(listener) {
     this->party_count_ = config.parties();
     this->incoming_query_msg_size_ =
         types::IncomingQuery::Size(party_id, this->party_count_);
@@ -51,6 +54,7 @@ class AbstractSocket {
 
  protected:
   uint32_t party_id_;
+  uint32_t machine_id_;
   uint32_t party_count_;
   types::Configuration config_;
   SocketListener *listener_;
@@ -61,7 +65,7 @@ class AbstractSocket {
 };
 
 using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
-    uint32_t, const types::Configuration &, SocketListener *)>;
+    uint32_t, uint32_t, const types::Configuration &, SocketListener *)>;
 
 }  // namespace socket
 }  // namespace io

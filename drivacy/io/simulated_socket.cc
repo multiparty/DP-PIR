@@ -14,10 +14,10 @@ namespace io {
 namespace socket {
 
 // SimulatedSocket.
-SimulatedSocket::SimulatedSocket(uint32_t party_id,
+SimulatedSocket::SimulatedSocket(uint32_t party_id, uint32_t machine_id,
                                  const types::Configuration &config,
                                  SocketListener *listener)
-    : AbstractSocket(party_id, config, listener) {
+    : AbstractSocket(party_id, machine_id, config, listener) {
   assert(SimulatedSocket::sockets_.count(party_id) == 0);
   SimulatedSocket::sockets_.insert({party_id, this});
 }
@@ -44,9 +44,10 @@ std::unordered_map<uint32_t, SimulatedSocket *> SimulatedSocket::sockets_ = {};
 
 // SimulatedClientSocket.
 SimulatedClientSocket::SimulatedClientSocket(uint32_t party_id,
+                                             uint32_t machine_id,
                                              const types::Configuration &config,
                                              SocketListener *listener)
-    : AbstractSocket(party_id, config, listener) {
+    : AbstractSocket(party_id, machine_id, config, listener) {
   assert(SimulatedClientSocket::sockets_.count(party_id) == 0);
   SimulatedClientSocket::sockets_.insert({party_id, this});
 }

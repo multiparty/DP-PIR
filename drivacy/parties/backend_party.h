@@ -23,10 +23,10 @@ namespace parties {
 // with other parties as well as clients!
 class BackendParty : public Party {
  public:
-  BackendParty(uint32_t party, const types::Configuration &config,
-               const types::Table &table,
+  BackendParty(uint32_t party, uint32_t machine,
+               const types::Configuration &config, const types::Table &table,
                io::socket::SocketFactory socket_factory)
-      : Party(party, config, table, socket_factory) {
+      : Party(party, machine, config, table, socket_factory) {
     this->processed_queries_ = 0;
   }
 

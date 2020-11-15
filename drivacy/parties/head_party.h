@@ -24,13 +24,13 @@ namespace parties {
 // with other parties as well as clients!
 class HeadParty : public Party {
  public:
-  HeadParty(uint32_t party, const types::Configuration &config,
-            const types::Table &table, io::socket::SocketFactory socket_factory,
+  HeadParty(uint32_t party, uint32_t machine,
+            const types::Configuration &config, const types::Table &table,
+            io::socket::SocketFactory socket_factory,
             io::socket::SocketFactory client_socket_factory,
             uint32_t batch_size)
-      : Party(party, config, table, socket_factory) {
-    this->client_socket_ =
-        client_socket_factory(this->party_id_, this->config_, this);
+      : Party(party, machine, config, table, socket_factory) {
+    this->client_socket_ = client_socket_factory(party, machine, config, this);
     this->OnReceiveBatch(batch_size);
   }
 

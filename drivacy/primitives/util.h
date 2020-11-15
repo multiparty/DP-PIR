@@ -13,8 +13,8 @@ namespace primitives {
 namespace util {
 
 inline uint64_t Prime() {
-  // 29 bits prime. // 26 bits prime.
-  return 536870909;  // 67108859;
+  // 26 bits prime. // 29 bits prime. // 26 bits prime.
+  return 67108859;  // 536870909;     // 67108859;
 }
 
 inline uint64_t Mod(uint64_t a, uint64_t modulus) {

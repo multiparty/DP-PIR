@@ -11,7 +11,9 @@
 
 #include <cstdint>
 #include <iostream>
+#include <iterator>
 #include <list>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -34,29 +36,48 @@ ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 absl::Status Test(const drivacy::types::Configuration &config,
                   const drivacy::types::Table &table) {
   std::cout << "Testing..." << std::endl;
+  uint32_t parallelism = config.parallelism();
 
-  // Create a client.
-  drivacy::parties::Client client(
-      config, drivacy::io::socket::SimulatedClientSocket::Factory);
+  // Create all clients.
+  std::list<drivacy::parties::Client> clients;
+  std::list<std::list<uint64_t>> queries;
+  for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
+    clients.emplace_back(machine_id, config,
+                         drivacy::io::socket::SimulatedClientSocket::Factory);
+    drivacy::parties::Client &client = clients.back();
 
-  // Verify correctness of query / response.
-  std::list<uint64_t> queries;
-  client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
-    assert(query == queries.front());
-    assert(response == table.at(query));
-    queries.pop_front();
-  });
+    // Verify correctness of query / response.
+    queries.emplace_back();
+    std::list<uint64_t> &client_queries = queries.back();
+    client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
+      assert(query == client_queries.front());
+      assert(response == table.at(query));
+      client_queries.pop_front();
+    });
+  }
 
   // Query everything in the table.
+  auto client_it = clients.begin();
+  auto queries_it = queries.begin();
   for (const auto &[query, response] : table) {
-    queries.push_back(query);
-    client.MakeQuery(query);
+    // Record and make query.
+    queries_it->push_back(query);
+    client_it->MakeQuery(query);
+    // Move to the next client.
+    std::next(client_it);
+    std::next(queries_it);
+    if (client_it == clients.end()) {
+      // Restart from the first client again.
+      client_it = clients.begin();
+      queries_it = queries.begin();
+    }
   }
 
   // Make sure all queries were handled.
-  assert(queries.size() == 0);
+  for (const auto &client_queries : queries) {
+    assert(client_queries.size() == 0);
+  }
   std::cout << "All tests passed!" << std::endl;
-
   return absl::OkStatus();
 }
 
@@ -75,19 +96,31 @@ absl::Status Setup(const std::string &table_path,
                    drivacy::util::file::ParseTable(json));
 
   // Setup parties.
-  drivacy::parties::HeadParty head_party(
-      1, config, table, drivacy::io::socket::SimulatedSocket::Factory,
-      drivacy::io::socket::SimulatedClientSocket::Factory, BATCH_SIZE);
-
-  std::list<drivacy::parties::Party> parties;
-  for (uint32_t party_id = 2; party_id < config.parties(); party_id++) {
-    parties.emplace_back(party_id, config, table,
-                         drivacy::io::socket::SimulatedSocket::Factory);
+  // Setup the head party's machines!
+  uint32_t parallelism = config.parallelism();
+  std::list<drivacy::parties::HeadParty> head_party;
+  for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
+    head_party.emplace_back(1, machine_id, config, table,
+                            drivacy::io::socket::SimulatedSocket::Factory,
+                            drivacy::io::socket::SimulatedClientSocket::Factory,
+                            BATCH_SIZE);
   }
 
-  drivacy::parties::BackendParty backend_party(
-      config.parties(), config, table,
-      drivacy::io::socket::SimulatedSocket::Factory);
+  // Setup middle-of-the-chain parties' machines.
+  std::list<drivacy::parties::Party> parties;
+  for (uint32_t party_id = 2; party_id < config.parties(); party_id++) {
+    for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
+      parties.emplace_back(party_id, machine_id, config, table,
+                           drivacy::io::socket::SimulatedSocket::Factory);
+    }
+  }
+
+  // Setup the backend party's machines.
+  std::list<drivacy::parties::BackendParty> backend_party;
+  for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
+    backend_party.emplace_back(config.parties(), machine_id, config, table,
+                               drivacy::io::socket::SimulatedSocket::Factory);
+  }
 
   // Make a query.
   return Test(config, table);

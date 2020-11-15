@@ -81,9 +81,10 @@ int SocketClient(uint16_t port, const std::string &serverip) {
 }  // namespace
 
 // Socket(s) setup ...
-TCPSocket::TCPSocket(uint32_t party_id, const types::Configuration &config,
+TCPSocket::TCPSocket(uint32_t party_id, uint32_t machine_id,
+                     const types::Configuration &config,
                      SocketListener *listener)
-    : AbstractSocket(party_id, config, listener) {
+    : AbstractSocket(party_id, machine_id, config, listener) {
   // Default counter values.
   this->queries_written_ = 0;
   this->responses_written_ = 0;
@@ -104,12 +105,15 @@ TCPSocket::TCPSocket(uint32_t party_id, const types::Configuration &config,
   this->read_response_buffer_ = new unsigned char[this->response_msg_size_];
 
   // Read ports from config.
-  int32_t this_port = this->config_.network().at(this->party_id_).socket_port();
+  const auto &network = this->config_.network();
+  const auto &this_party_network = network.at(this->party_id_).machines();
+  int32_t this_port = this_party_network.at(machine_id).socket_port();
   int32_t next_port = -1;
   std::string next_ip;
   if (this->party_id_ < this->config_.parties()) {
-    next_port = this->config_.network().at(this->party_id_ + 1).socket_port();
-    next_ip = this->config_.network().at(this->party_id_ + 1).ip();
+    const auto &next_party_network = network.at(this->party_id_ + 1).machines();
+    next_port = next_party_network.at(machine_id).socket_port();
+    next_ip = next_party_network.at(machine_id).ip();
   }
 
   // Create socket server to the previous party (for queries).

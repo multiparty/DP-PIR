@@ -32,10 +32,11 @@ rules_proto_dependencies()
 rules_proto_toolchains()
 
 # Abseil
-git_repository(
+http_archive(
     name = "com_google_absl",
-    remote = "https://github.com/abseil/abseil-cpp.git",
-    tag = "20200225.1",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/20200225.2.zip"],
+    strip_prefix = "abseil-cpp-20200225.2",
+    sha256 = "f342aac71a62861ac784cadb8127d5a42c6c61ab1cd07f00aef05f2cc4988c42",
 )
 
 # Foreign rules to use for libsodium

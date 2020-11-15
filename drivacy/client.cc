@@ -28,9 +28,11 @@
 
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
+ABSL_FLAG(uint32_t, machine, 0, "The head machine id to query (required)");
 ABSL_FLAG(uint32_t, queries, 0, "The number of queries to make (required)");
 
-absl::Status Setup(uint32_t query_count, const std::string &table_path,
+absl::Status Setup(uint32_t machine_id, uint32_t query_count,
+                   const std::string &table_path,
                    const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
@@ -44,7 +46,7 @@ absl::Status Setup(uint32_t query_count, const std::string &table_path,
 
   // Setup party and listen to incoming queries and responses.
   drivacy::parties::Client client(
-      config, drivacy::io::socket::WebSocketClient::Factory);
+      machine_id, config, drivacy::io::socket::WebSocketClient::Factory);
 
   // Verify correctness of query / response.
   std::list<uint64_t> queries;
@@ -88,6 +90,7 @@ int main(int argc, char *argv[]) {
   // Get command line flags.
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
+  uint32_t machine_id = absl::GetFlag(FLAGS_machine);
   uint32_t query_count = absl::GetFlag(FLAGS_queries);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
@@ -99,6 +102,11 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
+  if (machine_id == 0) {
+    std::cout << "Please provide a valid machine id to query using --machine"
+              << std::endl;
+    return 1;
+  }
   if (query_count == 0) {
     std::cout << "Please provide a valid query count using --queries"
               << std::endl;
@@ -106,7 +114,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(query_count, table_path, config_path);
+  absl::Status output = Setup(machine_id, query_count, table_path, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

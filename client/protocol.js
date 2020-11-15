@@ -14,7 +14,9 @@
   // response.
   const makeQuery = function (queryValue) {
     return new Promise(function (resolve) {
-      let socket = new WebSocket('ws://localhost:3000/');
+      let network_config = config.network["1"].machines["1"];
+      let addr = 'ws://' + network_config.ip + ':' + network_config.webserver_port + '/';
+      let socket = new WebSocket(addr);
       socket.addEventListener('open', function () {
         // Incremental sharing of query.
         const shares = window.incrementalShareGenerate(queryValue, config.parties);

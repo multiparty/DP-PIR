@@ -16,10 +16,10 @@
 namespace drivacy {
 namespace parties {
 
-Client::Client(const types::Configuration &config,
+Client::Client(uint32_t machine_id, const types::Configuration &config,
                io::socket::SocketFactory socket_factory)
-    : config_(config) {
-  this->socket_ = socket_factory(0, config, this);
+    : machine_id_(machine_id), config_(config) {
+  this->socket_ = socket_factory(0, machine_id, config, this);
 }
 
 void Client::Listen() { this->socket_->Listen(); }
