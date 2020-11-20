@@ -43,7 +43,7 @@ class WebSocketClient : public AbstractSocket {
   }
 
   // This is how we send queries to the frontend party!
-  void SendQuery(const types::OutgoingQuery &query) override;
+  void SendQuery(const types::ForwardQuery &query) override;
 
   // We can never send responses (or batch sizes) as a client.
   void SendBatch(uint32_t batch_size) override { assert(false); }

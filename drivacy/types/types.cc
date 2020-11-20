@@ -78,5 +78,11 @@ Response Response::Deserialize(const unsigned char *buffer) {
   return Response(*ptr);
 }
 
+// Forward Query and Response sizes.
+uint32_t ForwardQuerySize(uint32_t party_id, uint32_t party_count) {
+  return OutgoingQuery::Size(party_id, party_count);
+}
+uint32_t ForwardResponseSize() { return Response::Size(); }
+
 }  // namespace types
 }  // namespace drivacy

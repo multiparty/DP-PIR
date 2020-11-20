@@ -42,9 +42,9 @@ void WebSocketClient::Listen() {
   }
 }
 
-void WebSocketClient::SendQuery(const types::OutgoingQuery &query) {
+void WebSocketClient::SendQuery(const types::ForwardQuery &query) {
   this->queries_sent_count_++;
-  const unsigned char *buffer = query.Serialize();
+  const unsigned char *buffer = query;
   std::string msg(reinterpret_cast<const char *>(buffer),
                   this->outgoing_query_msg_size_);
   this->socket_->sendBinary(msg);
@@ -54,8 +54,7 @@ void WebSocketClient::SendQuery(const types::OutgoingQuery &query) {
 void WebSocketClient::HandleResponse(const std::vector<uint8_t> &msg) {
   this->queries_sent_count_--;
   const unsigned char *buffer = &(msg[0]);
-  types::Response response = types::Response::Deserialize(buffer);
-  this->listener_->OnReceiveResponse(response);
+  this->listener_->OnReceiveResponse(buffer);
 }
 
 }  // namespace socket

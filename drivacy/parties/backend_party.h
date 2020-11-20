@@ -39,7 +39,7 @@ class BackendParty : public Party {
   void OnReceiveQuery(const types::IncomingQuery &query) override;
 
   // Backend party never receives responses.
-  void OnReceiveResponse(const types::Response &response) override {
+  void OnReceiveResponse(const types::ForwardResponse &response) override {
     assert(false);
   }
 

@@ -1,9 +1,9 @@
 // Copyright 2020 multiparty.org
 
-// The real server-server socket interface.
+// The real server-server socket interface (across different parties).
 //
-// Every socket connects a client (socket-wise) server with a server
-// (socket-wise) server. The party with a lower id has the client end
+// Every socket connects a client (socket-wise) machine with a server
+// (socket-wise) machine. The party with a lower id has the client end
 // while the one with the higher id has the server end.
 
 #ifndef DRIVACY_IO_SOCKET_H_
@@ -43,7 +43,7 @@ class TCPSocket : public AbstractSocket {
   }
 
   void SendBatch(uint32_t batch_size) override;
-  void SendQuery(const types::OutgoingQuery &query) override;
+  void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
   void FlushQueries() override;

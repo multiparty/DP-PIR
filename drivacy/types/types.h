@@ -116,6 +116,14 @@ class Response {
   uint64_t tally_;
 };
 
+// Forward Query and Responses are used between machines within the same party
+// for shuffling. They are treated as blackboxes.
+using ForwardQuery = const unsigned char *;
+using ForwardResponse = const unsigned char *;
+
+uint32_t ForwardQuerySize(uint32_t party_id, uint32_t party_count);
+uint32_t ForwardResponseSize();
+
 // A client state. This survives between a query and its response.
 struct ClientState {
   // A copy of previously made queries for sanity checks.

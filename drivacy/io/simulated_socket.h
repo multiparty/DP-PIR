@@ -37,7 +37,7 @@ class SimulatedSocket : public AbstractSocket {
   ~SimulatedSocket() { SimulatedSocket::sockets_.erase(this->party_id_); }
 
   void SendBatch(uint32_t batch_size) override;
-  void SendQuery(const types::OutgoingQuery &query) override;
+  void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
   void FlushQueries() override {}
@@ -69,7 +69,7 @@ class SimulatedClientSocket : public AbstractSocket {
   }
 
   void SendBatch(uint32_t batch_size) override { assert(false); }
-  void SendQuery(const types::OutgoingQuery &query) override;
+  void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
   void FlushQueries() override { assert(false); }
@@ -79,6 +79,44 @@ class SimulatedClientSocket : public AbstractSocket {
 
  private:
   static std::unordered_map<uint32_t, SimulatedClientSocket *> sockets_;
+};
+
+class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
+ public:
+  SimulatedIntraPartySocket(uint32_t party_id, uint32_t machine_id,
+                            const types::Configuration &config,
+                            IntraPartySocketListener *listener);
+
+  static std::unique_ptr<AbstractIntraPartySocket> Factory(
+      uint32_t party_id, uint32_t machine_id,
+      const types::Configuration &config, IntraPartySocketListener *listener) {
+    return std::make_unique<SimulatedIntraPartySocket>(party_id, machine_id,
+                                                       config, listener);
+  }
+
+  ~SimulatedIntraPartySocket() {
+    std::unordered_map<uint32_t, SimulatedIntraPartySocket *> &nested_map =
+        SimulatedIntraPartySocket::sockets_.at(this->party_id_);
+    nested_map.erase(this->machine_id_);
+    if (nested_map.empty()) {
+      SimulatedIntraPartySocket::sockets_.erase(this->party_id_);
+    }
+  }
+
+  void SendQuery(uint32_t machine_id,
+                 const types::OutgoingQuery &query) override;
+  void SendResponse(uint32_t machine_id,
+                    const types::ForwardResponse &response) override;
+
+  void FlushQueries() override {}
+  void FlushResponses() override {}
+
+  void Listen() override {}
+
+ private:
+  static std::unordered_map<
+      uint32_t, std::unordered_map<uint32_t, SimulatedIntraPartySocket *>>
+      sockets_;
 };
 
 }  // namespace socket

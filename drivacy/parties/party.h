@@ -57,7 +57,7 @@ class Party : public io::socket::SocketListener {
   // socket when a batch size, query, or response is received on the socket.
   void OnReceiveBatch(uint32_t batch_size) override;
   void OnReceiveQuery(const types::IncomingQuery &query) override;
-  void OnReceiveResponse(const types::Response &response) override;
+  void OnReceiveResponse(const types::ForwardResponse &response) override;
 
  protected:
   uint32_t party_id_;

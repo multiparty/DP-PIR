@@ -32,11 +32,12 @@ void Client::MakeQuery(uint64_t value) {
   this->state_.queries.push_back(value);
   this->state_.preshares.push_back(query.query_state());
   // Send via socket.
-  this->socket_->SendQuery(query);
+  this->socket_->SendQuery(query.Serialize());
   query.Free();
 }
 
-void Client::OnReceiveResponse(const types::Response &response) {
+void Client::OnReceiveResponse(const types::ForwardResponse &forward) {
+  types::Response response = types::Response::Deserialize(forward);
   // Retrieve stored state for this response.
   uint64_t query = this->state_.queries.front();
   uint64_t preshare = this->state_.preshares.front();

@@ -36,7 +36,8 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
   }
 }
 
-void Party::OnReceiveResponse(const types::Response &response) {
+void Party::OnReceiveResponse(const types::ForwardResponse &forward) {
+  types::Response response = types::Response::Deserialize(forward);
   // Process response.
   types::QueryState query_state = this->shuffler_.NextQueryState();
   types::Response outgoing_response =
@@ -52,7 +53,7 @@ void Party::SendQueries() {
   this->socket_->SendBatch(this->batch_size_);
   for (uint32_t i = 0; i < this->batch_size_; i++) {
     types::OutgoingQuery query = this->shuffler_.NextQuery();
-    this->socket_->SendQuery(query);
+    this->socket_->SendQuery(query.Serialize());
     query.Free();
   }
   this->socket_->FlushQueries();

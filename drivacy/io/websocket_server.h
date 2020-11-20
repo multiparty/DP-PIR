@@ -41,7 +41,7 @@ class WebSocketServer : public AbstractSocket {
 
   // We can never send queries (or batch sizes) to clients!
   void SendBatch(uint32_t batch_size) override { assert(false); }
-  void SendQuery(const types::OutgoingQuery &query) override { assert(false); }
+  void SendQuery(const types::ForwardQuery &query) override { assert(false); }
 
   // We can send responses to clients!
   void SendResponse(const types::Response &response) override;

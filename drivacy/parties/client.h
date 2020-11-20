@@ -55,7 +55,7 @@ class Client : public io::socket::SocketListener {
   // Executed when a batch size, query, or response are received.
   void OnReceiveBatch(uint32_t _) override { assert(false); }
   void OnReceiveQuery(const types::IncomingQuery &_) override { assert(false); }
-  void OnReceiveResponse(const types::Response &response) override;
+  void OnReceiveResponse(const types::ForwardResponse &response) override;
 
  private:
   uint32_t machine_id_;

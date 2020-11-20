@@ -1,9 +1,9 @@
 // Copyright 2020 multiparty.org
 
-// The real server-server socket interface.
+// The real server-server socket interface (across different parties).
 //
-// Every socket connects a client (socket-wise) server with a server
-// (socket-wise) server. The party with a lower id has the client end
+// Every socket connects a client (socket-wise) machine with a server
+// (socket-wise) machine. The party with a lower id has the client end
 // while the one with the higher id has the server end.
 
 #include "drivacy/io/socket.h"
@@ -155,8 +155,7 @@ void TCPSocket::Listen() {
       for (uint32_t i = 0; i < this->sent_queries_count_; i++) {
         read(this->upper_socket_, this->read_response_buffer_,
              this->response_msg_size_);
-        this->listener_->OnReceiveResponse(
-            types::Response::Deserialize(this->read_response_buffer_));
+        this->listener_->OnReceiveResponse(this->read_response_buffer_);
       }
     }
 
@@ -177,12 +176,11 @@ void TCPSocket::SendBatch(uint32_t batch_size) {
   send(this->upper_socket_, buffer, sizeof(uint32_t), 0);
 }
 
-void TCPSocket::SendQuery(const types::OutgoingQuery &query) {
+void TCPSocket::SendQuery(const types::ForwardQuery &query) {
   // Write message to out buffer.
   this->sent_queries_count_++;
-  const unsigned char *buffer = query.Serialize();
   uint32_t offset = this->queries_written_ * this->outgoing_query_msg_size_;
-  memcpy(this->write_query_buffer_ + offset, buffer,
+  memcpy(this->write_query_buffer_ + offset, query,
          this->outgoing_query_msg_size_);
   this->queries_written_++;
   // Flush out buffer when full.
