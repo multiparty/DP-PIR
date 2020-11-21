@@ -1,0 +1,28 @@
+# Copyright 2020 multiparty.org
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("many_tests.bzl", "many_tests")
+
+cc_binary(
+    name = "shuffle",
+    srcs = [
+        "shuffle.cc",
+    ],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/protocol:protocol",
+        "//drivacy/types:types",
+    ],
+)
+
+# Shuffle tests
+many_tests("//drivacy/protocol/test:shuffle", ["parallelism", "size"], [
+    (1, 100),
+    (3, 3),
+    (3, 100),
+    (2, 10),
+    (10, 1000),
+])
