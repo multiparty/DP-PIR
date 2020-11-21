@@ -20,6 +20,7 @@ cc_library(
         "//drivacy/primitives:crypto",
         "//drivacy/primitives:sharing",
         "//drivacy/primitives:util",
+        "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
     ],
 )
