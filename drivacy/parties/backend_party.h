@@ -25,10 +25,7 @@ class BackendParty : public Party {
  public:
   BackendParty(uint32_t party, uint32_t machine,
                const types::Configuration &config, const types::Table &table,
-               io::socket::SocketFactory socket_factory)
-      : Party(party, machine, config, table, socket_factory) {
-    this->processed_queries_ = 0;
-  }
+               io::socket::SocketFactory socket_factory);
 
   // Not copyable or movable!
   BackendParty(BackendParty &&other) = delete;
@@ -36,14 +33,25 @@ class BackendParty : public Party {
   BackendParty(const BackendParty &) = delete;
   BackendParty &operator=(const BackendParty &) = delete;
 
+  void OnReceiveBatch(uint32_t batch_size) override;
+
   void OnReceiveQuery(const types::IncomingQuery &query) override;
 
-  // Backend party never receives responses.
+  // Backend party never receives responses or uses intra-party communication.
+  void OnQueriesReady(uint32_t machine_id) override { assert(false); }
+  void OnResponsesReady(uint32_t machine_id) override { assert(false); }
+
   void OnReceiveResponse(const types::ForwardResponse &response) override {
     assert(false);
   }
-
-  // Send the processed queries/responses over socket.
+  bool OnReceiveQuery(uint32_t machine_id,
+                      const types::ForwardQuery &query) override {
+    assert(false);
+  }
+  bool OnReceiveResponse(uint32_t machine_id,
+                         const types::Response &response) override {
+    assert(false);
+  }
   void SendQueries() override { assert(false); }
   void SendResponses() override { assert(false); }
 

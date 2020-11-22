@@ -64,8 +64,8 @@ absl::Status Test(const drivacy::types::Configuration &config,
     queries_it->push_back(query);
     client_it->MakeQuery(query);
     // Move to the next client.
-    std::next(client_it);
-    std::next(queries_it);
+    client_it = std::next(client_it);
+    queries_it = std::next(queries_it);
     if (client_it == clients.end()) {
       // Restart from the first client again.
       client_it = clients.begin();
@@ -100,18 +100,21 @@ absl::Status Setup(const std::string &table_path,
   uint32_t parallelism = config.parallelism();
   std::list<drivacy::parties::HeadParty> head_party;
   for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
-    head_party.emplace_back(1, machine_id, config, table,
-                            drivacy::io::socket::SimulatedSocket::Factory,
-                            drivacy::io::socket::SimulatedClientSocket::Factory,
-                            BATCH_SIZE);
+    head_party.emplace_back(
+        1, machine_id, config, table,
+        drivacy::io::socket::SimulatedSocket::Factory,
+        drivacy::io::socket::SimulatedIntraPartySocket::Factory,
+        drivacy::io::socket::SimulatedClientSocket::Factory, BATCH_SIZE);
   }
 
   // Setup middle-of-the-chain parties' machines.
   std::list<drivacy::parties::Party> parties;
   for (uint32_t party_id = 2; party_id < config.parties(); party_id++) {
     for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
-      parties.emplace_back(party_id, machine_id, config, table,
-                           drivacy::io::socket::SimulatedSocket::Factory);
+      parties.emplace_back(
+          party_id, machine_id, config, table,
+          drivacy::io::socket::SimulatedSocket::Factory,
+          drivacy::io::socket::SimulatedIntraPartySocket::Factory);
     }
   }
 
@@ -120,6 +123,17 @@ absl::Status Setup(const std::string &table_path,
   for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
     backend_party.emplace_back(config.parties(), machine_id, config, table,
                                drivacy::io::socket::SimulatedSocket::Factory);
+  }
+
+  // Listen.
+  for (auto &machine : head_party) {
+    machine.Listen();
+  }
+  for (auto &machine : parties) {
+    machine.Listen();
+  }
+  for (auto &machine : backend_party) {
+    machine.Listen();
   }
 
   // Make a query.

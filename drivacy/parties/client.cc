@@ -32,7 +32,8 @@ void Client::MakeQuery(uint64_t value) {
   this->state_.queries.push_back(value);
   this->state_.preshares.push_back(query.query_state());
   // Send via socket.
-  this->socket_->SendQuery(query.Serialize());
+  types::ForwardQuery buffer = query.Serialize();
+  this->socket_->SendQuery(buffer);
   query.Free();
 }
 

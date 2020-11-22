@@ -13,13 +13,37 @@
 
 namespace drivacy {
 namespace parties {
+namespace {
 
+std::unique_ptr<io::socket::AbstractIntraPartySocket> NullFactory(
+    uint32_t /*party_id*/, uint32_t /*machine_id*/,
+    const types::Configuration & /*config*/,
+    io::socket::IntraPartySocketListener * /*listener*/) {
+  return nullptr;
+}
+
+}  // namespace
+
+// Constructor
+BackendParty::BackendParty(uint32_t party, uint32_t machine,
+                           const types::Configuration &config,
+                           const types::Table &table,
+                           io::socket::SocketFactory socket_factory)
+    : Party(party, machine, config, table, socket_factory, NullFactory) {
+  this->processed_queries_ = 0;
+}
+
+// Store batch size and reset counters.
+void BackendParty::OnReceiveBatch(uint32_t batch_size) {
+  this->batch_size_ = batch_size;
+}
+
+// Handle query and reply back immediately when a query is received.
 void BackendParty::OnReceiveQuery(const types::IncomingQuery &query) {
   // Process query creating a response, send it over socket.
   types::Response response =
       protocol::backend::QueryToResponse(query, config_, table_);
   this->socket_->SendResponse(response);
-  response.Free();
 
   // Flush socket when everything is done.
   this->processed_queries_++;

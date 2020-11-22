@@ -46,7 +46,9 @@ class SimulatedSocket : public AbstractSocket {
   void Listen() override {}
 
  private:
-  static std::unordered_map<uint32_t, SimulatedSocket *> sockets_;
+  static std::unordered_map<uint32_t,
+                            std::unordered_map<uint32_t, SimulatedSocket *>>
+      sockets_;
 };
 
 // Similar to the above class, but used by the first server/party to simulate
@@ -78,7 +80,9 @@ class SimulatedClientSocket : public AbstractSocket {
   void Listen() override {}
 
  private:
-  static std::unordered_map<uint32_t, SimulatedClientSocket *> sockets_;
+  static std::unordered_map<
+      uint32_t, std::unordered_map<uint32_t, SimulatedClientSocket *>>
+      sockets_;
 };
 
 class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
@@ -102,6 +106,9 @@ class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
       SimulatedIntraPartySocket::sockets_.erase(this->party_id_);
     }
   }
+
+  void BroadcastQueriesReady() override;
+  void BroadcastResponsesReady() override;
 
   void SendQuery(uint32_t machine_id,
                  const types::OutgoingQuery &query) override;

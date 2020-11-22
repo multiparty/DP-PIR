@@ -119,10 +119,12 @@ class Shuffler {
   // The response vector contains responses that this machine was meant to
   // process, and were shuffled by other machines of this party but now need
   // deshuffling, before sending them to another party.
-  // TODO(babman): improve memory allocations and management here.
   std::vector<types::ForwardQuery> shuffled_queries_;
   std::vector<types::Response> deshuffled_responses_;
   // Maps storing relavent information from simulated shuffling.
+  // Invariant: for any machines m and m',
+  //            query_indices[m'] at machine m == query_order_[m] at machine m'.
+
   // query_machine_ids_[i] = machine-bucket of the ith query (phase 1).
   std::list<uint32_t> query_machine_ids_;
   // response_machine_ids_[i] = machine-bucket of the ith response (phase 1).
@@ -144,9 +146,6 @@ class Shuffler {
   std::unordered_map<uint32_t,
                      std::pair<size_t, std::vector<types::QueryState>>>
       query_states_;
-
-  // Invariant: for any machines m and m',
-  //            query_indices[m'] at machine m == query_order_[m] at machine m'.
 };
 
 }  // namespace protocol

@@ -24,22 +24,33 @@
 namespace drivacy {
 namespace parties {
 
-class Party : public io::socket::SocketListener {
+class Party : public io::socket::SocketListener,
+              public io::socket::IntraPartySocketListener {
  public:
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
   Party(uint32_t party_id, uint32_t machine_id,
         const types::Configuration &config, const types::Table &table,
-        io::socket::SocketFactory socket_factory)
+        io::socket::SocketFactory socket_factory,
+        io::socket::IntraPartySocketFactory intra_party_socket_factory)
       : party_id_(party_id),
         machine_id_(machine_id),
         config_(config),
-        table_(table) {
+        table_(table),
+        batch_size_(0),
+        queries_shuffled_(0),
+        responses_deshuffled_(0),
+        processed_queries_(0),
+        processed_responses_(0),
+        query_machines_ready_(0),
+        response_machines_ready_(0),
+        shuffler_(party_id, machine_id, config.parties(),
+                  config.parallelism()) {
     // virtual funtion binds to correct subclass.
     this->socket_ = socket_factory(party_id, machine_id, config, this);
-    this->processed_queries_ = 0;
-    this->processed_responses_ = 0;
+    this->intra_party_socket_ =
+        intra_party_socket_factory(party_id, machine_id, config, this);
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -59,17 +70,32 @@ class Party : public io::socket::SocketListener {
   void OnReceiveQuery(const types::IncomingQuery &query) override;
   void OnReceiveResponse(const types::ForwardResponse &response) override;
 
+  // Implementation of IntraPartySocketListener, these functions are called
+  // by the intra party socket when the corresponding event occurs.
+  void OnQueriesReady(uint32_t machine_id) override;
+  void OnResponsesReady(uint32_t machine_id) override;
+  bool OnReceiveQuery(uint32_t machine_id,
+                      const types::ForwardQuery &query) override;
+  bool OnReceiveResponse(uint32_t machine_id,
+                         const types::Response &response) override;
+
  protected:
   uint32_t party_id_;
   uint32_t machine_id_;
   const types::Configuration &config_;
   const types::Table &table_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
-  protocol::Shuffler shuffler_;
+  std::unique_ptr<io::socket::AbstractIntraPartySocket> intra_party_socket_;
   uint32_t batch_size_;
+  uint32_t queries_shuffled_;
+  uint32_t responses_deshuffled_;
   // Tracks the number of processed queries and responses.
   uint32_t processed_queries_;
   uint32_t processed_responses_;
+  uint32_t query_machines_ready_;
+  uint32_t response_machines_ready_;
+  // Shuffler (for distrbuted 2 phase shuffling).
+  protocol::Shuffler shuffler_;
   // Send the processed queries/responses over socket.
   virtual void SendQueries();
   virtual void SendResponses();

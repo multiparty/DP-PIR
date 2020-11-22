@@ -27,11 +27,13 @@ class HeadParty : public Party {
   HeadParty(uint32_t party, uint32_t machine,
             const types::Configuration &config, const types::Table &table,
             io::socket::SocketFactory socket_factory,
+            io::socket::IntraPartySocketFactory intra_party_socket_factory,
             io::socket::SocketFactory client_socket_factory,
             uint32_t batch_size)
-      : Party(party, machine, config, table, socket_factory) {
+      : Party(party, machine, config, table, socket_factory,
+              intra_party_socket_factory) {
     this->client_socket_ = client_socket_factory(party, machine, config, this);
-    this->OnReceiveBatch(batch_size);
+    this->batch_size_ = batch_size;
   }
 
   // Not copyable or movable!

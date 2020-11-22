@@ -57,8 +57,9 @@ class Client : public io::socket::SocketListener {
   void OnReceiveQuery(const types::IncomingQuery &_) override { assert(false); }
   void OnReceiveResponse(const types::ForwardResponse &response) override;
 
- private:
   uint32_t machine_id_;
+
+ private:
   const types::Configuration &config_;
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   types::ClientState state_;

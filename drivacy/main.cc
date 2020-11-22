@@ -26,6 +26,9 @@
 #include "drivacy/util/file.h"
 #include "drivacy/util/status.h"
 
+// TODO(babman): remove
+#include "drivacy/io/simulated_socket.h"
+
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
@@ -50,6 +53,7 @@ absl::Status Setup(uint32_t party_id, uint32_t machine_id,
     drivacy::parties::HeadParty party(
         party_id, machine_id, config, table,
         drivacy::io::socket::TCPSocket::Factory,
+        drivacy::io::socket::SimulatedIntraPartySocket::Factory,
         drivacy::io::socket::WebSocketServer::Factory, batch_size);
     party.Listen();
   } else if (party_id == config.parties()) {
@@ -58,8 +62,10 @@ absl::Status Setup(uint32_t party_id, uint32_t machine_id,
         drivacy::io::socket::TCPSocket::Factory);
     party.Listen();
   } else {
-    drivacy::parties::Party party(party_id, machine_id, config, table,
-                                  drivacy::io::socket::TCPSocket::Factory);
+    drivacy::parties::Party party(
+        party_id, machine_id, config, table,
+        drivacy::io::socket::TCPSocket::Factory,
+        drivacy::io::socket::SimulatedIntraPartySocket::Factory);
     party.Listen();
   }
 

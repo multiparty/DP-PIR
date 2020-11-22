@@ -80,11 +80,7 @@ class OutgoingQuery {
   // After the placeholder has been filled, this produces a processed query!
   const unsigned char *Serialize() const;
 
-  // Frees the underlying buffers in the instance.
-  // It is unsafe to use any of the functions related to the buffer after this
-  // function is called.
-  // Unsafe functions: buffer(), set_Tally(), and share().
-  // Safe functions: set_preshare() and query_state()
+  // Free underlying buffer.
   void Free();
 
  private:
@@ -109,8 +105,6 @@ class Response {
   // Serialization.
   const unsigned char *Serialize() const;
   static Response Deserialize(const unsigned char *buffer);
-  // Freeing.
-  void Free() {}
 
  private:
   uint64_t tally_;

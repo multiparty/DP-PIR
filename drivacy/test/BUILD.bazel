@@ -55,3 +55,19 @@ cc_test(
         "--table=$(location testdata/table2.json)",
     ],
 )
+
+cc_test(
+    name = "local-test-3",
+    srcs = [
+        "main.cc",
+    ],
+    deps = MAIN_DEPS,
+    data = [
+        "testdata/config3.json",
+        "testdata/table3.json",
+    ],
+    args = [
+        "--config=$(location testdata/config3.json)",
+        "--table=$(location testdata/table3.json)",
+    ],
+)

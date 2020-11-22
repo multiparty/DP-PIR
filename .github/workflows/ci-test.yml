@@ -35,4 +35,4 @@ jobs:
       run: bazel build //drivacy/...
 
     - name: Test all
-      run: bazel test //drivacy/... --test_output=errors
+      run: bazel test //drivacy/... --test_output=all

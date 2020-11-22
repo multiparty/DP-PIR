@@ -72,9 +72,12 @@ using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
 // Intra-party portion.
 class IntraPartySocketListener {
  public:
-  virtual void OnReceiveQuery(uint32_t machine_id,
+  virtual void OnQueriesReady(uint32_t machine_id) = 0;
+  virtual void OnResponsesReady(uint32_t machine_id) = 0;
+
+  virtual bool OnReceiveQuery(uint32_t machine_id,
                               const types::ForwardQuery &query) = 0;
-  virtual void OnReceiveResponse(uint32_t machine_id,
+  virtual bool OnReceiveResponse(uint32_t machine_id,
                                  const types::Response &response) = 0;
 };
 
@@ -98,6 +101,9 @@ class AbstractIntraPartySocket {
   }
 
   virtual void Listen() = 0;
+
+  virtual void BroadcastQueriesReady() = 0;
+  virtual void BroadcastResponsesReady() = 0;
 
   virtual void SendQuery(uint32_t machine_id,
                          const types::OutgoingQuery &query) = 0;
