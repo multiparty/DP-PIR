@@ -1,6 +1,8 @@
 # Copyright 2020 multiparty.org
 load("@rules_cc//cc:defs.bzl", "cc_test", "cc_binary")
 
+exports_files(glob(["testdata/*.json"]), ["//visibility:public"])
+
 MAIN_DEPS = [
     "@com_google_absl//absl/flags:flag",
     "@com_google_absl//absl/flags:parse",

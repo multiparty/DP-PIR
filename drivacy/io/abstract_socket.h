@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <vector>
 
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -75,9 +76,9 @@ class IntraPartySocketListener {
   virtual void OnQueriesReady(uint32_t machine_id) = 0;
   virtual void OnResponsesReady(uint32_t machine_id) = 0;
 
-  virtual bool OnReceiveQuery(uint32_t machine_id,
+  virtual void OnReceiveQuery(uint32_t machine_id,
                               const types::ForwardQuery &query) = 0;
-  virtual bool OnReceiveResponse(uint32_t machine_id,
+  virtual void OnReceiveResponse(uint32_t machine_id,
                                  const types::Response &response) = 0;
 };
 
@@ -94,13 +95,14 @@ class AbstractIntraPartySocket {
     this->party_count_ = config.parties();
     this->parallelism_ = config.parallelism();
     this->query_msg_size_ =
-        types::OutgoingQuery::Size(party_id, this->party_count_);
-    this->response_msg_size_ = types::Response::Size();
+        types::ForwardQuerySize(party_id, this->party_count_);
+    this->response_msg_size_ = types::ForwardResponseSize();
     // The backend party does not need Intra-party sockets.
     assert(party_id < this->party_count_);
   }
 
-  virtual void Listen() = 0;
+  virtual void ListenQueries(std::vector<uint32_t> counts) = 0;
+  virtual void ListenResponses() = 0;
 
   virtual void BroadcastQueriesReady() = 0;
   virtual void BroadcastResponsesReady() = 0;

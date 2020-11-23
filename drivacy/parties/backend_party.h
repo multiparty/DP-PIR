@@ -44,11 +44,11 @@ class BackendParty : public Party {
   void OnReceiveResponse(const types::ForwardResponse &response) override {
     assert(false);
   }
-  bool OnReceiveQuery(uint32_t machine_id,
+  void OnReceiveQuery(uint32_t machine_id,
                       const types::ForwardQuery &query) override {
     assert(false);
   }
-  bool OnReceiveResponse(uint32_t machine_id,
+  void OnReceiveResponse(uint32_t machine_id,
                          const types::Response &response) override {
     assert(false);
   }

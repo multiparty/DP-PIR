@@ -118,7 +118,8 @@ class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
   void FlushQueries() override {}
   void FlushResponses() override {}
 
-  void Listen() override {}
+  void ListenQueries(std::vector<uint32_t> counts) override {}
+  void ListenResponses() override {}
 
  private:
   static std::unordered_map<

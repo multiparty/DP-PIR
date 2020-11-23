@@ -57,12 +57,14 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
   });
 
   // Query from table.
-  uint32_t i = 1;
-  for (const auto &[query, response] : table) {
-    queries.push_back(query);
-    client.MakeQuery(query);
-    if (i++ == query_count) {
-      break;
+  uint32_t i = 0;
+  while (i < query_count) {
+    for (const auto &[query, response] : table) {
+      queries.push_back(query);
+      client.MakeQuery(query);
+      if (++i == query_count) {
+        break;
+      }
     }
   }
 

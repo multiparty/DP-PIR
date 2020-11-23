@@ -1,6 +1,4 @@
 # Copyright 2020 multiparty.org
-load("@rules_cc//cc:defs.bzl", "cc_test")
-
 def _binary_test_impl(ctx):
     ctx.actions.write(
         is_executable = True,

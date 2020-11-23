@@ -156,6 +156,17 @@ void Shuffler::Initialize(uint32_t size) {
   }
 }
 
+// Returns a vector (logically a map) from a machine_id to the count
+// of queries expected to be received from that machine.
+std::vector<uint32_t> Shuffler::IncomingQueriesCount() {
+  std::vector<uint32_t> result(this->parallelism_ + 1, 0);
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    uint32_t count = this->query_indices_.at(m).second.size();
+    result[m] = count;
+  }
+  return result;
+}
+
 // Determines the machine the next query is meant to be sent to.
 uint32_t Shuffler::MachineOfNextQuery(const types::QueryState &query_state) {
   // Find which machine this query is meant for.

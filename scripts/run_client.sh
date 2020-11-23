@@ -7,4 +7,4 @@ if [ -z "$1" ] || [ "$1" == "-h" ]; then
 fi
 
 # Run parties
-./bazel-bin/drivacy/client --table=data/server-map.json --config=data/config.json --machine=$1 --queries=$2
+./bazel-bin/drivacy/client --table=data/server-map.json --config=data/config2.json --machine=$1 --queries=$2

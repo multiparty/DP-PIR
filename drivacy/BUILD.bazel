@@ -1,6 +1,7 @@
 # Copyright 2020 multiparty.org
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+load("test.bzl", "end_to_end_test")
 
 cc_binary(
     name = "main",
@@ -56,4 +57,38 @@ cc_binary(
         "//drivacy/primitives:crypto",
         "//drivacy/types:config_cc_proto",
     ],
+)
+
+# end to end tests
+end_to_end_test(
+    name = "end-to-end-1",
+    table = "//drivacy/test:testdata/table1.json",
+    config = "//drivacy/test:testdata/config1.json",
+    parties = 2,
+    parallelism = 1,
+    batch = 100,
+    queries = 2100,
+    tags = ["exclusive"],
+)
+
+end_to_end_test(
+    name = "end-to-end-2",
+    table = "//drivacy/test:testdata/table2.json",
+    config = "//drivacy/test:testdata/config2.json",
+    parties = 5,
+    parallelism = 1,
+    batch = 30,
+    queries = 120,
+    tags = ["exclusive"],
+)
+
+end_to_end_test(
+    name = "end-to-end-3",
+    table = "//drivacy/test:testdata/table3.json",
+    config = "//drivacy/test:testdata/config3.json",
+    parties = 3,
+    parallelism = 3,
+    batch = 3,
+    queries = 18,
+    tags = ["exclusive"],
 )

@@ -74,9 +74,9 @@ class Party : public io::socket::SocketListener,
   // by the intra party socket when the corresponding event occurs.
   void OnQueriesReady(uint32_t machine_id) override;
   void OnResponsesReady(uint32_t machine_id) override;
-  bool OnReceiveQuery(uint32_t machine_id,
+  void OnReceiveQuery(uint32_t machine_id,
                       const types::ForwardQuery &query) override;
-  bool OnReceiveResponse(uint32_t machine_id,
+  void OnReceiveResponse(uint32_t machine_id,
                          const types::Response &response) override;
 
  protected:

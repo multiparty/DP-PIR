@@ -30,8 +30,10 @@ namespace {
 
 int SocketServer(uint16_t port) {
   // Creating socket file descriptor.
+  int re = 1;
   int serverfd = ::socket(AF_INET, SOCK_STREAM, 0);
   assert(serverfd >= 0);
+  assert(setsockopt(serverfd, SOL_SOCKET, SO_REUSEADDR, &re, sizeof(int)) >= 0);
 
   // Filling server information.
   struct sockaddr_in servaddr;
@@ -40,19 +42,18 @@ int SocketServer(uint16_t port) {
   servaddr.sin_port = htons(port);
 
   // Bind the socket to the port address.
-  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr),
-              sizeof(servaddr)) >= 0);
+  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr), sizeof(servaddr)) >= 0);
 
   // Listen for only 1 connection.
   std::cout << "Waiting for client..." << std::endl;
   assert(listen(serverfd, 1) >= 0);
-  std::cout << "Client connected to our server socket!" << std::endl;
 
   // Accept the connection.
   auto servaddr_len = static_cast<socklen_t>(sizeof(servaddr));
   int sockfd =
       accept(serverfd, reinterpret_cast<sockaddr *>(&servaddr), &servaddr_len);
   assert(sockfd >= 0);
+  std::cout << "Client connected to our server socket!" << std::endl;
   return sockfd;
 }
 
