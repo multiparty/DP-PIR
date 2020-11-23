@@ -40,7 +40,8 @@ class IntraPartyTCPSocket : public AbstractIntraPartySocket {
   static std::unique_ptr<AbstractIntraPartySocket> Factory(
       uint32_t party_id, uint32_t machine_id,
       const types::Configuration &config, IntraPartySocketListener *listener) {
-    return std::make_unique<IntraPartyTCPSocket>(party_id, machine_id, config, listener);
+    return std::make_unique<IntraPartyTCPSocket>(party_id, machine_id, config,
+                                                 listener);
   }
 
   void ListenQueries(std::vector<uint32_t> counts) override;
@@ -49,8 +50,10 @@ class IntraPartyTCPSocket : public AbstractIntraPartySocket {
   void BroadcastQueriesReady() override;
   void BroadcastResponsesReady() override;
 
-  void SendQuery(uint32_t machine_id, const types::OutgoingQuery &query) override;
-  void SendResponse(uint32_t machine_id, const types::ForwardResponse &response) override;
+  void SendQuery(uint32_t machine_id,
+                 const types::OutgoingQuery &query) override;
+  void SendResponse(uint32_t machine_id,
+                    const types::ForwardResponse &response) override;
 
   void FlushQueries() override;
   void FlushResponses() override;

@@ -41,7 +41,8 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
   if (++this->queries_shuffled_ == this->batch_size_) {
     this->queries_shuffled_ = 0;
     this->intra_party_socket_->FlushQueries();
-    this->intra_party_socket_->ListenQueries(std::move(this->shuffler_.IncomingQueriesCount()));
+    this->intra_party_socket_->ListenQueries(
+        std::move(this->shuffler_.IncomingQueriesCount()));
   }
 }
 

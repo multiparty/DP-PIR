@@ -42,7 +42,8 @@ int SocketServer(uint16_t port) {
   servaddr.sin_port = htons(port);
 
   // Bind the socket to the port address.
-  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr), sizeof(servaddr)) >= 0);
+  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr),
+              sizeof(servaddr)) >= 0);
 
   // Listen for only 1 connection.
   std::cout << "Waiting for client..." << std::endl;

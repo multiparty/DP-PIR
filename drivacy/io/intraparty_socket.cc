@@ -7,21 +7,21 @@
 
 #include "drivacy/io/intraparty_socket.h"
 
-#include <cassert>
-#include <algorithm>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <poll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <utility>
 
+#include <algorithm>
+#include <cassert>
 #include <cstring>
 #include <iostream>
+#include <utility>
 
 #include "absl/functional/bind_front.h"
 
@@ -35,7 +35,7 @@ int ServerSocket(const types::Configuration &config, uint32_t party_id,
                  uint32_t machine_id) {
   const auto &machines = config.network().at(party_id).machines();
   int32_t port = machines.at(machine_id).intraparty_port();
-  
+
   // Creating socket file descriptor.
   int re = 1;
   int serverfd = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -49,7 +49,8 @@ int ServerSocket(const types::Configuration &config, uint32_t party_id,
   servaddr.sin_port = htons(port);
 
   // Bind the socket to the port address.
-  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr), sizeof(servaddr)) >= 0);
+  assert(bind(serverfd, reinterpret_cast<struct sockaddr *>(&servaddr),
+              sizeof(servaddr)) >= 0);
   return serverfd;
 }
 
@@ -70,7 +71,7 @@ void AcceptClients(int serverfd, std::vector<int> &map,
     int clientfd = accept(serverfd, servaddr_ptr, &servaddr_len);
     assert(clientfd >= 0);
     // Listen to the client's machine id.
-    assert(read(clientfd, &machine_id, sizeof(uint32_t)) == sizeof(uint32_t));    
+    assert(read(clientfd, &machine_id, sizeof(uint32_t)) == sizeof(uint32_t));
     // Store socket.
     map[machine_id] = clientfd;
     std::cout << "Machine " << machine_id << " connected. " << clients_count
@@ -87,7 +88,7 @@ int ClientSocket(const types::Configuration &config, uint32_t party_id,
   const auto &machines = config.network().at(party_id).machines();
   const std::string &ip = machines.at(target_machine_id).ip();
   int32_t port = machines.at(target_machine_id).intraparty_port();
-  
+
   // Creating socket file descriptor.
   int sockfd = ::socket(AF_INET, SOCK_STREAM, 0);
   assert(sockfd >= 0);
@@ -99,7 +100,8 @@ int ClientSocket(const types::Configuration &config, uint32_t party_id,
   assert(inet_pton(AF_INET, ip.c_str(), &servaddr.sin_addr) >= 0);
 
   // Connect to the server.
-  std::cout << "Connecting to machine " << target_machine_id << "..." << std::endl;
+  std::cout << "Connecting to machine " << target_machine_id << "..."
+            << std::endl;
   while (connect(sockfd, reinterpret_cast<sockaddr *>(&servaddr),
                  sizeof(servaddr)) < 0) {
     sleep(1);
@@ -117,13 +119,13 @@ void FillPoll(pollfd *fds, const std::vector<int> &sockets,
               const std::vector<uint32_t> &counts, uint32_t machine_id) {
   for (uint32_t m = 1; m < sockets.size(); m++) {
     if (m != machine_id && counts.at(m) > 0) {
-      fds[m-1].fd = sockets.at(m);
-      fds[m-1].events = POLLIN;
-      fds[m-1].revents = 0;
+      fds[m - 1].fd = sockets.at(m);
+      fds[m - 1].events = POLLIN;
+      fds[m - 1].revents = 0;
     } else {
-      fds[m-1].fd = -1;
-      fds[m-1].events = 0;
-      fds[m-1].revents = 0;
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+      fds[m - 1].revents = 0;
     }
   }
 }
@@ -133,7 +135,7 @@ uint32_t PollAndFind(pollfd *fds, nfds_t nfds) {
   assert(poll(fds, nfds, -1) > 0);
   // Find socket that has POLLIN ready.
   for (uint32_t m = 1; m <= nfds; m++) {
-    if (fds[m-1].revents & POLLIN) {
+    if (fds[m - 1].revents & POLLIN) {
       return m;
     }
   }
@@ -184,8 +186,8 @@ void IntraPartyTCPSocket::ListenQueries(std::vector<uint32_t> counts) {
     // Update counts.
     if (--counts.at(machine_id) == 0) {
       fds[machine_id - 1].fd = -1;
-      fds[machine_id - 1]. events = 0;
-      fds[machine_id - 1]. revents = 0;
+      fds[machine_id - 1].events = 0;
+      fds[machine_id - 1].revents = 0;
     }
     // Read query.
     read(this->sockets_.at(machine_id), this->read_query_buffer_,
@@ -198,10 +200,11 @@ void IntraPartyTCPSocket::ListenQueries(std::vector<uint32_t> counts) {
   // Read broadcast!
   unsigned char ready = 0;
   size_t size = sizeof(ready);
-  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id ++) {
+  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id++) {
     if (machine_id != this->machine_id_) {
       read(this->sockets_.at(machine_id), &ready, size);
-      assert(ready == 1); ready = 0;
+      assert(ready == 1);
+      ready = 0;
       this->listener_->OnQueriesReady(machine_id);
     }
   }
@@ -226,13 +229,14 @@ void IntraPartyTCPSocket::ListenResponses() {
     // Update counts.
     if (--this->outgoing_counts_.at(machine_id) == 0) {
       fds[machine_id - 1].fd = -1;
-      fds[machine_id - 1]. events = 0;
-      fds[machine_id - 1]. revents = 0;
+      fds[machine_id - 1].events = 0;
+      fds[machine_id - 1].revents = 0;
     }
     // Read response.
     read(this->sockets_.at(machine_id), this->read_response_buffer_,
          this->response_msg_size_);
-    this->listener_->OnReceiveResponse(machine_id, types::Response::Deserialize(this->read_response_buffer_));
+    this->listener_->OnReceiveResponse(
+        machine_id, types::Response::Deserialize(this->read_response_buffer_));
   }
 
   delete[] fds;
@@ -240,10 +244,11 @@ void IntraPartyTCPSocket::ListenResponses() {
   // Read broadcast!
   unsigned char ready = 0;
   size_t size = sizeof(ready);
-  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id ++) {
+  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id++) {
     if (machine_id != this->machine_id_) {
       read(this->sockets_.at(machine_id), &ready, size);
-      assert(ready == 1); ready = 0;
+      assert(ready == 1);
+      ready = 0;
       this->listener_->OnResponsesReady(machine_id);
     }
   }
@@ -291,8 +296,8 @@ void IntraPartyTCPSocket::SendResponse(uint32_t machine_id,
 }
 
 // Flushing write buffers.
-void IntraPartyTCPSocket::FlushQueries() { }
-void IntraPartyTCPSocket::FlushResponses() { }
+void IntraPartyTCPSocket::FlushQueries() {}
+void IntraPartyTCPSocket::FlushResponses() {}
 
 }  // namespace socket
 }  // namespace io

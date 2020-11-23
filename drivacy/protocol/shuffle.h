@@ -76,7 +76,7 @@ class Shuffler {
   // Initialize the shuffler to handle a new batch of the given
   // size (per machine), thus size * parallelism_ in total.
   void Initialize(uint32_t size);
-  
+
   // Returns a vector (logically a map) from a machine_id to the count
   // of queries expected to be received from that machine.
   std::vector<uint32_t> IncomingQueriesCount();
