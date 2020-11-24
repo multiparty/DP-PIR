@@ -68,7 +68,7 @@ void Shuffler::Initialize(uint32_t size) {
     // Query at global index j goes to global index i after shuffling.
     uint32_t j = i;
     if (i < this->total_size_ - 1) {
-      j = primitives::util::Rand32(this->generator_, i, this->total_size_);
+      j = primitives::util::Rand32(&this->generator_, i, this->total_size_);
     }
     uint32_t true_j = j;
     if (shuffling_order.count(j) == 1) {

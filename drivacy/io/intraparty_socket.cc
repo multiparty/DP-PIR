@@ -54,7 +54,7 @@ int ServerSocket(const types::Configuration &config, uint32_t party_id,
   return serverfd;
 }
 
-void AcceptClients(int serverfd, std::vector<int> &map,
+void AcceptClients(int serverfd, std::vector<int> *map,
                    uint32_t clients_count) {
   // Listen for only 1 connection.
   std::cout << "Waiting for " << clients_count << " intraparty connections..."
@@ -73,7 +73,7 @@ void AcceptClients(int serverfd, std::vector<int> &map,
     // Listen to the client's machine id.
     assert(read(clientfd, &machine_id, sizeof(uint32_t)) == sizeof(uint32_t));
     // Store socket.
-    map[machine_id] = clientfd;
+    (*map)[machine_id] = clientfd;
     std::cout << "Machine " << machine_id << " connected. " << clients_count
               << " remain!" << std::endl;
   }
@@ -159,7 +159,7 @@ IntraPartyTCPSocket::IntraPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   // Setup sockets.
   if (machine_id - 1 > 0) {
     int serverfd = ServerSocket(config, party_id, machine_id);
-    AcceptClients(serverfd, this->sockets_, machine_id - 1);
+    AcceptClients(serverfd, &this->sockets_, machine_id - 1);
   }
   for (uint32_t m = machine_id + 1; m <= config.parallelism(); m++) {
     this->sockets_[m] = ClientSocket(config, party_id, machine_id, m);

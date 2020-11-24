@@ -24,7 +24,7 @@ inline uint64_t Mod(uint64_t a, uint64_t modulus) {
 }
 
 // Random number using std::rand() (unseeded)
-// TODO: replace this with something proper.
+// TODO(babman): replace this with something proper.
 inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {
   return (std::rand() % (upper_bound - lower_bound)) + lower_bound;
 }
@@ -33,7 +33,7 @@ inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {
 using Generator = std::mt19937;
 
 inline Generator SeedGenerator(uint32_t seed) { return std::mt19937(seed); }
-inline uint32_t Rand32(Generator &generator, uint32_t lower_bound,
+inline uint32_t Rand32(Generator *generator, uint32_t lower_bound,
                        uint32_t upper_bound) {
   uint64_t span = upper_bound - lower_bound;
   uint64_t generator_span = std::mt19937::max() - std::mt19937::min();
@@ -44,7 +44,7 @@ inline uint32_t Rand32(Generator &generator, uint32_t lower_bound,
   uint64_t rejection = generator_span - (generator_span % span);
   assert((rejection % span) == 0);
   uint64_t result;
-  while ((result = generator()) >= rejection + std::mt19937::min()) {
+  while ((result = (*generator)()) >= rejection + std::mt19937::min()) {
   }
   result -= std::mt19937::min();  // result uniformly  in range [0, rejection)
                                   // with rejection % span == 0

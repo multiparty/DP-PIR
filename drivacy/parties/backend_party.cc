@@ -9,6 +9,8 @@
 
 #include "drivacy/parties/backend_party.h"
 
+#include <memory>
+
 #include "drivacy/protocol/backend.h"
 
 namespace drivacy {

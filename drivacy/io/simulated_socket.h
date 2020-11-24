@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/types/config.pb.h"
