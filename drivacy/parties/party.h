@@ -13,7 +13,10 @@
 #ifndef DRIVACY_PARTIES_PARTY_H_
 #define DRIVACY_PARTIES_PARTY_H_
 
+// #define DEBUG_MSG
+
 #include <cstdint>
+#include <list>
 #include <memory>
 
 #include "drivacy/io/abstract_socket.h"
@@ -45,6 +48,7 @@ class Party : public io::socket::SocketListener,
         processed_responses_(0),
         query_machines_ready_(0),
         response_machines_ready_(0),
+        noise_size_(0),
         shuffler_(party_id, machine_id, config.parties(),
                   config.parallelism()) {
     // virtual funtion binds to correct subclass.
@@ -66,18 +70,20 @@ class Party : public io::socket::SocketListener,
 
   // Implementation of SocketListener, these functions are called by the
   // socket when a batch size, query, or response is received on the socket.
-  void OnReceiveBatch(uint32_t batch_size) override;
+  void OnReceiveBatchSize(uint32_t batch_size) override;
   void OnReceiveQuery(const types::IncomingQuery &query) override;
   void OnReceiveResponse(const types::ForwardResponse &response) override;
 
   // Implementation of IntraPartySocketListener, these functions are called
   // by the intra party socket when the corresponding event occurs.
-  void OnQueriesReady(uint32_t machine_id) override;
-  void OnResponsesReady(uint32_t machine_id) override;
+  bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) override;
+  void OnReceiveBatchSize2() override;
   void OnReceiveQuery(uint32_t machine_id,
                       const types::ForwardQuery &query) override;
   void OnReceiveResponse(uint32_t machine_id,
                          const types::Response &response) override;
+  void OnQueriesReady(uint32_t machine_id) override;
+  void OnResponsesReady(uint32_t machine_id) override;
 
  protected:
   uint32_t party_id_;
@@ -94,6 +100,9 @@ class Party : public io::socket::SocketListener,
   uint32_t processed_responses_;
   uint32_t query_machines_ready_;
   uint32_t response_machines_ready_;
+  // Noise used in this batch.
+  std::list<types::OutgoingQuery> noise_;
+  uint32_t noise_size_;
   // Shuffler (for distrbuted 2 phase shuffling).
   protocol::Shuffler shuffler_;
   // Send the processed queries/responses over socket.

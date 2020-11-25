@@ -8,21 +8,18 @@ cc_binary(
         "shuffle.cc",
     ],
     deps = [
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
         "//drivacy/protocol:protocol",
         "//drivacy/types:types",
     ],
 )
 
 # Shuffle tests
-many_tests("//drivacy/protocol/test:shuffle", ["parallelism", "size"], [
-    (1, 100),
-    (3, 3),
-    (3, 100),
-    (2, 10),
-    (10, 1000),
+many_tests("//drivacy/protocol/test:shuffle", [
+    (100, ),
+    (3, 3, 3),
+    (50, 50, 50),
+    (100, 50, 141),
+    (20, 10),
+    (1010, 800, 1131, 1001, 1000, 600, 812, 1099, 965, 1000),
 ])

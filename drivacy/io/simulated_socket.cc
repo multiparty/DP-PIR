@@ -9,6 +9,8 @@
 
 #include "drivacy/io/simulated_socket.h"
 
+#include <cstring>
+
 namespace drivacy {
 namespace io {
 namespace socket {
@@ -27,21 +29,35 @@ SimulatedSocket::SimulatedSocket(uint32_t party_id, uint32_t machine_id,
 void SimulatedSocket::SendBatch(uint32_t batch_size) {
   SimulatedSocket *socket =
       SimulatedSocket::sockets_.at(this->party_id_ + 1).at(this->machine_id_);
-  socket->listener_->OnReceiveBatch(batch_size);
+  socket->listener_->OnReceiveBatchSize(batch_size);
 }
 
 void SimulatedSocket::SendQuery(const types::ForwardQuery &query) {
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->outgoing_query_msg_size_];
+  memcpy(buffer, query, this->outgoing_query_msg_size_);
+  // Pass copy to party.
   SimulatedSocket *socket =
       SimulatedSocket::sockets_.at(this->party_id_ + 1).at(this->machine_id_);
-  socket->listener_->OnReceiveQuery(
-      types::IncomingQuery::Deserialize(query, this->outgoing_query_msg_size_));
+  socket->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
+      buffer, this->outgoing_query_msg_size_));
+  // Free memory.
+  delete[] buffer;
 }
 
 void SimulatedSocket::SendResponse(const types::Response &response) {
   types::ForwardResponse forward = response.Serialize();
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->response_msg_size_];
+  memcpy(buffer, forward, this->response_msg_size_);
+  // Pass copy to party.
   SimulatedSocket *socket =
       SimulatedSocket::sockets_.at(this->party_id_ - 1).at(this->machine_id_);
-  socket->listener_->OnReceiveResponse(forward);
+  socket->listener_->OnReceiveResponse(buffer);
+  // Free memory.
+  delete[] buffer;
 }
 
 std::unordered_map<uint32_t, std::unordered_map<uint32_t, SimulatedSocket *>>
@@ -61,18 +77,32 @@ SimulatedClientSocket::SimulatedClientSocket(uint32_t party_id,
 
 void SimulatedClientSocket::SendQuery(const types::ForwardQuery &query) {
   assert(this->party_id_ == 0);
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->outgoing_query_msg_size_];
+  memcpy(buffer, query, this->outgoing_query_msg_size_);
+  // Pass copy over to party.
   SimulatedClientSocket *socket =
       SimulatedClientSocket::sockets_.at(1).at(this->machine_id_);
-  socket->listener_->OnReceiveQuery(
-      types::IncomingQuery::Deserialize(query, this->outgoing_query_msg_size_));
+  socket->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
+      buffer, this->outgoing_query_msg_size_));
+  // Free copy: it is the socket's responsibility to manage memory it allocates.
+  delete[] buffer;
 }
 
 void SimulatedClientSocket::SendResponse(const types::Response &response) {
   assert(this->party_id_ == 1);
   types::ForwardResponse forward = response.Serialize();
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->response_msg_size_];
+  memcpy(buffer, forward, this->response_msg_size_);
+  // Pass response to party.
   SimulatedClientSocket *socket =
       SimulatedClientSocket::sockets_.at(0).at(this->machine_id_);
-  socket->listener_->OnReceiveResponse(forward);
+  socket->listener_->OnReceiveResponse(buffer);
+  // Free memory.
+  delete[] buffer;
 }
 
 std::unordered_map<uint32_t,
@@ -89,6 +119,21 @@ SimulatedIntraPartySocket::SimulatedIntraPartySocket(
       SimulatedIntraPartySocket::sockets_[party_id];
   assert(nested_map.count(machine_id) == 0);
   nested_map.insert({machine_id, this});
+}
+
+void SimulatedIntraPartySocket::BroadcastBatchSize(uint32_t batch_size) {
+  std::unordered_map<uint32_t, SimulatedIntraPartySocket *> &nested_map =
+      SimulatedIntraPartySocket::sockets_.at(this->party_id_);
+  bool should_continue = true;
+  for (auto [_, socket] : nested_map) {
+    should_continue &=
+        socket->listener_->OnReceiveBatchSize(this->machine_id_, batch_size);
+  }
+  if (should_continue) {
+    for (auto [_, socket] : nested_map) {
+      socket->listener_->OnReceiveBatchSize2();
+    }
+  }
 }
 
 void SimulatedIntraPartySocket::BroadcastQueriesReady() {
@@ -110,19 +155,33 @@ void SimulatedIntraPartySocket::BroadcastResponsesReady() {
 void SimulatedIntraPartySocket::SendQuery(uint32_t machine_id,
                                           const types::OutgoingQuery &query) {
   types::ForwardQuery forward = query.Serialize();
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->query_msg_size_];
+  memcpy(buffer, forward, this->query_msg_size_);
+  // Pass over copy to party.
   std::unordered_map<uint32_t, SimulatedIntraPartySocket *> &nested_map =
       SimulatedIntraPartySocket::sockets_.at(this->party_id_);
   SimulatedIntraPartySocket *socket = nested_map.at(machine_id);
-  socket->listener_->OnReceiveQuery(this->machine_id_, forward);
+  socket->listener_->OnReceiveQuery(this->machine_id_, buffer);
+  // Free memory.
+  delete[] buffer;
 }
 
 void SimulatedIntraPartySocket::SendResponse(
     uint32_t machine_id, const types::ForwardResponse &response) {
+  // Make a copy, simulates sending over a network for purposes of memory
+  // management.
+  unsigned char *buffer = new unsigned char[this->response_msg_size_];
+  memcpy(buffer, response, this->response_msg_size_);
+  // Pass over copy to party.
   std::unordered_map<uint32_t, SimulatedIntraPartySocket *> &nested_map =
       SimulatedIntraPartySocket::sockets_.at(this->party_id_);
   SimulatedIntraPartySocket *socket = nested_map.at(machine_id);
   socket->listener_->OnReceiveResponse(this->machine_id_,
-                                       types::Response::Deserialize(response));
+                                       types::Response::Deserialize(buffer));
+  // Free memory.
+  delete[] buffer;
 }
 
 std::unordered_map<uint32_t,

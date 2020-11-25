@@ -6,12 +6,14 @@ cc_library(
     srcs = [
         "backend.cc",
         "query.cc",
+        "noise.cc",
         "response.cc",
         "shuffle.cc",
     ],
     hdrs = [
         "backend.h",
         "query.h",
+        "noise.h",
         "response.h",
         "shuffle.h",
     ],
@@ -20,6 +22,7 @@ cc_library(
         "//drivacy/primitives:crypto",
         "//drivacy/primitives:sharing",
         "//drivacy/primitives:util",
+        "//drivacy/protocol:client",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
     ],

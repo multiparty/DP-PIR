@@ -36,12 +36,19 @@ BackendParty::BackendParty(uint32_t party, uint32_t machine,
 }
 
 // Store batch size and reset counters.
-void BackendParty::OnReceiveBatch(uint32_t batch_size) {
+void BackendParty::OnReceiveBatchSize(uint32_t batch_size) {
+#ifdef DEBUG_MSG
+  std::cout << "On receive batch size (backend) " << machine_id_ << " = "
+            << batch_size << std::endl;
+#endif
   this->batch_size_ = batch_size;
 }
 
 // Handle query and reply back immediately when a query is received.
 void BackendParty::OnReceiveQuery(const types::IncomingQuery &query) {
+#ifdef DEBUG_MSG
+  std::cout << "On receive query (backend) " << machine_id_ << std::endl;
+#endif
   // Process query creating a response, send it over socket.
   types::Response response =
       protocol::backend::QueryToResponse(query, config_, table_);

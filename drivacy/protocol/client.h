@@ -15,8 +15,15 @@ namespace drivacy {
 namespace protocol {
 namespace client {
 
+// Equivalent to CreateQuery(value, config, 0);
 types::OutgoingQuery CreateQuery(uint64_t value,
                                  const types::Configuration &config);
+
+// Creates a query meant to be handled by the system starting from
+// party_id + 1.
+types::OutgoingQuery CreateQuery(uint64_t value,
+                                 const types::Configuration &config,
+                                 uint32_t party_id);
 
 uint64_t ReconstructResponse(const types::Response &response,
                              uint64_t preshare);

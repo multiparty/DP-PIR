@@ -108,6 +108,7 @@ class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
     }
   }
 
+  void BroadcastBatchSize(uint32_t batch_size) override;
   void BroadcastQueriesReady() override;
   void BroadcastResponsesReady() override;
 
@@ -119,6 +120,7 @@ class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
   void FlushQueries() override {}
   void FlushResponses() override {}
 
+  void ListenBatchSizes() override {}
   void ListenQueries(std::vector<uint32_t> counts) override {}
   void ListenResponses() override {}
 

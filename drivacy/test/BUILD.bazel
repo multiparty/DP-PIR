@@ -35,11 +35,11 @@ cc_test(
     deps = MAIN_DEPS,
     data = [
         "testdata/config1.json",
-        "testdata/table1.json",
+        "testdata/table2.json",
     ],
     args = [
         "--config=$(location testdata/config1.json)",
-        "--table=$(location testdata/table1.json)",
+        "--table=$(location testdata/table2.json)",
     ],
 )
 cc_test(

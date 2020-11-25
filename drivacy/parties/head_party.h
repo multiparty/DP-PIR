@@ -31,9 +31,9 @@ class HeadParty : public Party {
             io::socket::SocketFactory client_socket_factory,
             uint32_t batch_size)
       : Party(party, machine, config, table, socket_factory,
-              intra_party_socket_factory) {
+              intra_party_socket_factory),
+        initial_batch_size_(batch_size) {
     this->client_socket_ = client_socket_factory(party, machine, config, this);
-    this->batch_size_ = batch_size;
   }
 
   // Not copyable or movable!
@@ -54,6 +54,7 @@ class HeadParty : public Party {
 
  protected:
   std::unique_ptr<io::socket::AbstractSocket> client_socket_;
+  const uint32_t initial_batch_size_;
 };
 
 }  // namespace parties

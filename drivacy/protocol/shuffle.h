@@ -73,9 +73,23 @@ class Shuffler {
   Shuffler(uint32_t party_id, uint32_t machine_id, uint32_t party_count,
            uint32_t parallelism);
 
-  // Initialize the shuffler to handle a new batch of the given
-  // size (per machine), thus size * parallelism_ in total.
-  void Initialize(uint32_t size);
+  ~Shuffler();
+
+  // Accessors.
+  uint32_t batch_size() { return this->batch_size_; }
+
+  // Initialize the shuffler to handle a new batch.
+  // Initialize must be called for every machine_id, passing the input
+  // batch size of that machine.
+  // When all machine input batch sizes are specified, Initialize returns
+  // true, indicating that initialization is complete.
+  bool Initialize(uint32_t machine_id, uint32_t size);
+
+  // After the shuffler is initialized with the various batch size at every
+  // machine, this function should be called to simulate a global shuffle,
+  // record the relevant portions of the shuffling and deshuffling orders,
+  // for later use during the actual online (phase 2) shuffling.
+  void PreShuffle();
 
   // Returns a vector (logically a map) from a machine_id to the count
   // of queries expected to be received from that machine.
@@ -92,7 +106,7 @@ class Shuffler {
   bool DeshuffleResponse(uint32_t machine_id, const types::Response &response);
 
   // Get the next query in the shuffled order.
-  types::ForwardQuery &NextQuery();
+  types::ForwardQuery NextQuery();
   // Get the next response in the de-shuffled order.
   types::Response &NextResponse();
   // Get the next query state in the shuffled order.
@@ -106,7 +120,8 @@ class Shuffler {
   uint32_t forward_query_size_;
   uint32_t forward_response_size_;
   // Batch size configurations.
-  uint32_t size_;
+  std::unordered_map<uint32_t, uint32_t> size_;
+  uint32_t batch_size_;
   uint32_t total_size_;
   uint32_t shuffled_query_count_;
   uint32_t deshuffled_response_count_;

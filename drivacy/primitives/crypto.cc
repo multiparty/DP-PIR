@@ -42,7 +42,9 @@ uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count) {
 }
 
 void OnionEncrypt(const std::vector<types::QueryShare> &shares,
-                  const types::Configuration &config, unsigned char *cipher) {
+                  const types::Configuration &config, unsigned char *cipher,
+                  uint32_t party_id) {
+  assert(shares.size() + party_id == config.parties() + 1);
   // Compute how large the whole onion cipher is.
   size_t single_size = sizeof(types::QueryShare);
   size_t single_overhead = crypto_box_SEALBYTES;
@@ -57,8 +59,8 @@ void OnionEncrypt(const std::vector<types::QueryShare> &shares,
   for (size_t i = shares.size(); i > 0; i--) {
     const unsigned char *share =
         reinterpret_cast<const unsigned char *>(&shares.at(i - 1));
-    const unsigned char *pk =
-        ProtobufStringToByteBuffer(config.keys().at(i).public_key());
+    const unsigned char *pk = ProtobufStringToByteBuffer(
+        config.keys().at(i + party_id - 1).public_key());
 
     offset = offset - single_size;
     memcpy(&onioncipher1[offset], share, single_size);

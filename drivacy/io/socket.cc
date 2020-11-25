@@ -137,7 +137,7 @@ void TCPSocket::Listen() {
       uint32_t batch_size;
       read(this->lower_socket_, reinterpret_cast<unsigned char *>(&batch_size),
            sizeof(uint32_t));
-      this->listener_->OnReceiveBatch(batch_size);
+      this->listener_->OnReceiveBatchSize(batch_size);
 
       // Then, expect to read that many queries.
       for (uint32_t i = 0; i < batch_size; i++) {

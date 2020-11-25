@@ -7,7 +7,7 @@ def _binary_test_impl(ctx):
             valgrind ./{binary} {cmdargs}
         """.format(
             binary=ctx.file.binary.short_path,
-            cmdargs=" ".join(ctx.attr.cmdargs),
+            cmdargs=ctx.attr.cmdargs,
         ),
     )
 
@@ -25,7 +25,7 @@ binary_test = rule(
             mandatory = True,
             allow_single_file = True,
         ),
-        "cmdargs": attr.string_list(
+        "cmdargs": attr.string(
             doc = "Command line arguments list.",
             mandatory = False,
         ),
@@ -34,16 +34,13 @@ binary_test = rule(
 
 
 # Create a test for given configuration parameters.
-def many_tests(binary, args, params_list):
+def many_tests(binary, params_list):
     for params in params_list:
-        if len(args) != len(params):
-            fail("args and params need to have the same length")
-
-        cmdargs = [
-          "--{}={}".format(arg, param) for (arg, param) in zip(args, params)
-        ]
+        strs = [str(p) for p in params]
+        name = '-'.join(strs)
+        cmdargs = ' '.join(strs)
         binary_test(
-            name = "shuffle-test-{}".format("-".join([str(p) for p in params])),
+            name = "shuffle-test-{}".format(name),
             binary = binary,
             cmdargs = cmdargs,
         )

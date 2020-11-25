@@ -44,9 +44,11 @@ class IntraPartyTCPSocket : public AbstractIntraPartySocket {
                                                  listener);
   }
 
+  void ListenBatchSizes() override;
   void ListenQueries(std::vector<uint32_t> counts) override;
   void ListenResponses() override;
 
+  void BroadcastBatchSize(uint32_t batch_size) override;
   void BroadcastQueriesReady() override;
   void BroadcastResponsesReady() override;
 

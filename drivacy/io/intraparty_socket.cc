@@ -166,6 +166,18 @@ IntraPartyTCPSocket::IntraPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   }
 }
 
+// Listening to batch sizes.
+void IntraPartyTCPSocket::ListenBatchSizes() {
+  uint32_t batch_size = 0;
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      read(this->sockets_.at(m), &batch_size, sizeof(batch_size));
+      this->listener_->OnReceiveBatchSize(m, batch_size);
+    }
+  }
+  this->listener_->OnReceiveBatchSize2();
+}
+
 // Listening to queries and responses.
 void IntraPartyTCPSocket::ListenQueries(std::vector<uint32_t> counts) {
   // Find total number of queries to read.
@@ -255,6 +267,14 @@ void IntraPartyTCPSocket::ListenResponses() {
 }
 
 // Broadcasts.
+void IntraPartyTCPSocket::BroadcastBatchSize(uint32_t batch_size) {
+  for (int socket : this->sockets_) {
+    if (socket > -1) {
+      send(socket, &batch_size, sizeof(batch_size), 0);
+    }
+  }
+  this->listener_->OnReceiveBatchSize(this->machine_id_, batch_size);
+}
 void IntraPartyTCPSocket::BroadcastQueriesReady() {
   unsigned char msg = 1;
   for (int socket : this->sockets_) {

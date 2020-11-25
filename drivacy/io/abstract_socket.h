@@ -23,7 +23,7 @@ class SocketListener {
  public:
   // Indicates that a batch start message was received specifying the
   // size of the batch.
-  virtual void OnReceiveBatch(uint32_t batch_size) = 0;
+  virtual void OnReceiveBatchSize(uint32_t batch_size) = 0;
   // Handlers for when a query or response are received.
   virtual void OnReceiveQuery(const types::IncomingQuery &query) = 0;
   virtual void OnReceiveResponse(const types::ForwardResponse &response) = 0;
@@ -73,13 +73,14 @@ using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
 // Intra-party portion.
 class IntraPartySocketListener {
  public:
-  virtual void OnQueriesReady(uint32_t machine_id) = 0;
-  virtual void OnResponsesReady(uint32_t machine_id) = 0;
-
+  virtual bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) = 0;
+  virtual void OnReceiveBatchSize2() = 0;  // hack to ensure FIFO msg delivery.
   virtual void OnReceiveQuery(uint32_t machine_id,
                               const types::ForwardQuery &query) = 0;
   virtual void OnReceiveResponse(uint32_t machine_id,
                                  const types::Response &response) = 0;
+  virtual void OnQueriesReady(uint32_t machine_id) = 0;
+  virtual void OnResponsesReady(uint32_t machine_id) = 0;
 };
 
 // Base class for sockets connecting machines within the same party.
@@ -101,9 +102,11 @@ class AbstractIntraPartySocket {
     assert(party_id < this->party_count_);
   }
 
+  virtual void ListenBatchSizes() = 0;
   virtual void ListenQueries(std::vector<uint32_t> counts) = 0;
   virtual void ListenResponses() = 0;
 
+  virtual void BroadcastBatchSize(uint32_t batch_size) = 0;
   virtual void BroadcastQueriesReady() = 0;
   virtual void BroadcastResponsesReady() = 0;
 

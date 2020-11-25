@@ -17,7 +17,13 @@ namespace client {
 
 types::OutgoingQuery CreateQuery(uint64_t value,
                                  const types::Configuration &config) {
-  uint64_t parties = config.parties();
+  return CreateQuery(value, config, 0);
+}
+
+types::OutgoingQuery CreateQuery(uint64_t value,
+                                 const types::Configuration &config,
+                                 uint32_t party_id) {
+  uint32_t parties = config.parties() - party_id;
 
   // Share query value and create additive preshares of the response.
   auto shares = primitives::GenerateIncrementalSecretShares(value, parties);
@@ -35,7 +41,8 @@ types::OutgoingQuery CreateQuery(uint64_t value,
   query.set_tally(1);
   query.set_preshare(preshares.at(parties));
   primitives::crypto::OnionEncrypt(query_shares, config,
-                                   query.buffer() + sizeof(types::QueryShare));
+                                   query.buffer() + sizeof(types::QueryShare),
+                                   party_id + 1);
   return query;
 }
 

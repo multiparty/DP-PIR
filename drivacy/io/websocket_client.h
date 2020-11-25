@@ -32,6 +32,7 @@ class WebSocketClient : public AbstractSocket {
     if (this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
       this->socket_->close();
     }
+    delete this->socket_;
   }
 
   // Factory function used to simplify construction of inheriting sockets.
