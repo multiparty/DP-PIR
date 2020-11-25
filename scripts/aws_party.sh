@@ -1,8 +1,11 @@
 #!/bin/bash
+ORCHASTRATOR="http://localhost:8000"
+CORES=2
+
 git clone https://github.com/multiparty/drivacy.git
 cd drivacy
 
-git checkout experiment
+git checkout c++
 git submodule init
 git submodule update
 
@@ -22,3 +25,10 @@ sudo apt-get update && sudo apt-get install -y bazel
 # Compile with bazel
 bazel build ...
 bazel test ...
+
+# Run daemon
+for i in $(seq 1 $CORES)
+do
+  echo $i
+#  ./scripts/daemon_party "$ORCHASTRATOR"
+done

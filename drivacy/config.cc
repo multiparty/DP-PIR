@@ -27,7 +27,8 @@ int main(int argc, char *argv[]) {
   absl::SetProgramUsageMessage(
       absl::StrFormat("usage: %s %s", argv[0],
                       "--parties=<number of parties> "
-                      "--parallelism=<number of machines/cores per party>"));
+                      "--parallelism=<number of machines/cores per party> "
+                      "<ip1> <ip2> ... [optional]"));
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.
@@ -52,11 +53,16 @@ int main(int argc, char *argv[]) {
   }
 
   // Handle the networking configuration.
+  int ip_index = 0;
   for (uint32_t party_id = 1; party_id <= parties; party_id++) {
     drivacy::types::PartyNetworkConfig party_config;
     for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
       drivacy::types::MachineNetworkConfig machine_config;
-      machine_config.set_ip("127.0.0.1");
+      std::string ip = "127.0.0.1";
+      if (ip_index < argc - 3) {
+        ip = std::string(argv[ip_index + 3]);
+      }
+      machine_config.set_ip(ip);
       // all ports must be unique for all <party_id, machine_id> pair, starting
       // from port 3000.
       int offset = (party_id - 1) * parallelism * 3 + (machine_id - 1) * 3;
@@ -66,6 +72,7 @@ int main(int argc, char *argv[]) {
       machine_config.set_intraparty_port(
           party_id < parties && machine_id > 1 ? offset + 2 : -1);
       party_config.mutable_machines()->insert({machine_id, machine_config});
+      ip_index++;
     }
     config.mutable_network()->insert({party_id, party_config});
   }

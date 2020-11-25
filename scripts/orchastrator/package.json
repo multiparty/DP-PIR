@@ -1,0 +1,15 @@
+{
+  "name": "drivacy-orchastrator",
+  "version": "1.0.0",
+  "description": "orchastrates experiments of the drivacy DP-PIR protocol, so that the protocol can be deployed and managed on many many machines",
+  "main": "orchastrator.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kinan Dak Albab",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ipaddr.js": "^2.0.0"
+  }
+}
