@@ -13,14 +13,15 @@ do
   response=$( { curl "$ORCHASTRATOR/signup/client" 2> /dev/null; } )
   if [ "$response" = "WAIT" ]
   then
-    sleep 20
+    sleep 1
     continue
   fi
 
   # We signed up! read configuration.
   params=($response)
   machine_id=${params[0]}
-  queries=${params[1]}
+  client_id=${params[1]}
+  queries=${params[2]}
 
   # Read table and configurations.
   curl "$ORCHASTRATOR/config" > data/config.json 2> /dev/null
@@ -28,7 +29,7 @@ do
 
   # Run client and time the command
   echo "Running client for ${machine_id} with ${queries}"
-  \time -f "%e" ./bazel-bin/drivacy/client --config=data/config.json --table=data/table.json --machine=${machine_id} --queries=${queries} 1> client-${machine_id}.log 2> time.log && curl "$ORCHASTRATOR/done/${machine_id}/$(cat time.log)" 2> /dev/null &
+  \time -f "%e" ./bazel-bin/drivacy/client --config=data/config.json --table=data/table.json --machine=${machine_id} --queries=${queries} 1> client-${machine_id}-${client_id}.log 2> time.log && curl "$ORCHASTRATOR/done/${machine_id}/${client_id}/$(cat time.log)" 2> /dev/null &
   pid=$!
 
   # Watch out for kill signal sent from orchastrator.

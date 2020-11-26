@@ -49,10 +49,6 @@ class WebSocketServer : public AbstractSocket {
   // We need to explicitly listen to incoming connections: blocking.
   void Listen() override;
 
-  // Flush is useless, this socket flushes at every send...
-  void FlushQueries() override { assert(false); }
-  void FlushResponses() override { assert(false); }
-
  private:
   // Client sockets in order of receiving queries (not connecting).
   std::list<uWS::WebSocket<false, true> *> sockets_;

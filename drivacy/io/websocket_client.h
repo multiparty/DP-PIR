@@ -53,10 +53,6 @@ class WebSocketClient : public AbstractSocket {
   // Start the socket and listen to messages: blocking.
   void Listen() override;
 
-  // Flush is useless, this socket flushes at every send...
-  void FlushQueries() override { assert(false); }
-  void FlushResponses() override { assert(false); }
-
  private:
   // The client socket.
   easywsclient::WebSocket *socket_;

@@ -12,6 +12,7 @@
 
 #include "drivacy/parties/party.h"
 
+#include <chrono>
 #include <utility>
 
 #include "drivacy/protocol/noise.h"
@@ -47,7 +48,15 @@ bool Party::OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) {
   // Initialize shuffling and shuffle in the noise.
   if (this->shuffler_.Initialize(machine_id, batch_size)) {
     this->socket_->SendBatch(this->shuffler_.batch_size());
+
+    auto begin = std::chrono::steady_clock::now();
     this->shuffler_.PreShuffle();
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Shuffling done = "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                       begin)
+                     .count()
+              << "[ms]" << std::endl;
     return true;
   }
   return false;
@@ -76,6 +85,7 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
   // Process query.
   types::OutgoingQuery outgoing_query =
       protocol::query::ProcessQuery(this->party_id_, query, this->config_);
+
   // Distributed two phase shuffling - Phase 1.
   // Assign query to some machine.
   uint32_t machine_id =
@@ -84,7 +94,6 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
   outgoing_query.Free();
   if (++this->queries_shuffled_ == this->batch_size_) {
     this->queries_shuffled_ = 0;
-    this->intra_party_socket_->FlushQueries();
     this->intra_party_socket_->ListenQueries(
         std::move(this->shuffler_.IncomingQueriesCount()));
   }
@@ -100,9 +109,8 @@ void Party::OnReceiveResponse(const types::ForwardResponse &forward) {
   // query in phase 1 of shuffling.
   uint32_t machine_id = this->shuffler_.MachineOfNextResponse();
   this->intra_party_socket_->SendResponse(machine_id, forward);
-  if (++this->responses_deshuffled_ == this->batch_size_) {
+  if (++this->responses_deshuffled_ == this->shuffler_.batch_size()) {
     this->responses_deshuffled_ = 0;
-    this->intra_party_socket_->FlushResponses();
     this->intra_party_socket_->ListenResponses();
   }
 }
@@ -168,7 +176,6 @@ void Party::SendQueries() {
     this->socket_->SendQuery(query);
     delete[] query;  // memory is allocated inside shuffler_
   }
-  this->socket_->FlushQueries();
 }
 
 void Party::SendResponses() {
@@ -185,7 +192,6 @@ void Party::SendResponses() {
     types::Response &response = this->shuffler_.NextResponse();
     this->socket_->SendResponse(response);
   }
-  this->socket_->FlushResponses();
 }
 
 }  // namespace parties

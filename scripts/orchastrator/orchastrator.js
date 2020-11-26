@@ -38,6 +38,7 @@ let reportedCount;
 // A configuration's run.
 let totalParties;
 let totalClients;
+let clientsPerMachine;
 let batch;
 let queries;
 let span;
@@ -68,9 +69,10 @@ function formatIP(ipString) {
   }
 }
 
-function configure(parties, parallelism, _batch, _queries, _span, _cutoff, tablePath) {
+function configure(parties, parallelism, _clients, _batch, _queries, _span, _cutoff, tablePath) {
   parties = Number(parties);
   parallelism = Number(parallelism);
+  _clients = Number(_clients);
   _batch = Number(_batch);
   _queries = Number(_queries);
   _span = Number(_span);
@@ -80,7 +82,8 @@ function configure(parties, parallelism, _batch, _queries, _span, _cutoff, table
   ready = false;
   allowClients = false;
   totalParties = parties * parallelism;
-  totalClients = parallelism;
+  totalClients = parallelism * _clients;
+  clientsPerMachine = _clients;
   batch = _batch;
   queries = _queries;
   span = _span;
@@ -125,14 +128,19 @@ function configure(parties, parallelism, _batch, _queries, _span, _cutoff, table
   for (const ip of clientIPs) {
     clientIPsCounts[ip] = (clientIPsCounts[ip] || 0) + 1;
   }
-  machine_id = 1;
+  machineID = 1;
+  clientParallelID = 1;
   for (const [ip, count] of Object.entries(clientIPsCounts)) {
     clientMap[ip] = [];
     for (let i = 0; i < count; i++) {
-      clientMap[ip].push(machineID);
-      machineID++;
-      if (machineID > parallelism)
-        break;
+      clientMap[ip].push([machineID, clientParallelID]);
+      clientParallelID++;
+      if (clientParallelID > _clients) {
+        clientParallelID = 1;
+        machineID++;
+        if (machineID > parallelism)
+          break;
+      }
     }
     if (machineID > parallelism)
       break;
@@ -237,22 +245,25 @@ app.get('/signup/client', (req, res) => {
   // Mark the the target client machine id.
   runningIPsCount++;
   runningIPs[ip] = (runningIPs[ip] || 0) + 1;
-  const machineID = list.shift();
+  const [machineID, clientParallelID] = list.shift();
   // Log.
-  console.log('Client', machineID, 'is about to start!');
+  console.log('Client', machineID, '-', clientParallelID, 'is about to start!');
   if (runningIPsCount == totalParties + totalClients) {
     console.log('All clients connected!');
   }
   console.log('');
   // Reply.
-  res.send(machineID + ' ' + queries + '\n');
+  res.send(machineID + ' ' + clientParallelID + ' ' + queries + '\n');
 });
 
 // Report finishing.
-app.get('/done/:machine_id/:time', (req, res) => {
-  console.log('Client ', req.params.machine_id, ' finished in ', req.params.time, '!');
+app.get('/done/:machine_id/:client_id/:time', (req, res) => {
+  console.log('Client ', req.params.machine_id, '-', req.params.client_id, ' finished in ', req.params.time, '!');
   reportedCount++;
-  times[req.params.machine_id] = Number(req.params.time);
+  const machineID = Number(req.params.machine_id);
+  const clientID = Number(req.params.client_id);
+  const uniqueID = (machineID - 1) * clientsPerMachine + clientID;
+  times[uniqueID] = Number(req.params.time);
   if (reportedCount == totalClients) {
     let max = times[1];
     let min = times[1];
@@ -281,7 +292,7 @@ app.listen(PORT, () => {
       console.log('Available commands:');
       console.log('- exit');
       console.log('- kill');
-      console.log('- new <parties> <parallelism> <batch> <queries> <dpspan> <dpcutoff> <table path>');
+      console.log('- new <parties> <parallelism> <clients per machine> <batch> <queries per client> <dpspan> <dpcutoff> <table path>');
       console.log('- clients');
     }
     if (line.startsWith('exit')) {
@@ -293,7 +304,7 @@ app.listen(PORT, () => {
       return;
     }
     if (line.startsWith('new')) {
-      const [parties, parallelism, batch, queries, span, cutoff, table] =
+      const [parties, parallelism, clients, batch, queries, span, cutoff, table] =
           line.split(' ').slice(1);
       if (shouldKill) {
         console.log('Kill is pending!');
@@ -307,11 +318,15 @@ app.listen(PORT, () => {
         console.log('Not enough parties');
         return;
       }
-      if (Number(parallelism) > clientIPs.length) {
+      if (Number(parallelism) * Number(clients) > clientIPs.length) {
         console.log('Not enough clients');
         return;
       }
-      configure(parties, parallelism, batch, queries, span, cutoff, table);
+      if (Number(queries) * Number(clients) % batch != 0) {
+        console.log('Queries and batch are incompatible');
+        return;
+      }
+      configure(parties, parallelism, clients, batch, queries, span, cutoff, table);
     }
     if (line.startsWith('clients')) {
       allowClients = true;

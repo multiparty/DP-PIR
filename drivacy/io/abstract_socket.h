@@ -52,9 +52,6 @@ class AbstractSocket {
   virtual void SendQuery(const types::ForwardQuery &query) = 0;
   virtual void SendResponse(const types::Response &response) = 0;
 
-  virtual void FlushQueries() = 0;
-  virtual void FlushResponses() = 0;
-
  protected:
   uint32_t party_id_;
   uint32_t machine_id_;
@@ -114,9 +111,6 @@ class AbstractIntraPartySocket {
                          const types::OutgoingQuery &query) = 0;
   virtual void SendResponse(uint32_t machine_id,
                             const types::ForwardResponse &response) = 0;
-
-  virtual void FlushQueries() = 0;
-  virtual void FlushResponses() = 0;
 
  protected:
   uint32_t party_id_;

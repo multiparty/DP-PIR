@@ -41,9 +41,6 @@ class SimulatedSocket : public AbstractSocket {
   void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
 
-  void FlushQueries() override {}
-  void FlushResponses() override {}
-
   void Listen() override {}
 
  private:
@@ -74,9 +71,6 @@ class SimulatedClientSocket : public AbstractSocket {
   void SendBatch(uint32_t batch_size) override { assert(false); }
   void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
-
-  void FlushQueries() override { assert(false); }
-  void FlushResponses() override { assert(false); }
 
   void Listen() override {}
 
@@ -116,9 +110,6 @@ class SimulatedIntraPartySocket : public AbstractIntraPartySocket {
                  const types::OutgoingQuery &query) override;
   void SendResponse(uint32_t machine_id,
                     const types::ForwardResponse &response) override;
-
-  void FlushQueries() override {}
-  void FlushResponses() override {}
 
   void ListenBatchSizes() override {}
   void ListenQueries(std::vector<uint32_t> counts) override {}

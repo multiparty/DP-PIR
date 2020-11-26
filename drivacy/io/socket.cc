@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <cstring>
 #include <iostream>
 
@@ -27,6 +28,17 @@ namespace io {
 namespace socket {
 
 namespace {
+
+inline void ReadUntil(int socket, unsigned char *buffer, uint32_t size) {
+  uint32_t bytes = 0;
+  while (bytes < size) {
+    bytes += read(socket, buffer + bytes, size - bytes);
+  }
+}
+
+inline void SendAssert(int socket, const unsigned char *buffer, uint32_t size) {
+  assert(send(socket, buffer, size, 0) == size);
+}
 
 int SocketServer(uint16_t port) {
   // Creating socket file descriptor.
@@ -88,19 +100,11 @@ TCPSocket::TCPSocket(uint32_t party_id, uint32_t machine_id,
                      SocketListener *listener)
     : AbstractSocket(party_id, machine_id, config, listener) {
   // Default counter values.
-  this->queries_written_ = 0;
-  this->responses_written_ = 0;
   this->sent_queries_count_ = 0;
 
   // Default no socket marker.
   this->lower_socket_ = -1;
   this->upper_socket_ = -1;
-
-  // Output/write buffers.
-  this->write_query_buffer_ =
-      new unsigned char[BUFFER_MESSAGE_COUNT * this->outgoing_query_msg_size_];
-  this->write_response_buffer_ =
-      new unsigned char[BUFFER_MESSAGE_COUNT * this->response_msg_size_];
 
   // Input/read buffers.
   this->read_query_buffer_ = new unsigned char[this->incoming_query_msg_size_];
@@ -135,14 +139,15 @@ void TCPSocket::Listen() {
     if (this->lower_socket_ != -1) {
       // First, listen to a setup message that defines the size of the batch.
       uint32_t batch_size;
-      read(this->lower_socket_, reinterpret_cast<unsigned char *>(&batch_size),
-           sizeof(uint32_t));
+      ReadUntil(this->lower_socket_,
+                reinterpret_cast<unsigned char *>(&batch_size),
+                sizeof(uint32_t));
       this->listener_->OnReceiveBatchSize(batch_size);
 
       // Then, expect to read that many queries.
       for (uint32_t i = 0; i < batch_size; i++) {
-        read(this->lower_socket_, this->read_query_buffer_,
-             this->incoming_query_msg_size_);
+        ReadUntil(this->lower_socket_, this->read_query_buffer_,
+                  this->incoming_query_msg_size_);
         this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
             this->read_query_buffer_, this->incoming_query_msg_size_));
       }
@@ -155,8 +160,8 @@ void TCPSocket::Listen() {
       // of sending all the received queries, the protocol requires
       // additional noise queries be sent as well.
       for (uint32_t i = 0; i < this->sent_queries_count_; i++) {
-        read(this->upper_socket_, this->read_response_buffer_,
-             this->response_msg_size_);
+        ReadUntil(this->upper_socket_, this->read_response_buffer_,
+                  this->response_msg_size_);
         this->listener_->OnReceiveResponse(this->read_response_buffer_);
       }
     }
@@ -175,49 +180,19 @@ void TCPSocket::Listen() {
 // Sending messages ...
 void TCPSocket::SendBatch(uint32_t batch_size) {
   unsigned char *buffer = reinterpret_cast<unsigned char *>(&batch_size);
-  send(this->upper_socket_, buffer, sizeof(uint32_t), 0);
+  SendAssert(this->upper_socket_, buffer, sizeof(uint32_t));
 }
 
 void TCPSocket::SendQuery(const types::ForwardQuery &query) {
   // Write message to out buffer.
   this->sent_queries_count_++;
-  uint32_t offset = this->queries_written_ * this->outgoing_query_msg_size_;
-  memcpy(this->write_query_buffer_ + offset, query,
-         this->outgoing_query_msg_size_);
-  this->queries_written_++;
-  // Flush out buffer when full.
-  if (this->queries_written_ == BUFFER_MESSAGE_COUNT) {
-    this->FlushQueries();
-  }
-}
-
-void TCPSocket::FlushQueries() {
-  if (this->queries_written_ > 0) {
-    send(this->upper_socket_, this->write_query_buffer_,
-         this->queries_written_ * this->outgoing_query_msg_size_, 0);
-    this->queries_written_ = 0;
-  }
+  SendAssert(this->upper_socket_, query, this->outgoing_query_msg_size_);
 }
 
 void TCPSocket::SendResponse(const types::Response &response) {
   // Write message to out buffer.
   const unsigned char *buffer = response.Serialize();
-  uint32_t offset = this->responses_written_ * this->response_msg_size_;
-  memcpy(this->write_response_buffer_ + offset, buffer,
-         this->response_msg_size_);
-  this->responses_written_++;
-  // Flush out buffer when full.
-  if (this->responses_written_ == BUFFER_MESSAGE_COUNT) {
-    this->FlushResponses();
-  }
-}
-
-void TCPSocket::FlushResponses() {
-  if (this->responses_written_ > 0) {
-    send(this->lower_socket_, this->write_response_buffer_,
-         this->responses_written_ * this->response_msg_size_, 0);
-    this->responses_written_ = 0;
-  }
+  SendAssert(this->lower_socket_, buffer, this->response_msg_size_);
 }
 
 }  // namespace socket

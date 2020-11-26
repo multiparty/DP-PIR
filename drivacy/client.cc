@@ -50,10 +50,14 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
 
   // Verify correctness of query / response.
   std::list<uint64_t> queries;
+  uint32_t response_count = 0;
   client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
     assert(query == queries.front());
     assert(response == table.at(query));
     queries.pop_front();
+    if (response_count++ % 5000 == 0) {
+      std::cout << "Got " << response_count << std::endl;
+    }
   });
 
   // Query from table.
@@ -61,6 +65,9 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
     for (const auto &[query, response] : table) {
       queries.push_back(query);
       client.MakeQuery(query);
+      if (i % 5000 == 0) {
+        std::cout << "Made " << i << std::endl;
+      }
       if (++i == query_count) {
         break;
       }

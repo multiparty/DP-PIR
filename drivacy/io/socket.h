@@ -9,8 +9,6 @@
 #ifndef DRIVACY_IO_SOCKET_H_
 #define DRIVACY_IO_SOCKET_H_
 
-#define BUFFER_MESSAGE_COUNT 25
-
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -30,9 +28,7 @@ class TCPSocket : public AbstractSocket {
 
   // Free internal write buffers.
   ~TCPSocket() {
-    delete[] this->write_query_buffer_;
     delete[] this->read_query_buffer_;
-    delete[] this->write_response_buffer_;
     delete[] this->read_response_buffer_;
   }
 
@@ -45,9 +41,6 @@ class TCPSocket : public AbstractSocket {
   void SendBatch(uint32_t batch_size) override;
   void SendQuery(const types::ForwardQuery &query) override;
   void SendResponse(const types::Response &response) override;
-
-  void FlushQueries() override;
-  void FlushResponses() override;
 
   void Listen() override;
 
@@ -63,13 +56,6 @@ class TCPSocket : public AbstractSocket {
   // Read buffers for storing a message that was just read from a socket.
   unsigned char *read_query_buffer_;
   unsigned char *read_response_buffer_;
-  // Buffer to store messages being written so that a batch of messages
-  // are sent all at once, instead of one at a time.
-  unsigned char *write_query_buffer_;
-  unsigned char *write_response_buffer_;
-  // Tracks how many messages have been written to the internal write buffer.
-  uint32_t queries_written_;
-  uint32_t responses_written_;
 };
 
 }  // namespace socket

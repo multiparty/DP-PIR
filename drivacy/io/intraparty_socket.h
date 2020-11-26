@@ -8,8 +8,6 @@
 #ifndef DRIVACY_IO_INTRAPARTY_SOCKET_H_
 #define DRIVACY_IO_INTRAPARTY_SOCKET_H_
 
-#define BUFFER_MESSAGE_COUNT 25
-
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -31,9 +29,7 @@ class IntraPartyTCPSocket : public AbstractIntraPartySocket {
 
   // Free internal write buffers.
   ~IntraPartyTCPSocket() {
-    // delete[] this->write_query_buffer_;
     delete[] this->read_query_buffer_;
-    // delete[] this->write_response_buffer_;
     delete[] this->read_response_buffer_;
   }
 
@@ -56,9 +52,6 @@ class IntraPartyTCPSocket : public AbstractIntraPartySocket {
                  const types::OutgoingQuery &query) override;
   void SendResponse(uint32_t machine_id,
                     const types::ForwardResponse &response) override;
-
-  void FlushQueries() override;
-  void FlushResponses() override;
 
  private:
   // Maps a machine_id to socket with that machine.

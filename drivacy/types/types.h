@@ -98,6 +98,8 @@ class Response {
  public:
   // Size of a response message in bytes.
   static uint32_t Size();
+  // Constructs an empty response, this should never be used directly..
+  Response() {}
   // Construct a response given its content tally.
   explicit Response(uint64_t tally) : tally_(tally) {}
   // Accessors.

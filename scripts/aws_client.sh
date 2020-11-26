@@ -1,19 +1,48 @@
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
+
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
+
 #!/bin/bash
-ORCHASTRATOR="http://localhost:8000"
-CORES=2
+ORCHASTRATOR="http://3.136.156.155:8000"
+CORES=1
 
-git clone https://github.com/multiparty/drivacy.git
+# clone repo once!
+if [[ ! -d "drivacy" ]]
+then
+  git clone https://github.com/multiparty/drivacy.git
+fi
+
+# update repo.
 cd drivacy
-
 git checkout c++
+git pull origin c++
 git submodule init
 git submodule update
+
+# remove obsolete log files.
+rm -rf *.log
 
 sudo apt-get update
 
 # Dependencies
 sudo apt-get install -y g++
 sudo apt-get install -y build-essential
+sudo apt-get install -y valgrind
 
 # Bazel
 sudo apt install curl gnupg
@@ -29,5 +58,6 @@ bazel test ...
 # Run daemon
 for i in $(seq 1 $CORES)
 do
-  ./scripts/daemon_client "$ORCHASTRATOR"
+  ./scripts/daemon_client.sh "$ORCHASTRATOR"
 done
+--//

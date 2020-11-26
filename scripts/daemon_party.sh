@@ -13,7 +13,7 @@ do
   response=$( { curl "$ORCHASTRATOR/signup/party" 2> /dev/null; } )
   if [ "$response" = "WAIT" ]
   then
-    sleep 20
+    sleep 1
     continue
   fi
 
@@ -31,7 +31,7 @@ do
 
   # Run client and time the command
   echo "Running party for ${party_id}-${machine_id} with ${batch} ${span} ${cutoff}"
-  ./bazel-bin/drivacy/main --config=data/config.json --table=data/table.json --party=${party_id} --machine=${machine_id} --batch=${batch} > party-${party_id}-${machine_id}.log &
+  ./bazel-bin/drivacy/main --config=data/config.json --table=data/table.json --party=${party_id} --machine=${machine_id} --batch=${batch} --span=${span} --cutoff=${cutoff} > party-${party_id}-${machine_id}.log &
   pid=$!
 
   # Watch out for kill signal sent from orchastrator.

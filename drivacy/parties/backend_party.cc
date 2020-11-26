@@ -44,6 +44,7 @@ void BackendParty::OnReceiveBatchSize(uint32_t batch_size) {
             << batch_size << std::endl;
 #endif
   this->batch_size_ = batch_size;
+  this->responses_ = new types::Response[batch_size];
 }
 
 // Handle query and reply back immediately when a query is received.
@@ -52,16 +53,22 @@ void BackendParty::OnReceiveQuery(const types::IncomingQuery &query) {
   std::cout << "On receive query (backend) " << machine_id_ << std::endl;
 #endif
   // Process query creating a response, send it over socket.
-  types::Response response =
+  this->responses_[processed_queries_++] =
       protocol::backend::QueryToResponse(query, config_, table_);
-  this->socket_->SendResponse(response);
 
   // Flush socket when everything is done.
-  this->processed_queries_++;
   if (this->processed_queries_ == this->batch_size_) {
     this->processed_queries_ = 0;
-    this->socket_->FlushResponses();
+    this->SendResponses();
   }
+}
+
+// Send all responses after they are handled.
+void BackendParty::SendResponses() {
+  for (uint32_t i = 0; i < this->batch_size_; i++) {
+    this->socket_->SendResponse(this->responses_[i]);
+  }
+  delete[] this->responses_;
 }
 
 }  // namespace parties

@@ -1,84 +1,53 @@
 # Copyright 2020 multiparty.org
-load("@rules_cc//cc:defs.bzl", "cc_test", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("test.bzl", "simulated_test")
 
 exports_files(glob(["testdata/*.json"]), ["//visibility:public"])
-
-MAIN_DEPS = [
-    "@com_google_absl//absl/flags:flag",
-    "@com_google_absl//absl/flags:parse",
-    "@com_google_absl//absl/flags:usage",
-    "@com_google_absl//absl/status",
-    "@com_google_absl//absl/strings",
-    "//drivacy/parties:client",
-    "//drivacy/parties:party",
-    "//drivacy/io:socket",
-    "//drivacy/types:config_cc_proto",
-    "//drivacy/types:types",
-    "//drivacy/util:file",
-    "//drivacy/util:status",
-]
 
 cc_binary(
     name = "main",
     srcs = [
         "main.cc",
     ],
-    deps = MAIN_DEPS,
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/parties:client",
+        "//drivacy/parties:party",
+        "//drivacy/io:socket",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+        "//drivacy/util:file",
+        "//drivacy/util:status",
+    ],
 )
 
 # Tests
-cc_test(
+simulated_test(
     name = "local-test-1",
-    srcs = [
-        "main.cc",
-    ],
-    deps = MAIN_DEPS,
-    data = [
-        "testdata/config1.json",
-        "testdata/table1.json",
-    ],
-    args = [
-        "--config=$(location testdata/config1.json)",
-        "--table=$(location testdata/table1.json)",
-        "--span=0.0",
-        "--cutoff=1.0",
-        "--batch=167",
-    ],
+    config = "testdata/config1.json",
+    table = "testdata/table1.json",
+    span = "0.0",
+    cutoff = "1.0",
+    batch = 167,
 )
-cc_test(
+simulated_test(
     name = "local-test-2",
-    srcs = [
-        "main.cc",
-    ],
-    deps = MAIN_DEPS,
-    data = [
-        "testdata/config2.json",
-        "testdata/table2.json",
-    ],
-    args = [
-        "--config=$(location testdata/config2.json)",
-        "--table=$(location testdata/table2.json)",
-        "--span=1.0",
-        "--cutoff=1.0",
-        "--batch=3",
-    ],
+    config = "testdata/config2.json",
+    table = "testdata/table2.json",
+    span = "1.0",
+    cutoff = "1.0",
+    batch = 3,
 )
 
-cc_test(
+simulated_test(
     name = "local-test-3",
-    srcs = [
-        "main.cc",
-    ],
-    deps = MAIN_DEPS,
-    data = [
-        "testdata/config3.json",
-        "testdata/table3.json",
-    ],
-    args = [
-        "--config=$(location testdata/config3.json)",
-        "--table=$(location testdata/table3.json)",
-        "--span=1.0",
-        "--cutoff=1.0",
-        "--batch=3",
-    ],
+    config = "testdata/config3.json",
+    table = "testdata/table3.json",
+    span = "1.0",
+    cutoff = "1.0",
+    batch = 3,
 )

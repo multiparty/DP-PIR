@@ -56,10 +56,11 @@ class BackendParty : public Party {
   void OnQueriesReady(uint32_t machine_id) override { assert(false); }
   void OnResponsesReady(uint32_t machine_id) override { assert(false); }
   void SendQueries() override { assert(false); }
-  void SendResponses() override { assert(false); }
+  void SendResponses() override;
 
  protected:
   uint32_t processed_queries_;
+  types::Response *responses_;
 };
 
 }  // namespace parties
