@@ -30,7 +30,8 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
 #endif
   // Sample noise.
   this->noise_ = protocol::noise::SampleNoise(
-      this->party_id_, this->machine_id_, this->config_, this->table_);
+      this->party_id_, this->machine_id_, this->config_, this->table_,
+      this->span_, this->cutoff_);
   this->noise_size_ = noise_.size();
   // Update batch size and send it to next party.
   this->batch_size_ = batch_size + this->noise_size_;

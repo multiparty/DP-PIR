@@ -62,33 +62,52 @@ cc_binary(
 # end to end tests
 end_to_end_test(
     name = "end-to-end-1",
-    table = "//drivacy/test:testdata/table2.json",
+    table = "//drivacy/test:testdata/table1.json",
     config = "//drivacy/test:testdata/config1.json",
     parties = 2,
     parallelism = 1,
     batch = 100,
-    queries = 200,
+    queries = 2100,
+    span = "0.0",
+    cutoff = "1.0",
     tags = ["exclusive"],
 )
 
 end_to_end_test(
     name = "end-to-end-2",
     table = "//drivacy/test:testdata/table2.json",
-    config = "//drivacy/test:testdata/config2.json",
-    parties = 5,
+    config = "//drivacy/test:testdata/config1.json",
+    parties = 2,
     parallelism = 1,
-    batch = 20,
-    queries = 40,
+    batch = 100,
+    queries = 200,
+    span = "1.0",
+    cutoff = "1.0",
     tags = ["exclusive"],
 )
 
 end_to_end_test(
     name = "end-to-end-3",
+    table = "//drivacy/test:testdata/table2.json",
+    config = "//drivacy/test:testdata/config2.json",
+    parties = 5,
+    parallelism = 1,
+    batch = 20,
+    queries = 40,
+    span = "1.0",
+    cutoff = "1.0",
+    tags = ["exclusive"],
+)
+
+end_to_end_test(
+    name = "end-to-end-4",
     table = "//drivacy/test:testdata/table3.json",
     config = "//drivacy/test:testdata/config3.json",
     parties = 3,
     parallelism = 3,
     batch = 10,
     queries = 30,
+    span = "1.0",
+    cutoff = "1.0",
     tags = ["exclusive"],
 )

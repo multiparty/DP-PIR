@@ -35,12 +35,14 @@ class Party : public io::socket::SocketListener,
   // back-pointer to the party.
   Party(uint32_t party_id, uint32_t machine_id,
         const types::Configuration &config, const types::Table &table,
-        io::socket::SocketFactory socket_factory,
+        double span, double cutoff, io::socket::SocketFactory socket_factory,
         io::socket::IntraPartySocketFactory intra_party_socket_factory)
       : party_id_(party_id),
         machine_id_(machine_id),
         config_(config),
         table_(table),
+        span_(span),
+        cutoff_(cutoff),
         batch_size_(0),
         queries_shuffled_(0),
         responses_deshuffled_(0),
@@ -90,6 +92,10 @@ class Party : public io::socket::SocketListener,
   uint32_t machine_id_;
   const types::Configuration &config_;
   const types::Table &table_;
+  // DP noise parameters.
+  double span_;
+  double cutoff_;
+  // Sockets.
   std::unique_ptr<io::socket::AbstractSocket> socket_;
   std::unique_ptr<io::socket::AbstractIntraPartySocket> intra_party_socket_;
   uint32_t batch_size_;

@@ -29,9 +29,11 @@ std::unique_ptr<io::socket::AbstractIntraPartySocket> NullFactory(
 // Constructor
 BackendParty::BackendParty(uint32_t party, uint32_t machine,
                            const types::Configuration &config,
-                           const types::Table &table,
+                           const types::Table &table, double span,
+                           double cutoff,
                            io::socket::SocketFactory socket_factory)
-    : Party(party, machine, config, table, socket_factory, NullFactory) {
+    : Party(party, machine, config, table, span, cutoff, socket_factory,
+            NullFactory) {
   this->processed_queries_ = 0;
 }
 

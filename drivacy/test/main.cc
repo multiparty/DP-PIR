@@ -32,6 +32,12 @@
 
 ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
+ABSL_FLAG(uint32_t, batch, 1,
+          "The size of a query batch (used only for party=1)");
+ABSL_FLAG(double, span, -1.0,
+          "The span of the laplace distribution of noise (required)");
+ABSL_FLAG(double, cutoff, 0.0,
+          "The cutoff for shifting/clamping the noise distribution (required)");
 
 absl::Status Test(const drivacy::types::Configuration &config,
                   const drivacy::types::Table &table) {
@@ -82,7 +88,8 @@ absl::Status Test(const drivacy::types::Configuration &config,
 }
 
 absl::Status Setup(const std::string &table_path,
-                   const std::string &config_path) {
+                   const std::string &config_path, double span, double cutoff,
+                   uint32_t batch_size) {
   std::cout << "Setting up..." << std::endl;
 
   // Read configuration.
@@ -95,16 +102,21 @@ absl::Status Setup(const std::string &table_path,
   ASSIGN_OR_RETURN(drivacy::types::Table table,
                    drivacy::util::file::ParseTable(json));
 
+  // Make sure table size is compatible with bath size.
+  if (table.size() % (batch_size * config.parallelism()) != 0) {
+    return absl::InvalidArgumentError("Batch size does not divide table size!");
+  }
+
   // Setup parties.
   // Setup the head party's machines!
   uint32_t parallelism = config.parallelism();
   std::list<drivacy::parties::HeadParty> head_party;
   for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
     head_party.emplace_back(
-        1, machine_id, config, table,
+        1, machine_id, config, table, span, cutoff,
         drivacy::io::socket::SimulatedSocket::Factory,
         drivacy::io::socket::SimulatedIntraPartySocket::Factory,
-        drivacy::io::socket::SimulatedClientSocket::Factory, BATCH_SIZE);
+        drivacy::io::socket::SimulatedClientSocket::Factory, batch_size);
   }
 
   // Setup middle-of-the-chain parties' machines.
@@ -112,7 +124,7 @@ absl::Status Setup(const std::string &table_path,
   for (uint32_t party_id = 2; party_id < config.parties(); party_id++) {
     for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
       parties.emplace_back(
-          party_id, machine_id, config, table,
+          party_id, machine_id, config, table, span, cutoff,
           drivacy::io::socket::SimulatedSocket::Factory,
           drivacy::io::socket::SimulatedIntraPartySocket::Factory);
     }
@@ -122,6 +134,7 @@ absl::Status Setup(const std::string &table_path,
   std::list<drivacy::parties::BackendParty> backend_party;
   for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
     backend_party.emplace_back(config.parties(), machine_id, config, table,
+                               span, cutoff,
                                drivacy::io::socket::SimulatedSocket::Factory);
   }
 
@@ -153,6 +166,9 @@ int main(int argc, char *argv[]) {
   // Get command line flags.
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
+  uint32_t batch_size = absl::GetFlag(FLAGS_batch);
+  double span = absl::GetFlag(FLAGS_span);
+  double cutoff = absl::GetFlag(FLAGS_cutoff);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
               << std::endl;
@@ -163,9 +179,18 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
+  if (span < 0) {
+    std::cout << "Please provide a valid span using --span" << std::endl;
+    return 1;
+  }
+  if (cutoff <= 0) {
+    std::cout << "Please provide a valid cutoff using --cutoff" << std::endl;
+    return 1;
+  }
 
   // Do the testing!
-  absl::Status output = Setup(table_path, config_path);
+  absl::Status output =
+      Setup(table_path, config_path, span, cutoff, batch_size);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

@@ -25,6 +25,7 @@ class BackendParty : public Party {
  public:
   BackendParty(uint32_t party, uint32_t machine,
                const types::Configuration &config, const types::Table &table,
+               double span, double cutoff,
                io::socket::SocketFactory socket_factory);
 
   // Not copyable or movable!

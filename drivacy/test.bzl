@@ -21,9 +21,9 @@ do
   for (( machine=1; machine<={parallelism}; machine++ ))
   do
     echo "Running party $party-$machine"
-    ./{_party} --table={table} --config={config} \
-                             --party=$party --machine=$machine \
-                             --batch={batch} > logs/party$party-$machine.log 2>&1 &
+    ./{_party} --table={table} --config={config} --party=$party \
+               --machine=$machine --batch={batch} --span={span} \
+               --cutoff={cutoff} > logs/party$party-$machine.log 2>&1 &
     PARTY_IDS+=($!)
   done
 done
@@ -38,7 +38,7 @@ for (( machine=1; machine<={parallelism}; machine++ ))
 do
   echo "Running client $machine"
   ./{_client} --table={table} --config={config} --machine=$machine \
-                              --queries={queries} > logs/client-$machine 2>&1 &
+              --queries={queries} > logs/client-$machine 2>&1 &
   CLIENT_IDS+=($!)
 done
 echo ""
@@ -100,6 +100,8 @@ def _end_to_end_test_impl(ctx):
             queries=ctx.attr.queries,
             table=ctx.file.table.short_path,
             config=ctx.file.config.short_path,
+            span=ctx.attr.span,
+            cutoff=ctx.attr.cutoff
         ),
     )
 
@@ -151,5 +153,13 @@ end_to_end_test = rule(
             doc = "The number of queries each client makes.",
             mandatory = True,
         ),
+        "span": attr.string(
+            doc = "The span of the DP distribution",
+            mandatory = True,
+        ),
+        "cutoff": attr.string(
+            doc = "The cutoff for the DP distribution",
+            mandatory = True,
+        )
     },
 )

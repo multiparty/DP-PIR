@@ -26,11 +26,12 @@ class HeadParty : public Party {
  public:
   HeadParty(uint32_t party, uint32_t machine,
             const types::Configuration &config, const types::Table &table,
+            double span, double cutoff,
             io::socket::SocketFactory socket_factory,
             io::socket::IntraPartySocketFactory intra_party_socket_factory,
             io::socket::SocketFactory client_socket_factory,
             uint32_t batch_size)
-      : Party(party, machine, config, table, socket_factory,
+      : Party(party, machine, config, table, span, cutoff, socket_factory,
               intra_party_socket_factory),
         initial_batch_size_(batch_size) {
     this->client_socket_ = client_socket_factory(party, machine, config, this);

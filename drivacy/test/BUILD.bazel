@@ -35,11 +35,14 @@ cc_test(
     deps = MAIN_DEPS,
     data = [
         "testdata/config1.json",
-        "testdata/table2.json",
+        "testdata/table1.json",
     ],
     args = [
         "--config=$(location testdata/config1.json)",
-        "--table=$(location testdata/table2.json)",
+        "--table=$(location testdata/table1.json)",
+        "--span=0.0",
+        "--cutoff=1.0",
+        "--batch=167",
     ],
 )
 cc_test(
@@ -55,6 +58,9 @@ cc_test(
     args = [
         "--config=$(location testdata/config2.json)",
         "--table=$(location testdata/table2.json)",
+        "--span=1.0",
+        "--cutoff=1.0",
+        "--batch=3",
     ],
 )
 
@@ -71,5 +77,8 @@ cc_test(
     args = [
         "--config=$(location testdata/config3.json)",
         "--table=$(location testdata/table3.json)",
+        "--span=1.0",
+        "--cutoff=1.0",
+        "--batch=3",
     ],
 )

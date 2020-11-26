@@ -18,7 +18,8 @@ namespace noise {
 std::list<types::OutgoingQuery> SampleNoise(uint32_t party_id,
                                             uint32_t machine_id,
                                             const types::Configuration &config,
-                                            const types::Table &table);
+                                            const types::Table &table,
+                                            double span, double cutoff);
 
 }  // namespace noise
 }  // namespace protocol
