@@ -12,9 +12,7 @@
 
 #include <cstdint>
 #include <list>
-#include <memory>
 #include <string>
-#include <unordered_map>
 
 #include "drivacy/io/abstract_socket.h"
 #include "drivacy/types/config.pb.h"
@@ -25,35 +23,43 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-class WebSocketServer : public AbstractSocket {
+class WebSocketServerListener {
+ public:
+  // Handlers for when a query or response are received.
+  virtual void OnReceiveQuery(const types::IncomingQuery &query) = 0;
+};
+
+class WebSocketServer {
  public:
   WebSocketServer(uint32_t party_id, uint32_t machine_id,
-                  const types::Configuration &config, SocketListener *listener)
-      : AbstractSocket(party_id, machine_id, config, listener) {}
-
-  // Factory function used to simplify construction of inheriting sockets.
-  static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, uint32_t machine_id,
-      const types::Configuration &config, SocketListener *listener) {
-    return std::make_unique<WebSocketServer>(party_id, machine_id, config,
-                                             listener);
-  }
-
-  // We can never send queries (or batch sizes) to clients!
-  void SendBatch(uint32_t batch_size) override { assert(false); }
-  void SendQuery(const types::ForwardQuery &query) override { assert(false); }
-
-  // We can send responses to clients!
-  void SendResponse(const types::Response &response) override;
+                  const types::Configuration &config,
+                  WebSocketServerListener *listener);
 
   // We need to explicitly listen to incoming connections: blocking.
-  void Listen() override;
+  void Listen();
+  void Stop();
+
+  // We can only send responses to the clients.
+  void SendResponse(const types::Response &response);
 
  private:
+  // Configurations.
+  uint32_t party_id_;
+  uint32_t machine_id_;
+  uint32_t party_count_;
+  types::Configuration config_;
+  WebSocketServerListener *listener_;
+  // Message sizes.
+  uint32_t incoming_query_msg_size_;
+  uint32_t response_msg_size_;
   // Client sockets in order of receiving queries (not connecting).
   std::list<uWS::WebSocket<false, true> *> sockets_;
-
+  uWS::App app_;
+  us_listen_socket_t *listener_token_;
+  uint32_t port_;
   // Handle incoming query from a client (parses and then calls QueryListener).
+  void OnMessage(uWS::WebSocket<false, true> *ws, std::string_view message,
+                 uWS::OpCode op_code);
   void HandleQuery(const std::string &msg) const;
 };
 

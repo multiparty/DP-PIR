@@ -16,9 +16,6 @@
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "drivacy/io/intraparty_socket.h"
-#include "drivacy/io/socket.h"
-#include "drivacy/io/websocket_server.h"
 #include "drivacy/parties/backend_party.h"
 #include "drivacy/parties/head_party.h"
 #include "drivacy/parties/party.h"
@@ -33,6 +30,8 @@ ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
 ABSL_FLAG(uint32_t, machine, 0, "The id of the machine [1-p] (required)");
 ABSL_FLAG(uint32_t, batch, 1,
           "The size of a query batch (used only for party=1)");
+ABSL_FLAG(uint32_t, batches, 0,
+          "The count of batchs to run for before terminating (optional)");
 ABSL_FLAG(double, span, -1.0,
           "The span of the laplace distribution of noise (required)");
 ABSL_FLAG(double, cutoff, 0.0,
@@ -41,7 +40,7 @@ ABSL_FLAG(double, cutoff, 0.0,
 absl::Status Setup(uint32_t party_id, uint32_t machine_id,
                    const std::string &table_path,
                    const std::string &config_path, double span, double cutoff,
-                   uint32_t batch_size) {
+                   uint32_t batch_size, uint32_t batches) {
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
@@ -54,26 +53,20 @@ absl::Status Setup(uint32_t party_id, uint32_t machine_id,
 
   // Setup party and listen to incoming queries and responses.
   if (party_id == 1) {
-    drivacy::parties::HeadParty party(
-        party_id, machine_id, config, table, span, cutoff,
-        drivacy::io::socket::TCPSocket::Factory,
-        drivacy::io::socket::IntraPartyTCPSocket::Factory,
-        drivacy::io::socket::WebSocketServer::Factory, batch_size);
-    party.Listen();
+    drivacy::parties::HeadParty party(party_id, machine_id, config, table, span,
+                                      cutoff, batches, batch_size);
+    party.Start();
   } else if (party_id == config.parties()) {
-    drivacy::parties::BackendParty party(
-        party_id, machine_id, config, table, span, cutoff,
-        drivacy::io::socket::TCPSocket::Factory);
-    party.Listen();
+    drivacy::parties::BackendParty party(party_id, machine_id, config, table,
+                                         span, cutoff, batches);
+    party.Start();
   } else {
-    drivacy::parties::Party party(
-        party_id, machine_id, config, table, span, cutoff,
-        drivacy::io::socket::TCPSocket::Factory,
-        drivacy::io::socket::IntraPartyTCPSocket::Factory);
-    party.Listen();
+    drivacy::parties::Party party(party_id, machine_id, config, table, span,
+                                  cutoff, batches);
+    party.Start();
   }
 
-  // Will never really get here...
+  std::cout << "Gracefully shutdown!" << std::endl;
   return absl::OkStatus();
 }
 
@@ -94,6 +87,7 @@ int main(int argc, char *argv[]) {
   uint32_t party_id = absl::GetFlag(FLAGS_party);
   uint32_t machine_id = absl::GetFlag(FLAGS_machine);
   uint32_t batch_size = absl::GetFlag(FLAGS_batch);
+  uint32_t batches = absl::GetFlag(FLAGS_batches);
   double span = absl::GetFlag(FLAGS_span);
   double cutoff = absl::GetFlag(FLAGS_cutoff);
   if (table_path.empty()) {
@@ -126,7 +120,7 @@ int main(int argc, char *argv[]) {
 
   // Execute mock protocol.
   absl::Status output = Setup(party_id, machine_id, table_path, config_path,
-                              span, cutoff, batch_size);
+                              span, cutoff, batch_size, batches);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

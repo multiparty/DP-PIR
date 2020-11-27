@@ -9,7 +9,6 @@
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,9 +20,8 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <utility>
-
-#include "absl/functional/bind_front.h"
 
 namespace drivacy {
 namespace io {
@@ -128,59 +126,179 @@ int ClientSocket(const types::Configuration &config, uint32_t party_id,
   return sockfd;
 }
 
-void FillPoll(pollfd *fds, const std::vector<int> &sockets,
-              const std::vector<uint32_t> &counts, uint32_t machine_id) {
-  for (uint32_t m = 1; m < sockets.size(); m++) {
-    if (m != machine_id && counts.at(m) > 0) {
-      fds[m - 1].fd = sockets.at(m);
-      fds[m - 1].events = POLLIN;
-      fds[m - 1].revents = 0;
-    } else {
-      fds[m - 1].fd = -1;
-      fds[m - 1].events = 0;
-      fds[m - 1].revents = 0;
-    }
-  }
-}
-
-uint32_t PollAndFind(pollfd *fds, nfds_t nfds) {
-  // Poll for POLLIN event.
-  assert(poll(fds, nfds, -1) > 0);
-  // Find socket that has POLLIN ready.
-  for (uint32_t m = 1; m <= nfds; m++) {
-    if (fds[m - 1].revents & POLLIN) {
-      return m;
-    }
-  }
-  assert(false);
-}
-
 }  // namespace
 
 // Constructor.
 IntraPartyTCPSocket::IntraPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
                                          const types::Configuration &config,
                                          IntraPartySocketListener *listener)
-    : AbstractIntraPartySocket(party_id, machine_id, config, listener) {
+    : party_id_(party_id),
+      machine_id_(machine_id),
+      config_(config),
+      listener_(listener) {
+  // Store configuration parameters.
+  this->party_count_ = config.parties();
+  this->parallelism_ = config.parallelism();
+  this->query_msg_size_ = types::ForwardQuerySize(party_id, this->party_count_);
+  this->response_msg_size_ = types::ForwardResponseSize();
   // Create sockets_ map
   this->sockets_.resize(this->parallelism_ + 1, -1);
-  this->outgoing_counts_.resize(this->parallelism_ + 1, 0);
   // Input/read buffers.
   this->read_query_buffer_ = new unsigned char[this->query_msg_size_];
   this->read_response_buffer_ = new unsigned char[this->response_msg_size_];
-
+  // Counters.
+  this->incoming_query_counts_.resize(this->parallelism_ + 1, 0);
+  this->incoming_response_counts_.resize(this->parallelism_ + 1, 0);
+  this->sockets_with_queries_ = 0;
+  this->sockets_with_responses_ = 0;
   // Setup sockets.
-  if (machine_id - 1 > 0) {
-    int serverfd = ServerSocket(config, party_id, machine_id);
-    AcceptClients(serverfd, &this->sockets_, machine_id - 1);
-  }
-  for (uint32_t m = machine_id + 1; m <= this->parallelism_; m++) {
-    this->sockets_[m] = ClientSocket(config, party_id, machine_id, m);
+  // The backend party does not need Intra-party sockets.
+  if (this->party_id_ < this->party_count_) {
+    if (machine_id - 1 > 0) {
+      int serverfd = ServerSocket(config, party_id, machine_id);
+      AcceptClients(serverfd, &this->sockets_, machine_id - 1);
+    }
+    for (uint32_t m = machine_id + 1; m <= this->parallelism_; m++) {
+      this->sockets_[m] = ClientSocket(config, party_id, machine_id, m);
+    }
   }
 }
 
-// Listening to batch sizes.
-void IntraPartyTCPSocket::ListenBatchSizes() {
+// Destructor.
+IntraPartyTCPSocket::~IntraPartyTCPSocket() {
+  // Free all open sockets!
+  for (int socket : this->sockets_) {
+    if (socket > -1) {
+      close(socket);
+    }
+  }
+  // Delete read buffers.
+  delete[] this->read_query_buffer_;
+  delete[] this->read_response_buffer_;
+}
+
+// Set expected query counts.
+void IntraPartyTCPSocket::SetQueryCounts(
+    std::vector<uint32_t> &&incoming_query_counts) {
+  this->incoming_query_counts_ = incoming_query_counts;
+  this->sockets_with_queries_ = 0;
+  for (uint32_t count : this->incoming_query_counts_) {
+    if (count > 0) {
+      this->sockets_with_queries_++;
+    }
+  }
+}
+
+// Configure poll(...).
+uint32_t IntraPartyTCPSocket::FdCount() { return this->parallelism_ - 1; }
+bool IntraPartyTCPSocket::PollQueries(pollfd *fds) {
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    fds[m - 1].revents = 0;
+    if (this->incoming_query_counts_.at(m) > 0) {
+      fds[m - 1].fd = this->sockets_.at(m);
+      fds[m - 1].events = POLLIN;
+    } else {
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+    }
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
+    fds[m - 2].revents = 0;
+    if (this->incoming_query_counts_.at(m) > 0) {
+      fds[m - 2].fd = this->sockets_.at(m);
+      fds[m - 2].events = POLLIN;
+    } else {
+      fds[m - 2].fd = -1;
+      fds[m - 2].events = 0;
+    }
+  }
+  return this->sockets_with_queries_ == 0;
+}
+bool IntraPartyTCPSocket::PollResponses(pollfd *fds) {
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    fds[m - 1].revents = 0;
+    if (this->incoming_response_counts_.at(m) > 0) {
+      fds[m - 1].fd = this->sockets_.at(m);
+      fds[m - 1].events = POLLIN;
+    } else {
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+    }
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
+    fds[m - 2].revents = 0;
+    if (this->incoming_response_counts_.at(m) > 0) {
+      fds[m - 2].fd = this->sockets_.at(m);
+      fds[m - 2].events = POLLIN;
+    } else {
+      fds[m - 2].fd = -1;
+      fds[m - 2].events = 0;
+    }
+  }
+  return this->sockets_with_responses_ == 0;
+}
+
+// Blocking reads.
+bool IntraPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
+  // Translate index to a machine id!
+  uint32_t machine_id = fd_index + 1;
+  if (machine_id >= this->machine_id_) {
+    machine_id++;
+  }
+  assert(machine_id <= this->parallelism_);
+  assert(machine_id != this->machine_id_);
+  assert(machine_id > 0);
+  assert(this->incoming_query_counts_.at(machine_id) > 0);
+
+  // Blocking read.
+  ReadUntil(this->sockets_.at(machine_id), this->read_query_buffer_,
+            this->query_msg_size_);
+
+  // Update fds.
+  bool done = false;
+  if (--this->incoming_query_counts_.at(machine_id) == 0) {
+    fds[fd_index].fd = -1;
+    fds[fd_index].events = 0;
+    fds[fd_index].revents = 0;
+    done = (--this->sockets_with_queries_ == 0);
+  }
+
+  // Call event handler.
+  this->listener_->OnReceiveQuery(machine_id, this->read_query_buffer_);
+  return done;
+}
+bool IntraPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
+  // Translate index to a machine id!
+  uint32_t machine_id = fd_index + 1;
+  if (machine_id >= this->machine_id_) {
+    machine_id++;
+  }
+  assert(machine_id <= this->parallelism_);
+  assert(machine_id != this->machine_id_);
+  assert(machine_id > 0);
+  assert(this->incoming_response_counts_.at(machine_id) > 0);
+
+  // Blocking read.
+  ReadUntil(this->sockets_.at(machine_id), this->read_response_buffer_,
+            this->response_msg_size_);
+
+  // Update fds.
+  bool done = false;
+  if (--this->incoming_response_counts_.at(machine_id) == 0) {
+    fds[fd_index].fd = -1;
+    fds[fd_index].events = 0;
+    fds[fd_index].revents = 0;
+    done = (--this->sockets_with_responses_ == 0);
+  }
+
+  // Call event handler.
+  this->listener_->OnReceiveResponse(
+      machine_id, types::Response::Deserialize(this->read_response_buffer_));
+  return done;
+}
+
+// Broadcast collection (blocking).
+void IntraPartyTCPSocket::CollectBatchSizes() {
   uint32_t batch_size = 0;
   for (uint32_t m = 1; m <= this->parallelism_; m++) {
     if (m != this->machine_id_) {
@@ -190,93 +308,27 @@ void IntraPartyTCPSocket::ListenBatchSizes() {
       this->listener_->OnReceiveBatchSize(m, batch_size);
     }
   }
-  this->listener_->OnReceiveBatchSize2();
+  this->listener_->OnCollectedBatchSizes();
 }
-
-// Listening to queries and responses.
-void IntraPartyTCPSocket::ListenQueries(std::vector<uint32_t> counts) {
-  // Find total number of queries to read.
-  uint32_t total = 0;
-  for (uint32_t count : counts) {
-    total += count;
-  }
-  total -= counts.at(0) + counts.at(this->machine_id_);
-
-  // Fill fds array.
-  nfds_t nfds = this->parallelism_;
-  pollfd *fds = new pollfd[nfds];
-  FillPoll(fds, this->sockets_, counts, this->machine_id_);
-
-  // Read the queries.
-  while (total-- > 0) {
-    uint32_t machine_id = PollAndFind(fds, nfds);
-    // Update counts.
-    if (--counts.at(machine_id) == 0) {
-      fds[machine_id - 1].fd = -1;
-      fds[machine_id - 1].events = 0;
-      fds[machine_id - 1].revents = 0;
-    }
-    // Read query.
-    ReadUntil(this->sockets_.at(machine_id), this->read_query_buffer_,
-              this->query_msg_size_);
-    this->listener_->OnReceiveQuery(machine_id, this->read_query_buffer_);
-  }
-
-  delete[] fds;
-
-  // Read broadcast!
+void IntraPartyTCPSocket::CollectQueriesReady() {
   unsigned char ready = 0;
-  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id++) {
-    if (machine_id != this->machine_id_) {
-      ReadUntil(this->sockets_.at(machine_id),
-                reinterpret_cast<unsigned char *>(&ready), sizeof(ready));
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      ReadUntil(this->sockets_.at(m), reinterpret_cast<unsigned char *>(&ready),
+                sizeof(ready));
       assert(ready == 1);
       ready = 0;
-      this->listener_->OnQueriesReady(machine_id);
     }
   }
 }
-
-void IntraPartyTCPSocket::ListenResponses() {
-  // Find total number of queries to read.
-  uint32_t total = 0;
-  for (uint32_t count : this->outgoing_counts_) {
-    total += count;
-  }
-
-  // Fill fds array.
-  nfds_t nfds = this->parallelism_;
-  pollfd *fds = new pollfd[nfds];
-  FillPoll(fds, this->sockets_, this->outgoing_counts_, this->machine_id_);
-
-  // Read the queries.
-  while (total-- > 0) {
-    // At least one socket has something to read, find it!
-    uint32_t machine_id = PollAndFind(fds, nfds);
-    // Update counts.
-    if (--this->outgoing_counts_.at(machine_id) == 0) {
-      fds[machine_id - 1].fd = -1;
-      fds[machine_id - 1].events = 0;
-      fds[machine_id - 1].revents = 0;
-    }
-    // Read response.
-    ReadUntil(this->sockets_.at(machine_id), this->read_response_buffer_,
-              this->response_msg_size_);
-    this->listener_->OnReceiveResponse(
-        machine_id, types::Response::Deserialize(this->read_response_buffer_));
-  }
-
-  delete[] fds;
-
-  // Read broadcast!
+void IntraPartyTCPSocket::CollectResponsesReady() {
   unsigned char ready = 0;
-  for (uint32_t machine_id = 1; machine_id <= nfds; machine_id++) {
-    if (machine_id != this->machine_id_) {
-      ReadUntil(this->sockets_.at(machine_id),
-                reinterpret_cast<unsigned char *>(&ready), sizeof(ready));
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      ReadUntil(this->sockets_.at(m), reinterpret_cast<unsigned char *>(&ready),
+                sizeof(ready));
       assert(ready == 1);
       ready = 0;
-      this->listener_->OnResponsesReady(machine_id);
     }
   }
 }
@@ -298,7 +350,6 @@ void IntraPartyTCPSocket::BroadcastQueriesReady() {
       SendAssert(socket, reinterpret_cast<unsigned char *>(&msg), sizeof(msg));
     }
   }
-  this->listener_->OnQueriesReady(this->machine_id_);
 }
 void IntraPartyTCPSocket::BroadcastResponsesReady() {
   unsigned char msg = 1;
@@ -307,7 +358,6 @@ void IntraPartyTCPSocket::BroadcastResponsesReady() {
       SendAssert(socket, reinterpret_cast<unsigned char *>(&msg), sizeof(msg));
     }
   }
-  this->listener_->OnResponsesReady(this->machine_id_);
 }
 
 // Sending queries and responses.
@@ -317,7 +367,14 @@ void IntraPartyTCPSocket::SendQuery(uint32_t machine_id,
   if (machine_id == this->machine_id_) {
     this->listener_->OnReceiveQuery(machine_id, serialized);
   } else {
-    this->outgoing_counts_[machine_id]++;
+    // Track how many queries are sent to a machine, we expect an equal
+    // number of responses to come back to us form that machine.
+    uint32_t &count = this->incoming_response_counts_.at(machine_id);
+    if (count == 0) {
+      this->sockets_with_responses_++;
+    }
+    count++;
+    // Send over the socket.
     int socket = this->sockets_.at(machine_id);
     SendAssert(socket, serialized, this->query_msg_size_);
   }

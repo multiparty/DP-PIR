@@ -216,7 +216,11 @@ void Shuffler::PreShuffle() {
 // of queries expected to be received from that machine.
 std::vector<uint32_t> Shuffler::IncomingQueriesCount() {
   std::vector<uint32_t> result(this->parallelism_ + 1, 0);
-  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    uint32_t count = this->query_indices_.at(m).second.size();
+    result[m] = count;
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
     uint32_t count = this->query_indices_.at(m).second.size();
     result[m] = count;
   }

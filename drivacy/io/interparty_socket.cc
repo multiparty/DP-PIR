@@ -6,7 +6,7 @@
 // (socket-wise) machine. The party with a lower id has the client end
 // while the one with the higher id has the server end.
 
-#include "drivacy/io/socket.h"
+#include "drivacy/io/interparty_socket.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -20,8 +20,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-
-#include "absl/functional/bind_front.h"
+#include <string>
 
 namespace drivacy {
 namespace io {
@@ -95,12 +94,26 @@ int SocketClient(uint16_t port, const std::string &serverip) {
 }  // namespace
 
 // Socket(s) setup ...
-TCPSocket::TCPSocket(uint32_t party_id, uint32_t machine_id,
-                     const types::Configuration &config,
-                     SocketListener *listener)
-    : AbstractSocket(party_id, machine_id, config, listener) {
+InterPartyTCPSocket::InterPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
+                                         const types::Configuration &config,
+                                         InterPartySocketListener *listener)
+    : party_id_(party_id),
+      machine_id_(machine_id),
+      config_(config),
+      listener_(listener) {
+  // Initialize configurations.
+  this->party_count_ = config.parties();
+
+  // Initialize the various message sizes.
+  this->incoming_query_msg_size_ =
+      types::IncomingQuery::Size(party_id, this->party_count_);
+  this->outgoing_query_msg_size_ =
+      types::OutgoingQuery::Size(party_id, this->party_count_);
+  this->response_msg_size_ = types::Response::Size();
+
   // Default counter values.
-  this->sent_queries_count_ = 0;
+  this->queries_count_ = 0;
+  this->responses_count_ = 0;
 
   // Default no socket marker.
   this->lower_socket_ = -1;
@@ -133,63 +146,113 @@ TCPSocket::TCPSocket(uint32_t party_id, uint32_t machine_id,
   }
 }
 
-// Reading messages ...
-void TCPSocket::Listen() {
-  while (true) {
-    if (this->lower_socket_ != -1) {
-      // First, listen to a setup message that defines the size of the batch.
-      uint32_t batch_size;
-      ReadUntil(this->lower_socket_,
-                reinterpret_cast<unsigned char *>(&batch_size),
-                sizeof(uint32_t));
-      this->listener_->OnReceiveBatchSize(batch_size);
+InterPartyTCPSocket::~InterPartyTCPSocket() {
+  if (this->lower_socket_ > -1) {
+    close(this->lower_socket_);
+  }
+  if (this->upper_socket_ > -1) {
+    close(this->upper_socket_);
+  }
+  delete[] this->read_query_buffer_;
+  delete[] this->read_response_buffer_;
+}
 
-      // Then, expect to read that many queries.
-      for (uint32_t i = 0; i < batch_size; i++) {
-        ReadUntil(this->lower_socket_, this->read_query_buffer_,
-                  this->incoming_query_msg_size_);
-        this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
-            this->read_query_buffer_, this->incoming_query_msg_size_));
-      }
-    }
+// Configure poll(...).
+uint32_t InterPartyTCPSocket::FdCount() {
+  // We have 2 fds but they are completely disjoint.
+  return 1;
+}
 
-    if (this->upper_socket_ != -1) {
-      // Read however many responses as queries sent.
-      // "this->sent_queries_count_" is updated in "SendQuery"
-      // it is larger than the batch size, because on top
-      // of sending all the received queries, the protocol requires
-      // additional noise queries be sent as well.
-      for (uint32_t i = 0; i < this->sent_queries_count_; i++) {
-        ReadUntil(this->upper_socket_, this->read_response_buffer_,
-                  this->response_msg_size_);
-        this->listener_->OnReceiveResponse(this->read_response_buffer_);
-      }
-    }
-
-    // Reset the number of queries sent (this batch is done).
-    this->sent_queries_count_ = 0;
-
-    // If the queries are received on a different socket, return so
-    // calling code can listen on that socket.
-    if (this->lower_socket_ == -1) {
-      break;
-    }
+bool InterPartyTCPSocket::PollQueries(pollfd *fds) {
+  fds->revents = 0;
+  if (this->queries_count_ > 0) {
+    fds->fd = this->lower_socket_;
+    fds->events = POLLIN;
+    return false;
+  } else {
+    fds->fd = -1;
+    fds->events = 0;
+    return true;
   }
 }
 
-// Sending messages ...
-void TCPSocket::SendBatch(uint32_t batch_size) {
+bool InterPartyTCPSocket::PollResponses(pollfd *fds) {
+  fds->revents = 0;
+  if (this->responses_count_ > 0) {
+    fds->fd = this->upper_socket_;
+    fds->events = POLLIN;
+    return false;
+  } else {
+    fds->fd = -1;
+    fds->events = 0;
+    return true;
+  }
+}
+
+// Reading messages!
+void InterPartyTCPSocket::ReadBatchSize() {
+  if (this->lower_socket_ != -1) {
+    ReadUntil(this->lower_socket_,
+              reinterpret_cast<unsigned char *>(&this->queries_count_),
+              sizeof(uint32_t));
+    this->listener_->OnReceiveBatchSize(this->queries_count_);
+  }
+}
+
+bool InterPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
+  assert(fd_index == 0 && this->lower_socket_ != -1 &&
+         this->queries_count_ > 0);
+  // Blocking read.
+  ReadUntil(this->lower_socket_, this->read_query_buffer_,
+            this->incoming_query_msg_size_);
+
+  // Chek if done and update fds.
+  bool done = (--this->queries_count_ == 0);
+  if (done) {
+    fds->fd = -1;
+    fds->events = 0;
+    fds->revents = 0;
+  }
+
+  // Call event handler.
+  this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
+      this->read_query_buffer_, this->incoming_query_msg_size_));
+  return done;
+}
+
+bool InterPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
+  assert(fd_index == 0 && this->upper_socket_ != -1 &&
+         this->responses_count_ > 0);
+  // Blocking read.
+  ReadUntil(this->upper_socket_, this->read_response_buffer_,
+            this->response_msg_size_);
+
+  // Chek if done and update fds.
+  bool done = (--this->responses_count_ == 0);
+  if (done) {
+    fds->fd = -1;
+    fds->events = 0;
+    fds->revents = 0;
+  }
+
+  // Call event handler.
+  this->listener_->OnReceiveResponse(this->read_response_buffer_);
+  return done;
+}
+
+// Sending messages!
+void InterPartyTCPSocket::SendBatchSize(uint32_t batch_size) {
   unsigned char *buffer = reinterpret_cast<unsigned char *>(&batch_size);
   SendAssert(this->upper_socket_, buffer, sizeof(uint32_t));
 }
 
-void TCPSocket::SendQuery(const types::ForwardQuery &query) {
+void InterPartyTCPSocket::SendQuery(const types::ForwardQuery &query) {
   // Write message to out buffer.
-  this->sent_queries_count_++;
+  this->responses_count_++;
   SendAssert(this->upper_socket_, query, this->outgoing_query_msg_size_);
 }
 
-void TCPSocket::SendResponse(const types::Response &response) {
+void InterPartyTCPSocket::SendResponse(const types::Response &response) {
   // Write message to out buffer.
   const unsigned char *buffer = response.Serialize();
   SendAssert(this->lower_socket_, buffer, this->response_msg_size_);

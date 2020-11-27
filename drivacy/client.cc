@@ -18,7 +18,6 @@
 #include "absl/flags/usage.h"
 #include "absl/status/status.h"
 #include "absl/strings/str_format.h"
-#include "drivacy/io/websocket_client.h"
 // NOLINTNEXTLINE
 #include "drivacy/parties/client.h"
 #include "drivacy/types/config.pb.h"
@@ -45,8 +44,7 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
                    drivacy::util::file::ParseTable(json));
 
   // Setup party and listen to incoming queries and responses.
-  drivacy::parties::Client client(
-      machine_id, config, drivacy::io::socket::WebSocketClient::Factory);
+  drivacy::parties::Client client(machine_id, config);
 
   // Verify correctness of query / response.
   std::list<uint64_t> queries;
@@ -55,8 +53,8 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
     assert(query == queries.front());
     assert(response == table.at(query));
     queries.pop_front();
-    if (response_count++ % 5000 == 0) {
-      std::cout << "Got " << response_count << std::endl;
+    if (response_count++ % 10000 == 0) {
+      std::cout << "Received " << (response_count - 1) << std::endl;
     }
   });
 
@@ -65,8 +63,8 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
     for (const auto &[query, response] : table) {
       queries.push_back(query);
       client.MakeQuery(query);
-      if (i % 5000 == 0) {
-        std::cout << "Made " << i << std::endl;
+      if (i % 10000 == 0) {
+        std::cout << "Sent " << i << std::endl;
       }
       if (++i == query_count) {
         break;

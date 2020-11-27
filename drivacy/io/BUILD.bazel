@@ -8,25 +8,20 @@ cc_library(
         "abstract_socket.h",
     ],
     visibility = ["//drivacy:__subpackages__"],
-    deps = [
-        "//drivacy/types:config_cc_proto",
-        "//drivacy/types:types",
-    ],
+    deps = [],
 )
 
 cc_library(
     name = "socket",
     srcs = [
         "intraparty_socket.cc",
-        "simulated_socket.cc",
-        "socket.cc",
+        "interparty_socket.cc",
         "websocket_client.cc",
         "websocket_server.cc",
     ],
     hdrs = [
         "intraparty_socket.h",
-        "simulated_socket.h",
-        "socket.h",
+        "interparty_socket.h",
         "websocket_client.h",
         "websocket_server.h",
     ],
@@ -39,5 +34,19 @@ cc_library(
         "//drivacy/types:types",
         "//drivacy/io:abstract_socket",
         "//third_party:easywsclient",
+    ],
+)
+
+cc_library(
+    name = "listener",
+    srcs = [
+        "unified_listener.cc",
+    ],
+    hdrs = [
+        "unified_listener.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+      "//drivacy/io:abstract_socket",
     ],
 )

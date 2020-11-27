@@ -21,9 +21,10 @@ do
   for (( machine=1; machine<={parallelism}; machine++ ))
   do
     echo "Running party $party-$machine"
-    ./{_party} --table={table} --config={config} --party=$party \
-               --machine=$machine --batch={batch} --span={span} \
-               --cutoff={cutoff} > logs/party$party-$machine.log 2>&1 &
+    valgrind ./{_party} --table={table} --config={config} --party=$party \
+               --machine=$machine --batches={batches} --batch={batch} \
+               --span={span} --cutoff={cutoff} \
+               > logs/party$party-$machine.log 2>&1 &
     PARTY_IDS+=($!)
   done
 done
@@ -37,14 +38,37 @@ echo "Running clients..."
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
   echo "Running client $machine"
-  ./{_client} --table={table} --config={config} --machine=$machine \
+  valgrind ./{_client} --table={table} --config={config} --machine=$machine \
               --queries={queries} > logs/client-$machine 2>&1 &
   CLIENT_IDS+=($!)
 done
 echo ""
 
-# Wait for all clients
+# In the background, wait a certian timeout, then attempt to forcefully
+# kill protocol if timeout is exceeded!
+(
+  sleep {max_time} &&
+  echo "Timeout expired!" &&
+  for ID in "${{CLIENT_IDS[@]}}"; do kill -9 $ID; done &&
+  for ID in "${{PARTY_IDS[@]}}"; do kill -9 $ID; done &&
+  echo "Killed all" &&
+  echo "" &&
+  exit 1
+) &
+TIMEOUT_PID=$!
+
+# Wait for all clients and parties
 for ID in "${{CLIENT_IDS[@]}}"
+do
+  # Use wait to get status code.
+  wait $ID
+  code=$?
+  if [ "$code" -ne "0" ]
+  then
+    EXIT_CODE=$code
+  fi
+done
+for ID in "${{PARTY_IDS[@]}}"
 do
   wait $ID
   code=$?
@@ -54,8 +78,13 @@ do
   fi
 done
 
+# in case we are done before timeout, kill the timeout task.
+kill -9 $TIMEOUT_PID &> /dev/null
+wait $! &> /dev/null
+
 # dump logs
 echo "Dumping logs..."
+echo ""
 for (( party={parties}; party>0; party-- ))
 do
   for (( machine=1; machine<={parallelism}; machine++ ))
@@ -67,7 +96,6 @@ do
     echo ""
   done
 done
-
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
   echo "Client $machine logs"
@@ -77,17 +105,22 @@ do
   echo ""
 done
 
+# Wait to make sure everything died properly.
+sleep 1
 
-# Kill all parties
-for ID in "${{PARTY_IDS[@]}}"
-do
-  kill -9 $ID &> /dev/null
-done
-
+# Exit with the deduced exit code.
+echo "Sucess: $EXIT_CODE"
 exit $EXIT_CODE
 """
 
 def _end_to_end_test_impl(ctx):
+    # automatically compute count of batches if needed.
+    batches = ctx.attr.batches
+    if batches == 0:
+      batches = ctx.attr.queries // ctx.attr.batch
+    if batches * ctx.attr.batch != ctx.attr.queries:
+      fail("Batches count, batch size, and queries are incompatible!")
+
     ctx.actions.write(
         is_executable = True,
         output = ctx.outputs.executable,
@@ -96,12 +129,14 @@ def _end_to_end_test_impl(ctx):
             _client=ctx.file._client.short_path,
             parties=ctx.attr.parties,
             parallelism=ctx.attr.parallelism,
+            batches=batches,
             batch=ctx.attr.batch,
             queries=ctx.attr.queries,
             table=ctx.file.table.short_path,
             config=ctx.file.config.short_path,
             span=ctx.attr.span,
-            cutoff=ctx.attr.cutoff
+            cutoff=ctx.attr.cutoff,
+            max_time=ctx.attr.max_time,
         ),
     )
 
@@ -145,6 +180,11 @@ end_to_end_test = rule(
             doc = "The number of machines per party.",
             mandatory = True,
         ),
+        "batches": attr.int(
+            doc = "Count of batches for which the protocol is running.",
+            mandatory = False,
+            default = 0,
+        ),
         "batch": attr.int(
             doc = "The batch size.",
             mandatory = True,
@@ -160,6 +200,11 @@ end_to_end_test = rule(
         "cutoff": attr.string(
             doc = "The cutoff for the DP distribution",
             mandatory = True,
-        )
+        ),
+        "max_time": attr.int(
+            doc = "Test timeout in seconds.",
+            mandatory = False,
+            default = 60,
+        ),
     },
 )

@@ -17,9 +17,10 @@
 
 #include <cstdint>
 #include <list>
-#include <memory>
 
-#include "drivacy/io/abstract_socket.h"
+#include "drivacy/io/interparty_socket.h"
+#include "drivacy/io/intraparty_socket.h"
+#include "drivacy/io/unified_listener.h"
 #include "drivacy/protocol/shuffle.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -27,7 +28,7 @@
 namespace drivacy {
 namespace parties {
 
-class Party : public io::socket::SocketListener,
+class Party : public io::socket::InterPartySocketListener,
               public io::socket::IntraPartySocketListener {
  public:
   // Construct the party given its configuration.
@@ -35,28 +36,25 @@ class Party : public io::socket::SocketListener,
   // back-pointer to the party.
   Party(uint32_t party_id, uint32_t machine_id,
         const types::Configuration &config, const types::Table &table,
-        double span, double cutoff, io::socket::SocketFactory socket_factory,
-        io::socket::IntraPartySocketFactory intra_party_socket_factory)
+        double span, double cutoff, uint32_t batches)
       : party_id_(party_id),
         machine_id_(machine_id),
         config_(config),
         table_(table),
         span_(span),
         cutoff_(cutoff),
-        batch_size_(0),
-        queries_shuffled_(0),
-        responses_deshuffled_(0),
-        processed_queries_(0),
-        processed_responses_(0),
-        query_machines_ready_(0),
-        response_machines_ready_(0),
+        batches_(batches),
+        batch_counter_(0),
+        inter_party_socket_(party_id, machine_id, config, this),
+        intra_party_socket_(party_id, machine_id, config, this),
+        input_batch_size_(0),
+        output_batch_size_(0),
         noise_size_(0),
         shuffler_(party_id, machine_id, config.parties(),
                   config.parallelism()) {
     // virtual funtion binds to correct subclass.
-    this->socket_ = socket_factory(party_id, machine_id, config, this);
-    this->intra_party_socket_ =
-        intra_party_socket_factory(party_id, machine_id, config, this);
+    this->listener_.AddSocket(&this->inter_party_socket_);
+    this->listener_.AddSocket(&this->intra_party_socket_);
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -68,7 +66,7 @@ class Party : public io::socket::SocketListener,
   Party &operator=(const Party &) = delete;
 
   // Called to start the listening on the socket (blocking!)
-  virtual void Listen();
+  virtual void Start();
 
   // Implementation of SocketListener, these functions are called by the
   // socket when a batch size, query, or response is received on the socket.
@@ -79,13 +77,11 @@ class Party : public io::socket::SocketListener,
   // Implementation of IntraPartySocketListener, these functions are called
   // by the intra party socket when the corresponding event occurs.
   bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) override;
-  void OnReceiveBatchSize2() override;
+  void OnCollectedBatchSizes() override;
   void OnReceiveQuery(uint32_t machine_id,
                       const types::ForwardQuery &query) override;
   void OnReceiveResponse(uint32_t machine_id,
                          const types::Response &response) override;
-  void OnQueriesReady(uint32_t machine_id) override;
-  void OnResponsesReady(uint32_t machine_id) override;
 
  protected:
   uint32_t party_id_;
@@ -95,17 +91,15 @@ class Party : public io::socket::SocketListener,
   // DP noise parameters.
   double span_;
   double cutoff_;
+  // How many batches before stopping!
+  uint32_t batches_;
+  uint32_t batch_counter_;
   // Sockets.
-  std::unique_ptr<io::socket::AbstractSocket> socket_;
-  std::unique_ptr<io::socket::AbstractIntraPartySocket> intra_party_socket_;
-  uint32_t batch_size_;
-  uint32_t queries_shuffled_;
-  uint32_t responses_deshuffled_;
-  // Tracks the number of processed queries and responses.
-  uint32_t processed_queries_;
-  uint32_t processed_responses_;
-  uint32_t query_machines_ready_;
-  uint32_t response_machines_ready_;
+  io::listener::UnifiedListener listener_;
+  io::socket::InterPartyTCPSocket inter_party_socket_;
+  io::socket::IntraPartyTCPSocket intra_party_socket_;
+  uint32_t input_batch_size_;
+  uint32_t output_batch_size_;
   // Noise used in this batch.
   std::list<types::OutgoingQuery> noise_;
   uint32_t noise_size_;

@@ -13,9 +13,9 @@
 #define DRIVACY_PARTIES_CLIENT_H_
 
 #include <cstdint>
-#include <memory>
+#include <functional>
 
-#include "drivacy/io/abstract_socket.h"
+#include "drivacy/io/websocket_client.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
 
@@ -25,13 +25,15 @@ namespace parties {
 // A function taking two arguments: the original query and its response values.
 using ResponseHandler = std::function<void(uint64_t, uint64_t)>;
 
-class Client : public io::socket::SocketListener {
+class Client : public io::socket::WebSocketClientListener {
  public:
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  Client(uint32_t machine_id, const types::Configuration &config,
-         io::socket::SocketFactory socket_factory);
+  Client(uint32_t machine_id, const types::Configuration &config)
+      : machine_id_(machine_id),
+        config_(config),
+        socket_(machine_id, config, this) {}
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
   // is stored in the socket (e.g. look at io/simulated_socket.[cc|h]).
@@ -53,14 +55,15 @@ class Client : public io::socket::SocketListener {
   void MakeQuery(uint64_t value);
 
   // Executed when a batch size, query, or response are received.
-  void OnReceiveBatchSize(uint32_t _) override { assert(false); }
-  void OnReceiveQuery(const types::IncomingQuery &_) override { assert(false); }
   void OnReceiveResponse(const types::ForwardResponse &response) override;
 
  private:
+  // Configuration.
   uint32_t machine_id_;
   const types::Configuration &config_;
-  std::unique_ptr<io::socket::AbstractSocket> socket_;
+  // Websocket client.
+  io::socket::WebSocketClient socket_;
+  // State for response handling.
   types::ClientState state_;
   ResponseHandler response_handler_;
 };

@@ -10,8 +10,6 @@
 #define DRIVACY_IO_WEBSOCKET_CLIENT_H_
 
 #include <cstdint>
-#include <memory>
-#include <string>
 #include <vector>
 
 #include "drivacy/io/abstract_socket.h"
@@ -23,10 +21,15 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-class WebSocketClient : public AbstractSocket {
+class WebSocketClientListener {
  public:
-  WebSocketClient(uint32_t party_id, uint32_t machine_id,
-                  const types::Configuration &config, SocketListener *listener);
+  virtual void OnReceiveResponse(const types::ForwardResponse &response) = 0;
+};
+
+class WebSocketClient {
+ public:
+  WebSocketClient(uint32_t machine_id, const types::Configuration &config,
+                  WebSocketClientListener *listener);
 
   ~WebSocketClient() {
     if (this->socket_->getReadyState() != easywsclient::WebSocket::CLOSED) {
@@ -35,31 +38,22 @@ class WebSocketClient : public AbstractSocket {
     delete this->socket_;
   }
 
-  // Factory function used to simplify construction of inheriting sockets.
-  static std::unique_ptr<AbstractSocket> Factory(
-      uint32_t party_id, uint32_t machine_id,
-      const types::Configuration &config, SocketListener *listener) {
-    return std::make_unique<WebSocketClient>(party_id, machine_id, config,
-                                             listener);
-  }
-
-  // This is how we send queries to the frontend party!
-  void SendQuery(const types::ForwardQuery &query) override;
-
-  // We can never send responses (or batch sizes) as a client.
-  void SendBatch(uint32_t batch_size) override { assert(false); }
-  void SendResponse(const types::Response &response) override { assert(false); }
+  // We can only send queries from a client.
+  void SendQuery(const types::ForwardQuery &query);
 
   // Start the socket and listen to messages: blocking.
-  void Listen() override;
+  void Listen();
 
  private:
+  // Configuration.
+  WebSocketClientListener *listener_;
   // The client socket.
   easywsclient::WebSocket *socket_;
-
+  // Message sizes.
+  uint32_t outgoing_query_msg_size_;
+  uint32_t response_msg_size_;
   // The total number of queries sent.
   uint32_t queries_sent_count_;
-
   // Handle incoming responses from server (calls response_listener_).
   void HandleResponse(const std::vector<uint8_t> &msg);
 };

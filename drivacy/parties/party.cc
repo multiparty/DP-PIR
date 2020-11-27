@@ -12,7 +12,6 @@
 
 #include "drivacy/parties/party.h"
 
-#include <chrono>
 #include <utility>
 
 #include "drivacy/protocol/noise.h"
@@ -22,8 +21,36 @@
 namespace drivacy {
 namespace parties {
 
-void Party::Listen() { this->socket_->Listen(); }
+// Begin by reading the batch size from the previous party (blocking).
+void Party::Start() {
+#ifdef DEBUG_MSG
+  std::cout << "Starting ... " << party_id_ << "-" << machine_id_ << std::endl;
+#endif
+  // Our protocol's communication flow explicitly encoded.
+  while (this->batches_ == 0 || this->batch_counter_++ < this->batches_) {
+    this->inter_party_socket_.ReadBatchSize();
+    // Expect the machines to tell us their batch size.
+    this->intra_party_socket_.CollectBatchSizes();
+    // Now we can listen to incoming queries (from previous party or from
+    // machines parallel).
+    this->listener_.ListenToQueries();
+    // After all queries are handled, broadcast ready.
+    this->intra_party_socket_.BroadcastQueriesReady();
+    this->intra_party_socket_.CollectQueriesReady();
+    // All queries are ready, we can move to the next party now!
+    this->SendQueries();
+    // Now we listen to incoming responses (from previous party or from parallel
+    // machines).
+    this->listener_.ListenToResponses();
+    // After all responses are handled, broadcast ready.
+    this->intra_party_socket_.BroadcastResponsesReady();
+    this->intra_party_socket_.CollectResponsesReady();
+    // All responses are ready, we can forward them to the previous party!
+    this->SendResponses();
+  }
+}
 
+// Batch size information and handling.
 void Party::OnReceiveBatchSize(uint32_t batch_size) {
 #ifdef DEBUG_MSG
   std::cout << "On Receive batch size " << party_id_ << "-" << machine_id_
@@ -34,10 +61,10 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
       this->party_id_, this->machine_id_, this->config_, this->table_,
       this->span_, this->cutoff_);
   this->noise_size_ = noise_.size();
-  // Update batch size and send it to next party.
-  this->batch_size_ = batch_size + this->noise_size_;
-  this->intra_party_socket_->BroadcastBatchSize(this->batch_size_);
-  this->intra_party_socket_->ListenBatchSizes();
+  // Update batch size.
+  this->input_batch_size_ = batch_size + this->noise_size_;
+  // Send batch size to all other machines of our same party.
+  this->intra_party_socket_.BroadcastBatchSize(this->input_batch_size_);
 }
 
 bool Party::OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) {
@@ -45,38 +72,35 @@ bool Party::OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) {
   std::cout << "On Receive batch size 2 " << party_id_ << "-" << machine_id_
             << " = " << machine_id << ":" << batch_size << std::endl;
 #endif
-  // Initialize shuffling and shuffle in the noise.
-  if (this->shuffler_.Initialize(machine_id, batch_size)) {
-    this->socket_->SendBatch(this->shuffler_.batch_size());
-
-    auto begin = std::chrono::steady_clock::now();
-    this->shuffler_.PreShuffle();
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Shuffling done = "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                       begin)
-                     .count()
-              << "[ms]" << std::endl;
-    return true;
-  }
-  return false;
+  // Initialize shuffler, shuffler will let us know if it has all the batch
+  // size information it needs.
+  return this->shuffler_.Initialize(machine_id, batch_size);
 }
 
-void Party::OnReceiveBatchSize2() {
+void Party::OnCollectedBatchSizes() {
 #ifdef DEBUG_MSG
-  std::cout << "On Receive batch size 2 (cntd) " << party_id_ << "-"
-            << machine_id_ << std::endl;
+  std::cout << "On Collected batch size 2 " << party_id_ << "-" << machine_id_
+            << std::endl;
 #endif
+  // We have all the batch size information.
+  // We can compute our output batch size and send it to the next party.
+  this->output_batch_size_ = this->shuffler_.batch_size();
+  this->inter_party_socket_.SendBatchSize(this->output_batch_size_);
+  // Simulate a global preshuffle to use later for shuffling incrementally.
+  this->shuffler_.PreShuffle();
+  this->intra_party_socket_.SetQueryCounts(
+      std::move(this->shuffler_.IncomingQueriesCount()));
+  // Shuffle in the noise queries.
   for (types::OutgoingQuery &query : this->noise_) {
     uint32_t machine_id =
         this->shuffler_.MachineOfNextQuery(query.query_state());
-    this->intra_party_socket_->SendQuery(machine_id, query);
+    this->intra_party_socket_.SendQuery(machine_id, query);
     query.Free();
   }
-  this->queries_shuffled_ += this->noise_size_;
   this->noise_.clear();
 }
 
+// Query handling.
 void Party::OnReceiveQuery(const types::IncomingQuery &query) {
 #ifdef DEBUG_MSG
   std::cout << "On receive query " << party_id_ << "-" << machine_id_
@@ -90,29 +114,8 @@ void Party::OnReceiveQuery(const types::IncomingQuery &query) {
   // Assign query to some machine.
   uint32_t machine_id =
       this->shuffler_.MachineOfNextQuery(outgoing_query.query_state());
-  this->intra_party_socket_->SendQuery(machine_id, outgoing_query);
+  this->intra_party_socket_.SendQuery(machine_id, outgoing_query);
   outgoing_query.Free();
-  if (++this->queries_shuffled_ == this->batch_size_) {
-    this->queries_shuffled_ = 0;
-    this->intra_party_socket_->ListenQueries(
-        std::move(this->shuffler_.IncomingQueriesCount()));
-  }
-}
-
-void Party::OnReceiveResponse(const types::ForwardResponse &forward) {
-#ifdef DEBUG_MSG
-  std::cout << "On receive response " << party_id_ << "-" << machine_id_
-            << std::endl;
-#endif
-  // Distributed two phase deshuffling - Phase 1.
-  // Assign response to the machine that handled its corresponding
-  // query in phase 1 of shuffling.
-  uint32_t machine_id = this->shuffler_.MachineOfNextResponse();
-  this->intra_party_socket_->SendResponse(machine_id, forward);
-  if (++this->responses_deshuffled_ == this->shuffler_.batch_size()) {
-    this->responses_deshuffled_ = 0;
-    this->intra_party_socket_->ListenResponses();
-  }
 }
 
 void Party::OnReceiveQuery(uint32_t machine_id,
@@ -123,9 +126,31 @@ void Party::OnReceiveQuery(uint32_t machine_id,
 #endif
   // Distributed two phase shuffling - Phase 2.
   // Shuffle query locally, and wait until all queries are shuffled.
-  if (this->shuffler_.ShuffleQuery(machine_id, query)) {
-    this->intra_party_socket_->BroadcastQueriesReady();
+  this->shuffler_.ShuffleQuery(machine_id, query);
+}
+
+void Party::SendQueries() {
+#ifdef DEBUG_MSG
+  std::cout << "send queries " << party_id_ << "-" << machine_id_ << std::endl;
+#endif
+  for (uint32_t i = 0; i < this->output_batch_size_; i++) {
+    types::ForwardQuery query = this->shuffler_.NextQuery();
+    this->inter_party_socket_.SendQuery(query);
+    delete[] query;  // memory is allocated inside shuffler_
   }
+}
+
+// Response handling.
+void Party::OnReceiveResponse(const types::ForwardResponse &forward) {
+#ifdef DEBUG_MSG
+  std::cout << "On receive response " << party_id_ << "-" << machine_id_
+            << std::endl;
+#endif
+  // Distributed two phase deshuffling - Phase 1.
+  // Assign response to the machine that handled its corresponding
+  // query in phase 1 of shuffling.
+  uint32_t machine_id = this->shuffler_.MachineOfNextResponse();
+  this->intra_party_socket_.SendResponse(machine_id, forward);
 }
 
 void Party::OnReceiveResponse(uint32_t machine_id,
@@ -141,41 +166,7 @@ void Party::OnReceiveResponse(uint32_t machine_id,
 
   // Distributed two phase deshuffling - Phase 2.
   // Deshuffle response locally, and wait until all responses are deshuffled.
-  if (this->shuffler_.DeshuffleResponse(machine_id, outgoing_response)) {
-    this->intra_party_socket_->BroadcastResponsesReady();
-  }
-}
-
-void Party::OnQueriesReady(uint32_t machine_id) {
-#ifdef DEBUG_MSG
-  std::cout << "On queries ready! " << party_id_ << "-" << machine_id_
-            << std::endl;
-#endif
-  if (++this->query_machines_ready_ == this->config_.parallelism()) {
-    this->query_machines_ready_ = 0;
-    this->SendQueries();
-  }
-}
-void Party::OnResponsesReady(uint32_t machine_id) {
-#ifdef DEBUG_MSG
-  std::cout << "On response ready! " << party_id_ << "-" << machine_id_
-            << std::endl;
-#endif
-  if (++this->response_machines_ready_ == this->config_.parallelism()) {
-    this->response_machines_ready_ = 0;
-    this->SendResponses();
-  }
-}
-
-void Party::SendQueries() {
-#ifdef DEBUG_MSG
-  std::cout << "send queries " << party_id_ << "-" << machine_id_ << std::endl;
-#endif
-  for (uint32_t i = 0; i < this->shuffler_.batch_size(); i++) {
-    types::ForwardQuery query = this->shuffler_.NextQuery();
-    this->socket_->SendQuery(query);
-    delete[] query;  // memory is allocated inside shuffler_
-  }
+  this->shuffler_.DeshuffleResponse(machine_id, outgoing_response);
 }
 
 void Party::SendResponses() {
@@ -188,9 +179,9 @@ void Party::SendResponses() {
     this->shuffler_.NextResponse();
   }
   // Handle the non-noise responses.
-  for (uint32_t i = this->noise_size_; i < this->batch_size_; i++) {
+  for (uint32_t i = this->noise_size_; i < this->input_batch_size_; i++) {
     types::Response &response = this->shuffler_.NextResponse();
-    this->socket_->SendResponse(response);
+    this->inter_party_socket_.SendResponse(response);
   }
 }
 

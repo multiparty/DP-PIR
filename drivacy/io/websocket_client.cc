@@ -8,6 +8,9 @@
 
 #include "drivacy/io/websocket_client.h"
 
+#include <cassert>
+#include <string>
+
 #include "absl/functional/bind_front.h"
 #include "absl/strings/str_format.h"
 
@@ -15,11 +18,14 @@ namespace drivacy {
 namespace io {
 namespace socket {
 
-WebSocketClient::WebSocketClient(uint32_t party_id, uint32_t machine_id,
+WebSocketClient::WebSocketClient(uint32_t machine_id,
                                  const types::Configuration &config,
-                                 SocketListener *listener)
-    : AbstractSocket(party_id, machine_id, config, listener) {
-  this->queries_sent_count_ = 0;
+                                 WebSocketClientListener *listener)
+    : listener_(listener), queries_sent_count_(0) {
+  // Message sizes.
+  this->outgoing_query_msg_size_ =
+      types::OutgoingQuery::Size(0, config.parties());
+  this->response_msg_size_ = types::Response::Size();
 
   // Find address of first frontend.
   const auto &network_config = config.network().at(1).machines().at(machine_id);
@@ -52,6 +58,7 @@ void WebSocketClient::SendQuery(const types::ForwardQuery &query) {
 }
 
 void WebSocketClient::HandleResponse(const std::vector<uint8_t> &msg) {
+  assert(msg.size() == this->response_msg_size_);
   this->queries_sent_count_--;
   const unsigned char *buffer = &(msg[0]);
   this->listener_->OnReceiveResponse(buffer);

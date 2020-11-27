@@ -6,129 +6,30 @@
 #ifndef DRIVACY_IO_ABSTRACT_SOCKET_H_
 #define DRIVACY_IO_ABSTRACT_SOCKET_H_
 
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <vector>
+#include <poll.h>
 
-#include "drivacy/types/config.pb.h"
-#include "drivacy/types/types.h"
+#include <cstdint>
 
 namespace drivacy {
 namespace io {
 namespace socket {
 
-// Inter-party portion.
-class SocketListener {
- public:
-  // Indicates that a batch start message was received specifying the
-  // size of the batch.
-  virtual void OnReceiveBatchSize(uint32_t batch_size) = 0;
-  // Handlers for when a query or response are received.
-  virtual void OnReceiveQuery(const types::IncomingQuery &query) = 0;
-  virtual void OnReceiveResponse(const types::ForwardResponse &response) = 0;
-};
-
-// Base class for socket connecting machines from different parties.
+// An AbstractSocket is something we can poll and read.
 class AbstractSocket {
  public:
-  AbstractSocket(uint32_t party_id, uint32_t machine_id,
-                 const types::Configuration &config, SocketListener *listener)
-      : party_id_(party_id),
-        machine_id_(machine_id),
-        config_(config),
-        listener_(listener) {
-    this->party_count_ = config.parties();
-    this->incoming_query_msg_size_ =
-        types::IncomingQuery::Size(party_id, this->party_count_);
-    this->outgoing_query_msg_size_ =
-        types::OutgoingQuery::Size(party_id, this->party_count_);
-    this->response_msg_size_ = types::Response::Size();
-  }
-
-  virtual void Listen() = 0;
-
-  virtual void SendBatch(uint32_t batch_size) = 0;
-  virtual void SendQuery(const types::ForwardQuery &query) = 0;
-  virtual void SendResponse(const types::Response &response) = 0;
-
- protected:
-  uint32_t party_id_;
-  uint32_t machine_id_;
-  uint32_t party_count_;
-  types::Configuration config_;
-  SocketListener *listener_;
-  // Stores the sizes of messages.
-  uint32_t incoming_query_msg_size_;
-  uint32_t outgoing_query_msg_size_;
-  uint32_t response_msg_size_;
+  // The count of the underlying file descriptors.
+  virtual uint32_t FdCount() = 0;
+  // Fill fds[0 ... FdCount()].
+  virtual bool PollQueries(pollfd *fds) = 0;
+  virtual bool PollResponses(pollfd *fds) = 0;
+  // Read a query or a response.
+  // In addition to reading from fd[fd_index] and calling the appropriate
+  // event handler, this function modifies fds[fd_index] depending on whether
+  // or not more messages are expected.
+  // Returns false when all sockets are completely consumed.
+  virtual bool ReadQuery(uint32_t fd_index, pollfd *fds) = 0;
+  virtual bool ReadResponse(uint32_t fd_index, pollfd *fds) = 0;
 };
-
-using SocketFactory = std::function<std::unique_ptr<AbstractSocket>(
-    uint32_t, uint32_t, const types::Configuration &, SocketListener *)>;
-
-// Intra-party portion.
-class IntraPartySocketListener {
- public:
-  virtual bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) = 0;
-  virtual void OnReceiveBatchSize2() = 0;  // hack to ensure FIFO msg delivery.
-  virtual void OnReceiveQuery(uint32_t machine_id,
-                              const types::ForwardQuery &query) = 0;
-  virtual void OnReceiveResponse(uint32_t machine_id,
-                                 const types::Response &response) = 0;
-  virtual void OnQueriesReady(uint32_t machine_id) = 0;
-  virtual void OnResponsesReady(uint32_t machine_id) = 0;
-};
-
-// Base class for sockets connecting machines within the same party.
-class AbstractIntraPartySocket {
- public:
-  AbstractIntraPartySocket(uint32_t party_id, uint32_t machine_id,
-                           const types::Configuration &config,
-                           IntraPartySocketListener *listener)
-      : party_id_(party_id),
-        machine_id_(machine_id),
-        config_(config),
-        listener_(listener) {
-    this->party_count_ = config.parties();
-    this->parallelism_ = config.parallelism();
-    this->query_msg_size_ =
-        types::ForwardQuerySize(party_id, this->party_count_);
-    this->response_msg_size_ = types::ForwardResponseSize();
-    // The backend party does not need Intra-party sockets.
-    assert(party_id < this->party_count_);
-  }
-
-  virtual void ListenBatchSizes() = 0;
-  virtual void ListenQueries(std::vector<uint32_t> counts) = 0;
-  virtual void ListenResponses() = 0;
-
-  virtual void BroadcastBatchSize(uint32_t batch_size) = 0;
-  virtual void BroadcastQueriesReady() = 0;
-  virtual void BroadcastResponsesReady() = 0;
-
-  virtual void SendQuery(uint32_t machine_id,
-                         const types::OutgoingQuery &query) = 0;
-  virtual void SendResponse(uint32_t machine_id,
-                            const types::ForwardResponse &response) = 0;
-
- protected:
-  uint32_t party_id_;
-  uint32_t machine_id_;
-  uint32_t party_count_;
-  uint32_t parallelism_;
-  types::Configuration config_;
-  IntraPartySocketListener *listener_;
-  // Both incoming and outgoing queries, as well as responses, have the
-  // same size.
-  uint32_t query_msg_size_;
-  uint32_t response_msg_size_;
-};
-
-using IntraPartySocketFactory =
-    std::function<std::unique_ptr<AbstractIntraPartySocket>(
-        uint32_t, uint32_t, const types::Configuration &,
-        IntraPartySocketListener *)>;
 
 }  // namespace socket
 }  // namespace io

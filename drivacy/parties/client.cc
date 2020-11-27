@@ -16,13 +16,7 @@
 namespace drivacy {
 namespace parties {
 
-Client::Client(uint32_t machine_id, const types::Configuration &config,
-               io::socket::SocketFactory socket_factory)
-    : machine_id_(machine_id), config_(config) {
-  this->socket_ = socket_factory(0, machine_id, config, this);
-}
-
-void Client::Listen() { this->socket_->Listen(); }
+void Client::Listen() { this->socket_.Listen(); }
 
 void Client::MakeQuery(uint64_t value) {
   // Create query via client protocol.
@@ -33,7 +27,7 @@ void Client::MakeQuery(uint64_t value) {
   this->state_.preshares.push_back(query.query_state());
   // Send via socket.
   types::ForwardQuery buffer = query.Serialize();
-  this->socket_->SendQuery(buffer);
+  this->socket_.SendQuery(buffer);
   query.Free();
 }
 

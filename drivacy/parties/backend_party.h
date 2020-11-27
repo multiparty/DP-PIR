@@ -25,8 +25,9 @@ class BackendParty : public Party {
  public:
   BackendParty(uint32_t party, uint32_t machine,
                const types::Configuration &config, const types::Table &table,
-               double span, double cutoff,
-               io::socket::SocketFactory socket_factory);
+               double span, double cutoff, uint32_t batches)
+      : Party(party, machine, config, table, span, cutoff, batches),
+        processed_queries_(0) {}
 
   // Not copyable or movable!
   BackendParty(BackendParty &&other) = delete;
@@ -34,17 +35,21 @@ class BackendParty : public Party {
   BackendParty(const BackendParty &) = delete;
   BackendParty &operator=(const BackendParty &) = delete;
 
+  void Start() override;
+
   void OnReceiveBatchSize(uint32_t batch_size) override;
   void OnReceiveQuery(const types::IncomingQuery &query) override;
+
+  // Backend cannot receive responses.
   void OnReceiveResponse(const types::ForwardResponse &response) override {
     assert(false);
   }
 
-  // Backend party never receives responses or uses intra-party communication.
+  // Backend does not use any intra-party communication.
   bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) override {
     assert(false);
   }
-  void OnReceiveBatchSize2() override { assert(false); }
+  void OnCollectedBatchSizes() override { assert(false); }
   void OnReceiveQuery(uint32_t machine_id,
                       const types::ForwardQuery &query) override {
     assert(false);
@@ -53,14 +58,15 @@ class BackendParty : public Party {
                          const types::Response &response) override {
     assert(false);
   }
-  void OnQueriesReady(uint32_t machine_id) override { assert(false); }
-  void OnResponsesReady(uint32_t machine_id) override { assert(false); }
-  void SendQueries() override { assert(false); }
-  void SendResponses() override;
 
  protected:
+  // Count how many queries have been processed in this batch.
   uint32_t processed_queries_;
+  // Store processed responses of a batch.
   types::Response *responses_;
+  // Change how responses are sent.
+  void SendQueries() override { assert(false); }
+  void SendResponses() override;
 };
 
 }  // namespace parties
