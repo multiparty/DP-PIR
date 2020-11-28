@@ -23,16 +23,15 @@ Shuffler::Shuffler(uint32_t party_id, uint32_t machine_id, uint32_t party_count,
   this->forward_query_size_ = types::ForwardQuerySize(party_id, party_count);
   this->forward_response_size_ = types::ForwardResponseSize();
   // Seed RNG.
-  // TODO(babman): use proper seed.
   this->generator_ = primitives::util::SeedGenerator(party_id);
+  // Mark buffers as nullptr.
+  this->shuffled_queries_ = nullptr;
 }
 
 // Delete any remaining queries that were shuffled but not consumed.
 Shuffler::~Shuffler() {
-  for (types::ForwardQuery &buffer : this->shuffled_queries_) {
-    if (buffer != nullptr) {
-      delete[] buffer;
-    }
+  if (this->shuffled_queries_ != nullptr) {
+    delete[] this->shuffled_queries_;
   }
 }
 
@@ -71,20 +70,25 @@ bool Shuffler::Initialize(uint32_t machine_id, uint32_t given_size) {
   this->deshuffled_response_count_ = 0;
 
   // Resize vectors.
-  this->shuffled_queries_.resize(this->batch_size_, nullptr);
+  this->shuffled_queries_ =
+      new unsigned char[this->batch_size_ * this->forward_query_size_];
   this->deshuffled_responses_.resize(this->size_[this->machine_id_],
                                      types::Response(0));
 
-  // clear maps.
-  this->query_machine_ids_.clear();
+  // ID vectors.
+  this->query_machine_ids_index_ = 0;
+  this->response_machine_ids_index = 0;
   this->response_machine_ids_.clear();
+  this->response_machine_ids_.reserve(this->batch_size_);
+
+  // clear maps.
   this->query_order_.clear();
   this->query_indices_.clear();
   this->response_indices_.clear();
-  this->query_states_.clear();
 
   // Reinitialize maps with pairs.
   for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    this->query_order_[m].first = 0;
     this->query_indices_[m].first = 0;
     this->response_indices_[m].first = 0;
     this->query_states_[m].first = 0;
@@ -157,6 +161,8 @@ void Shuffler::PreShuffle() {
   shuffling_order.clear();
 
   // query_machine_ids needs to be filled in original non-shuffled order.
+  this->query_machine_ids_.clear();
+  this->query_machine_ids_.reserve(sent.size());
   for (auto &[target, _] : sent) {
     uint32_t target_machine_id = target / ceil_batch_size + 1;
     this->query_machine_ids_.push_back(target_machine_id);
@@ -189,7 +195,7 @@ void Shuffler::PreShuffle() {
       if (last_owner != 0) {
         std::sort(relative_order.begin(), relative_order.end());
         for (auto &[_, order] : relative_order) {
-          this->query_order_[last_owner].push_back(order);
+          this->query_order_[last_owner].second.push_back(order);
         }
         this->query_states_.at(last_owner).second.resize(relative_order.size());
         relative_order.clear();
@@ -205,7 +211,7 @@ void Shuffler::PreShuffle() {
   if (last_owner != 0) {
     std::sort(relative_order.begin(), relative_order.end());
     for (auto &[_, order] : relative_order) {
-      this->query_order_[last_owner].push_back(order);
+      this->query_order_[last_owner].second.push_back(order);
     }
     this->query_states_.at(last_owner).second.resize(relative_order.size());
     relative_order.clear();
@@ -230,13 +236,12 @@ std::vector<uint32_t> Shuffler::IncomingQueriesCount() {
 // Determines the machine the next query is meant to be sent to.
 uint32_t Shuffler::MachineOfNextQuery(const types::QueryState &query_state) {
   // Find which machine this query is meant for.
-  uint32_t machine_id = this->query_machine_ids_.front();
-  this->query_machine_ids_.pop_front();
+  uint32_t machine_id =
+      this->query_machine_ids_[this->query_machine_ids_index_++];
   // Find the relative order of this query among all queries from this machine
   // meant for the target machine.
-  auto &nested_list = this->query_order_.at(machine_id);
-  uint32_t relative_order = nested_list.front();
-  nested_list.pop_front();
+  auto &[index, nested_vec] = this->query_order_.at(machine_id);
+  uint32_t relative_order = nested_vec[index++];
   // Store query_state according to the relative order.
   auto &[_, query_states] = this->query_states_.at(machine_id);
   query_states.at(relative_order) = query_state;
@@ -246,8 +251,8 @@ uint32_t Shuffler::MachineOfNextQuery(const types::QueryState &query_state) {
 
 // Determines the machine the next response is meant to be sent to.
 uint32_t Shuffler::MachineOfNextResponse() {
-  uint32_t machine_id = this->response_machine_ids_.front();
-  this->response_machine_ids_.pop_front();
+  uint32_t machine_id =
+      this->response_machine_ids_[this->response_machine_ids_index++];
   return machine_id;
 }
 
@@ -258,9 +263,9 @@ bool Shuffler::ShuffleQuery(uint32_t machine_id,
   auto &[i, nested_map] = this->query_indices_.at(machine_id);
   uint32_t index = nested_map.at(i++);
   // Copy into index.
-  unsigned char *copy = new unsigned char[this->forward_query_size_];
-  memcpy(copy, query, this->forward_query_size_);
-  this->shuffled_queries_.at(index) = copy;
+  unsigned char *dest =
+      this->shuffled_queries_ + index * this->forward_query_size_;
+  memcpy(dest, query, this->forward_query_size_);
   return ++this->shuffled_query_count_ == this->batch_size_;
 }
 
@@ -277,10 +282,8 @@ bool Shuffler::DeshuffleResponse(uint32_t machine_id,
 
 // Get the next query in the shuffled order.
 types::ForwardQuery Shuffler::NextQuery() {
-  types::ForwardQuery &ref = this->shuffled_queries_.at(this->query_index_++);
-  types::ForwardQuery res = ref;
-  ref = nullptr;
-  return res;
+  return this->shuffled_queries_ +
+         this->query_index_++ * this->forward_query_size_;
 }
 
 // Get the next response in the de-shuffled order.
@@ -292,6 +295,12 @@ types::Response &Shuffler::NextResponse() {
 types::QueryState &Shuffler::NextQueryState(uint32_t machine_id) {
   auto &[i, nested_map] = this->query_states_.at(machine_id);
   return nested_map.at(i++);
+}
+
+// Free allocated memory for queries.
+void Shuffler::FreeQueries() {
+  delete[] this->shuffled_queries_;
+  this->shuffled_queries_ = nullptr;
 }
 
 }  // namespace protocol

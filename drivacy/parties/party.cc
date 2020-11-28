@@ -136,8 +136,8 @@ void Party::SendQueries() {
   for (uint32_t i = 0; i < this->output_batch_size_; i++) {
     types::ForwardQuery query = this->shuffler_.NextQuery();
     this->inter_party_socket_.SendQuery(query);
-    delete[] query;  // memory is allocated inside shuffler_
   }
+  this->shuffler_.FreeQueries();
 }
 
 // Response handling.

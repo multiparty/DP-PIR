@@ -42,6 +42,7 @@ sudo apt-get update && sudo apt-get install -y bazel
 # Dependencies
 sudo apt-get install -y g++
 sudo apt-get install -y build-essential
+sudo apt-get install -y nodejs npm
 
 # Compile with bazel
 bazel build drivacy:config

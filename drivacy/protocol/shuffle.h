@@ -56,7 +56,6 @@
 #define DRIVACY_PROTOCOL_SHUFFLE_H_
 
 #include <cstring>
-#include <list>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -112,6 +111,9 @@ class Shuffler {
   // Get the next query state in the shuffled order.
   types::QueryState &NextQueryState(uint32_t machine_id);
 
+  // Free allocated memory for queries.
+  void FreeQueries();
+
  private:
   // Configurations.
   uint32_t party_id_;
@@ -138,20 +140,23 @@ class Shuffler {
   // The response vector contains responses that this machine was meant to
   // process, and were shuffled by other machines of this party but now need
   // deshuffling, before sending them to another party.
-  std::vector<types::ForwardQuery> shuffled_queries_;
+  unsigned char *shuffled_queries_;
   std::vector<types::Response> deshuffled_responses_;
   // Maps storing relavent information from simulated shuffling.
   // Invariant: for any machines m and m',
   //            query_indices[m'] at machine m == query_order_[m] at machine m'.
 
   // query_machine_ids_[i] = machine-bucket of the ith query (phase 1).
-  std::list<uint32_t> query_machine_ids_;
+  uint32_t query_machine_ids_index_;
+  std::vector<uint32_t> query_machine_ids_;
   // response_machine_ids_[i] = machine-bucket of the ith response (phase 1).
-  std::list<uint32_t> response_machine_ids_;
+  uint32_t response_machine_ids_index;
+  std::vector<uint32_t> response_machine_ids_;
   // query_order_[m][i] = the relative order of query q among all queries
   //                      sent from this machine to machine m, where q is
   //                      the i-th query sent from this machine to m.
-  std::unordered_map<uint32_t, std::list<uint32_t>> query_order_;
+  std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>
+      query_order_;
   // query_indices_[m][i] = index in shuffled_queries_ of the ith query received
   //                        from machine m (phase 2).
   std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>

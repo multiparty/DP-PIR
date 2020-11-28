@@ -11,7 +11,7 @@
 
 #include <cstdint>
 #include <iostream>
-#include <list>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
@@ -47,14 +47,13 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
   drivacy::parties::Client client(machine_id, config);
 
   // Verify correctness of query / response.
-  std::list<uint64_t> queries;
-  uint32_t response_count = 0;
+  std::vector<uint64_t> queries;
+  uint32_t current_query_index = 0;
   client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
-    assert(query == queries.front());
+    assert(query == queries.at(current_query_index));
     assert(response == table.at(query));
-    queries.pop_front();
-    if (response_count++ % 10000 == 0) {
-      std::cout << "Received " << (response_count - 1) << std::endl;
+    if (current_query_index++ % 10000 == 0) {
+      std::cout << "Received " << (current_query_index - 1) << std::endl;
     }
   });
 
@@ -76,7 +75,7 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
   client.Listen();
 
   // Done...
-  assert(queries.size() == 0);
+  assert(queries.size() == current_query_index);
 
   // Will never really get here...
   return absl::OkStatus();
