@@ -21,11 +21,20 @@ do
   for (( machine=1; machine<={parallelism}; machine++ ))
   do
     echo "Running party $party-$machine"
-    valgrind ./{_party} --table={table} --config={config} --party=$party \
+    if [[ "$1" == "--valgrind" ]]
+    then
+      valgrind ./{_party} --table={table} --config={config} --party=$party \
                --machine=$machine --batches={batches} --batch={batch} \
                --span={span} --cutoff={cutoff} \
                > logs/party$party-$machine.log 2>&1 &
-    PARTY_IDS+=($!)
+      PARTY_IDS+=($!)
+    else
+      {_party} --table={table} --config={config} --party=$party \
+               --machine=$machine --batches={batches} --batch={batch} \
+               --span={span} --cutoff={cutoff} \
+               > logs/party$party-$machine.log 2>&1 &
+      PARTY_IDS+=($!)
+    fi
   done
 done
 echo ""
@@ -38,9 +47,16 @@ echo "Running clients..."
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
   echo "Running client $machine"
-  valgrind ./{_client} --table={table} --config={config} --machine=$machine \
-              --queries={queries} > logs/client-$machine 2>&1 &
-  CLIENT_IDS+=($!)
+  if [[ "$1" == "--valgrind" ]]
+  then
+    valgrind ./{_client} --table={table} --config={config} --machine=$machine \
+             --queries={queries} > logs/client-$machine 2>&1 &
+    CLIENT_IDS+=($!)
+  else
+    ./{_client} --table={table} --config={config} --machine=$machine \
+                --queries={queries} > logs/client-$machine 2>&1 &
+    CLIENT_IDS+=($!)
+  fi
 done
 echo ""
 
