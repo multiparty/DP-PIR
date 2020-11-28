@@ -21,9 +21,10 @@ do
   params=($response)
   party_id=${params[0]}
   machine_id=${params[1]}
-  batch=${params[2]}
-  span=${params[3]}
-  cutoff=${params[4]}
+  batches=${params[2]}
+  batch=${params[3]}
+  span=${params[4]}
+  cutoff=${params[5]}
 
   # Read table and configurations.
   curl "$ORCHASTRATOR/config" > data/config.json 2> /dev/null
@@ -31,7 +32,10 @@ do
 
   # Run client and time the command
   echo "Running party for ${party_id}-${machine_id} with ${batch} ${span} ${cutoff}"
-  ./bazel-bin/drivacy/main --config=data/config.json --table=data/table.json --party=${party_id} --machine=${machine_id} --batch=${batch} --span=${span} --cutoff=${cutoff} > party-${party_id}-${machine_id}.log &
+  ./bazel-bin/drivacy/main --config=data/config.json --table=data/table.json \
+                           --party=${party_id} --machine=${machine_id} \
+                           --batches=${batches} --batch=${batch} --span=${span} \
+                           --cutoff=${cutoff} > party-${party_id}-${machine_id}.log &
   pid=$!
 
   # Watch out for kill signal sent from orchastrator.

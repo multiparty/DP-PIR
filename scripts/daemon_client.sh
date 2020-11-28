@@ -29,7 +29,11 @@ do
 
   # Run client and time the command
   echo "Running client for ${machine_id} with ${queries}"
-  \time -f "%e" ./bazel-bin/drivacy/client --config=data/config.json --table=data/table.json --machine=${machine_id} --queries=${queries} 1> client-${machine_id}-${client_id}.log 2> time.log && curl "$ORCHASTRATOR/done/${machine_id}/${client_id}/$(tail -1 time.log)" 2> /dev/null &
+  \time -f "%e" ./bazel-bin/drivacy/client --config=data/config.json \
+      --table=data/table.json --machine=${machine_id} --queries=${queries} \
+      1> client-${machine_id}-${client_id}.log 2> time.log && \
+      curl "$ORCHASTRATOR/done/${machine_id}/${client_id}/$(tail -1 time.log)" \
+      2> /dev/null &
   pid=$!
 
   # Watch out for kill signal sent from orchastrator.

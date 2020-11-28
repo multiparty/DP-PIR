@@ -39,7 +39,8 @@ let reportedCount;
 let totalParties;
 let totalClients;
 let clientsPerMachine;
-let batch;
+let batches;
+let batch_size;
 let queries;
 let span;
 let cutoff;
@@ -69,11 +70,13 @@ function formatIP(ipString) {
   }
 }
 
-function configure(parties, parallelism, _clients, _batch, _queries, _span, _cutoff, tablePath) {
+function configure(parties, parallelism, _clients, _batches, _batch_size,
+                   _queries, _span, _cutoff, tablePath) {
   parties = Number(parties);
   parallelism = Number(parallelism);
   _clients = Number(_clients);
-  _batch = Number(_batch);
+  _batches = Number(_batches);
+  _batch_size = Number(_batch_size);
   _queries = Number(_queries);
   _span = Number(_span);
   _cutoff = Number(_cutoff);
@@ -84,7 +87,8 @@ function configure(parties, parallelism, _clients, _batch, _queries, _span, _cut
   totalParties = parties * parallelism;
   totalClients = parallelism * _clients;
   clientsPerMachine = _clients;
-  batch = _batch;
+  batches = _batches;
+  batch_size = _batch_size;
   queries = _queries;
   span = _span;
   cutoff = _cutoff;
@@ -152,7 +156,8 @@ function configure(parties, parallelism, _clients, _batch, _queries, _span, _cut
 
   // Generate configuration file!
   const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
-  let command = scriptPath + ' --parties=' + parties + ' --parallelism=' + parallelism;
+  let command = scriptPath + ' --parties=' + parties;
+  command += ' --parallelism=' + parallelism;
   command += ' ' + ipList.join(' ');
   exec(command, (err, stdout, stderr) => {
     config = stdout;
@@ -195,7 +200,8 @@ app.get('/shouldkill', (req, res) => {
       runningIPs[ip]--;
       killedCount++;
       console.log('Killed machine!');
-      console.log('Total killed:', killedCount, '/' , totalParties, totalClients);
+      console.log('Total killed:', killedCount, '/' ,
+                  totalParties + totalClients);
       if (killedCount == totalParties + totalClients) {
         killedCount = 0;
         shouldKill = false;
@@ -228,7 +234,8 @@ app.get('/signup/party/', (req, res) => {
   }
   console.log('');
   // Reply.
-  res.send(partyID + ' ' + machineID + ' ' + batch + ' ' + span + ' ' + cutoff + '\n');
+  res.send(partyID + ' ' + machineID + ' ' + batches + ' ' + batch_size + ' ' +
+           span + ' ' + cutoff + '\n');
 });
 app.get('/signup/client', (req, res) => {
   // Wait for all parties to connect first.
@@ -258,7 +265,8 @@ app.get('/signup/client', (req, res) => {
 
 // Report finishing.
 app.get('/done/:machine_id/:client_id/:time', (req, res) => {
-  console.log('Client ', req.params.machine_id, '-', req.params.client_id, ' finished in ', req.params.time, '!');
+  console.log('Client ', req.params.machine_id, '-', req.params.client_id,
+              ' finished in ', req.params.time, '!');
   reportedCount++;
   const machineID = Number(req.params.machine_id);
   const clientID = Number(req.params.client_id);
@@ -292,7 +300,9 @@ app.listen(PORT, () => {
       console.log('Available commands:');
       console.log('- exit');
       console.log('- kill');
-      console.log('- new <parties> <parallelism> <clients per machine> <batch> <queries per client> <dpspan> <dpcutoff> <table path>');
+      console.log('- new <parties> <parallelism> <batches> <batch_size> ' +
+                  '<clients per machine> <queries per client> <dpspan> ' +
+                  '<dpcutoff> <table path>');
       console.log('- clients');
     }
     if (line.startsWith('exit')) {
@@ -304,8 +314,8 @@ app.listen(PORT, () => {
       return;
     }
     if (line.startsWith('new')) {
-      const [parties, parallelism, clients, batch, queries, span, cutoff, table] =
-          line.split(' ').slice(1);
+      const [parties, parallelism, batches, batch_size, clients, queries,
+             span, cutoff, table] = line.split(' ').slice(1);
       if (shouldKill) {
         console.log('Kill is pending!');
         return;
@@ -322,11 +332,12 @@ app.listen(PORT, () => {
         console.log('Not enough clients');
         return;
       }
-      if (Number(queries) * Number(clients) % batch != 0) {
+      if (Number(queries) * Number(clients) % batch_size != 0) {
         console.log('Queries and batch are incompatible');
         return;
       }
-      configure(parties, parallelism, clients, batch, queries, span, cutoff, table);
+      configure(parties, parallelism, clients, batches, batch_size, queries,
+                span, cutoff, table);
     }
     if (line.startsWith('clients')) {
       allowClients = true;
