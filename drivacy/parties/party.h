@@ -16,7 +16,7 @@
 // #define DEBUG_MSG
 
 #include <cstdint>
-#include <list>
+#include <vector>
 
 #include "drivacy/io/interparty_socket.h"
 #include "drivacy/io/intraparty_socket.h"
@@ -101,13 +101,15 @@ class Party : public io::socket::InterPartySocketListener,
   uint32_t input_batch_size_;
   uint32_t output_batch_size_;
   // Noise used in this batch.
-  std::list<types::OutgoingQuery> noise_;
+  std::vector<types::OutgoingQuery> noise_;
+  std::vector<uint32_t> noise_counts_;
   uint32_t noise_size_;
   // Shuffler (for distrbuted 2 phase shuffling).
   protocol::Shuffler shuffler_;
   // Send the processed queries/responses over socket.
   virtual void SendQueries();
   virtual void SendResponses();
+  virtual void InjectNoise();
 };
 
 }  // namespace parties

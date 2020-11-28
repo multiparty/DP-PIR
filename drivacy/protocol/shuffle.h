@@ -93,6 +93,7 @@ class Shuffler {
   // Returns a vector (logically a map) from a machine_id to the count
   // of queries expected to be received from that machine.
   std::vector<uint32_t> IncomingQueriesCount();
+  std::vector<uint32_t> OutgoingNoiseQueriesCount(uint32_t noise_size);
 
   // Determines the machine the next query is meant to be sent to.
   uint32_t MachineOfNextQuery(const types::QueryState &query_state);

@@ -23,6 +23,10 @@ inline uint64_t Mod(uint64_t a, uint64_t modulus) {
   return a < 0 ? (a % modulus + modulus) : a + modulus;
 }
 
+inline float RandUniform() {
+  return static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX);
+}
+
 // Random number using std::rand() (unseeded)
 // TODO(babman): replace this with something proper.
 inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {

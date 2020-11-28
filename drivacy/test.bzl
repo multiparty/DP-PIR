@@ -4,6 +4,8 @@
 # runs in parallel (as separate processes).
 
 SCRIPT = """
+echo $(pwd)
+
 # Create log directory
 mkdir -p logs
 
@@ -38,9 +40,6 @@ do
   done
 done
 echo ""
-
-# Sleep to give time for websocket servers to be setup
-sleep 5
 
 # Run clients
 echo "Running clients..."

@@ -41,9 +41,11 @@ class IntraPartyTCPSocket : public AbstractSocket {
 
   // AbstractSocket
   uint32_t FdCount() override;
+  bool PollNoiseQueries(pollfd *fds) override;
   bool PollQueries(pollfd *fds) override;
   bool PollResponses(pollfd *fds) override;
 
+  bool ReadNoiseQuery(uint32_t fd_index, pollfd *fds) override;
   bool ReadQuery(uint32_t fd_index, pollfd *fds) override;
   bool ReadResponse(uint32_t fd_index, pollfd *fds) override;
 
@@ -53,6 +55,7 @@ class IntraPartyTCPSocket : public AbstractSocket {
   void CollectResponsesReady();
 
   void BroadcastBatchSize(uint32_t batch_size);
+  void BroadcastNoiseQueryCounts(std::vector<uint32_t> &&noise_query_counts);
   void BroadcastQueriesReady();
   void BroadcastResponsesReady();
 
@@ -78,14 +81,19 @@ class IntraPartyTCPSocket : public AbstractSocket {
   // Maps a machine_id to socket with that machine.
   std::vector<int> sockets_;
   // Expected number of incoming queries and responses.
+  std::vector<uint32_t> noise_query_counts_;
   std::vector<uint32_t> incoming_query_counts_;
   std::vector<uint32_t> incoming_response_counts_;
   // How many sockets are still waiting for queries or responses.
+  uint32_t sockets_with_noise_queries_;
   uint32_t sockets_with_queries_;
   uint32_t sockets_with_responses_;
   // Read buffers for storing a message that was just read from a socket.
   unsigned char *read_query_buffer_;
   unsigned char *read_response_buffer_;
+  // Synchronization points.
+  void BroadcastSync();
+  void CollectSync();
 };
 
 }  // namespace socket

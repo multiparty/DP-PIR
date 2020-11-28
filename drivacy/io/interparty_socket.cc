@@ -211,8 +211,8 @@ bool InterPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
   if (done) {
     fds->fd = -1;
     fds->events = 0;
-    fds->revents = 0;
   }
+  fds->revents = 0;
 
   // Call event handler.
   this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
@@ -232,8 +232,8 @@ bool InterPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
   if (done) {
     fds->fd = -1;
     fds->events = 0;
-    fds->revents = 0;
   }
+  fds->revents = 0;
 
   // Call event handler.
   this->listener_->OnReceiveResponse(this->read_response_buffer_);

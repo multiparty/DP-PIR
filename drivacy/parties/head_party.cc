@@ -19,6 +19,8 @@ void HeadParty::Start() {
   this->processed_client_requests_ = 0;
   this->OnReceiveBatchSize(this->initial_batch_size_);
   this->intra_party_socket_.CollectBatchSizes();
+  // inject the noise queries in.
+  this->InjectNoise();
   // Now we can listen to incoming queries (from previous party or from
   // machines parallel).
   this->client_socket_.Listen();
@@ -42,12 +44,15 @@ void HeadParty::Continue() {
   this->intra_party_socket_.CollectResponsesReady();
   // All responses are ready, we can forward them to the previous party!
   this->SendResponses();
-  // Repeat setup phase of protocol
-  // Handle everything up to noise sampling and shuffling.
-  this->OnReceiveBatchSize(this->initial_batch_size_);
-  this->intra_party_socket_.CollectBatchSizes();
   // Check if we should stop
-  if (this->batches_ > 0 && ++this->batch_counter_ == this->batches_) {
+  if (this->batches_ == 0 || ++this->batch_counter_ < this->batches_) {
+    // Repeat setup phase of protocol
+    // Handle everything up to noise sampling and shuffling.
+    this->OnReceiveBatchSize(this->initial_batch_size_);
+    this->intra_party_socket_.CollectBatchSizes();
+    // inject the noise queries in.
+    this->InjectNoise();
+  } else {
     this->client_socket_.Stop();
   }
   // This returns back into client_socket->Listen() called in Start().

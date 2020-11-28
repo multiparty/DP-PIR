@@ -8,6 +8,8 @@
 
 #include "drivacy/io/websocket_client.h"
 
+#include <unistd.h>
+
 #include <cassert>
 #include <string>
 
@@ -21,7 +23,7 @@ namespace socket {
 WebSocketClient::WebSocketClient(uint32_t machine_id,
                                  const types::Configuration &config,
                                  WebSocketClientListener *listener)
-    : listener_(listener), queries_sent_count_(0) {
+    : listener_(listener), socket_(nullptr), queries_sent_count_(0) {
   // Message sizes.
   this->outgoing_query_msg_size_ =
       types::OutgoingQuery::Size(0, config.parties());
@@ -34,8 +36,10 @@ WebSocketClient::WebSocketClient(uint32_t machine_id,
   std::string address = absl::StrFormat("ws://%s:%d", ip, port);
 
   // Create socket.
-  this->socket_ = easywsclient::WebSocket::from_url(address);
-  assert(this->socket_);
+  while (this->socket_ == nullptr) {
+    this->socket_ = easywsclient::WebSocket::from_url(address);
+    sleep(1);
+  }
 }
 
 void WebSocketClient::Listen() {

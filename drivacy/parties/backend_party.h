@@ -67,6 +67,8 @@ class BackendParty : public Party {
   // Change how responses are sent.
   void SendQueries() override { assert(false); }
   void SendResponses() override;
+  // We do not inject noise.
+  void InjectNoise() override { assert(false); }
 };
 
 }  // namespace parties

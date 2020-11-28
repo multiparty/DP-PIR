@@ -51,6 +51,7 @@ absl::Status Test(uint32_t parallelism,
   // Setup shufflers.
   std::cout << "Initializing..." << std::endl;
   std::vector<drivacy::protocol::Shuffler> shufflers;
+  shufflers.reserve(parallelism);
   for (uint32_t machine_id = 1; machine_id <= parallelism; machine_id++) {
     shufflers.emplace_back(1, machine_id, PARTY_COUNT, parallelism);
     bool status = false;
@@ -102,8 +103,8 @@ absl::Status Test(uint32_t parallelism,
     for (uint32_t i = 0; i < shuffler.batch_size(); i++) {
       drivacy::types::ForwardQuery q = shuffler.NextQuery();
       list.push_back(TestQuery::Upcast(q)->response);
-      delete[] q;
     }
+    shuffler.FreeQueries();
   }
 
   // Now, we do de-shuffling.

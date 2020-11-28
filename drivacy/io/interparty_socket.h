@@ -41,9 +41,11 @@ class InterPartyTCPSocket : public AbstractSocket {
 
   // AbstractSocket
   uint32_t FdCount() override;
+  bool PollNoiseQueries(pollfd *fds) override { assert(false); }
   bool PollQueries(pollfd *fds) override;
   bool PollResponses(pollfd *fds) override;
 
+  bool ReadNoiseQuery(uint32_t, pollfd *fds) override { assert(false); }
   bool ReadQuery(uint32_t fd_index, pollfd *fds) override;
   bool ReadResponse(uint32_t fd_index, pollfd *fds) override;
 

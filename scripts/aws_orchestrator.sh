@@ -27,8 +27,7 @@ fi
 
 # update repo.
 cd drivacy
-git checkout c++
-git pull origin c++
+git pull origin master
 git submodule init
 git submodule update
 

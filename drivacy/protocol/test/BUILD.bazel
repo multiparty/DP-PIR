@@ -1,5 +1,5 @@
 # Copyright 2020 multiparty.org
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_test")
 load("many_tests.bzl", "many_tests")
 
 cc_binary(
@@ -23,3 +23,13 @@ many_tests("//drivacy/protocol/test:shuffle", [
     (20, 10),
     (1010, 800, 1131, 1001, 1000, 600, 812, 1099, 965, 1000),
 ])
+
+cc_test(
+  name = "noise_test",
+  srcs = [
+    "noise.cc",
+  ],
+  deps = [
+    "//drivacy/protocol:protocol",
+  ],
+)

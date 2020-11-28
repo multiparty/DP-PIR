@@ -29,8 +29,7 @@ fi
 
 # update repo.
 cd drivacy
-git checkout c++
-git pull origin c++
+git pull origin master
 git submodule init
 git submodule update
 
@@ -53,7 +52,6 @@ sudo apt-get update && sudo apt-get install -y bazel
 
 # Compile with bazel
 bazel build ...
-bazel test ...
 
 # Run daemon
 for i in $(seq 1 $CORES)

@@ -12,11 +12,22 @@
 
 #include "drivacy/parties/party.h"
 
+#include <chrono>
 #include <utility>
 
 #include "drivacy/protocol/noise.h"
 #include "drivacy/protocol/query.h"
 #include "drivacy/protocol/response.h"
+
+#define ELAPSED(i)                                                         \
+  std::chrono::duration_cast<std::chrono::milliseconds>(end##i - start##i) \
+      .count()
+
+#define TIMER(i) auto start##i = std::chrono::system_clock::now()
+
+#define TIME(tag, i)                              \
+  auto end##i = std::chrono::system_clock::now(); \
+  std::cout << tag << " " << ELAPSED(i) << std::endl
 
 namespace drivacy {
 namespace parties {
@@ -31,6 +42,8 @@ void Party::Start() {
     this->inter_party_socket_.ReadBatchSize();
     // Expect the machines to tell us their batch size.
     this->intra_party_socket_.CollectBatchSizes();
+    // First, inject the noise queries in.
+    this->InjectNoise();
     // Now we can listen to incoming queries (from previous party or from
     // machines parallel).
     this->listener_.ListenToQueries();
@@ -57,10 +70,13 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
             << " = " << batch_size << std::endl;
 #endif
   // Sample noise.
-  this->noise_ = protocol::noise::SampleNoise(
-      this->party_id_, this->machine_id_, this->config_, this->table_,
+  TIMER(0);
+  auto noise_pair = protocol::noise::SampleNoise(
+      this->machine_id_, this->config_.parallelism(), this->table_.size(),
       this->span_, this->cutoff_);
-  this->noise_size_ = noise_.size();
+  TIME("Sampled noise", 0);
+  this->noise_size_ = noise_pair.first;
+  this->noise_counts_ = noise_pair.second;
   // Update batch size.
   this->input_batch_size_ = batch_size + this->noise_size_;
   // Send batch size to all other machines of our same party.
@@ -87,17 +103,51 @@ void Party::OnCollectedBatchSizes() {
   this->output_batch_size_ = this->shuffler_.batch_size();
   this->inter_party_socket_.SendBatchSize(this->output_batch_size_);
   // Simulate a global preshuffle to use later for shuffling incrementally.
+  TIMER(0);
   this->shuffler_.PreShuffle();
+  TIME("PreShuffled", 0);
+  // Give the socket the number of queries (and noise queries) to exchange.
   this->intra_party_socket_.SetQueryCounts(
       std::move(this->shuffler_.IncomingQueriesCount()));
+  this->intra_party_socket_.BroadcastNoiseQueryCounts(
+      std::move(this->shuffler_.OutgoingNoiseQueriesCount(this->noise_size_)));
+}
+
+void Party::InjectNoise() {
+#ifdef DEBUG_MSG
+  std::cout << "Injecting Noise " << party_id_ << "-" << machine_id_
+            << std::endl;
+#endif
+  if (this->noise_size_ == 0) {
+    return;
+  }
+
+  // Make the noise queries.
+  TIMER(0);
+  this->noise_ = protocol::noise::MakeNoisyQueries(
+      this->party_id_, this->machine_id_, this->config_, this->table_,
+      this->noise_counts_);
+  TIME("Made noise queries", 0);
+
   // Shuffle in the noise queries.
+  TIMER(1);
   for (types::OutgoingQuery &query : this->noise_) {
     uint32_t machine_id =
         this->shuffler_.MachineOfNextQuery(query.query_state());
     this->intra_party_socket_.SendQuery(machine_id, query);
     query.Free();
+    // In case we are receiving noise from other parallel machines
+    // while operating on these noise!
+    this->listener_.ListenToNoiseQueriesNonblocking();
   }
+  TIME("Injected noise", 1);
+
+  // Clear noise, only keeping its size.
+  this->noise_counts_.clear();
   this->noise_.clear();
+
+  // Finish up any remaining noise queries sent to this party by other parties.
+  this->listener_.ListenToNoiseQueries();
 }
 
 // Query handling.

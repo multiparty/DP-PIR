@@ -20,6 +20,7 @@ class AbstractSocket {
   // The count of the underlying file descriptors.
   virtual uint32_t FdCount() = 0;
   // Fill fds[0 ... FdCount()].
+  virtual bool PollNoiseQueries(pollfd *fds) = 0;
   virtual bool PollQueries(pollfd *fds) = 0;
   virtual bool PollResponses(pollfd *fds) = 0;
   // Read a query or a response.
@@ -27,6 +28,7 @@ class AbstractSocket {
   // event handler, this function modifies fds[fd_index] depending on whether
   // or not more messages are expected.
   // Returns false when all sockets are completely consumed.
+  virtual bool ReadNoiseQuery(uint32_t fd_index, pollfd *fds) = 0;
   virtual bool ReadQuery(uint32_t fd_index, pollfd *fds) = 0;
   virtual bool ReadResponse(uint32_t fd_index, pollfd *fds) = 0;
 };

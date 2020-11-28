@@ -143,12 +143,14 @@ IntraPartyTCPSocket::IntraPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   this->response_msg_size_ = types::ForwardResponseSize();
   // Create sockets_ map
   this->sockets_.resize(this->parallelism_ + 1, -1);
+  this->noise_query_counts_.resize(this->parallelism_ + 1, 0);
   // Input/read buffers.
   this->read_query_buffer_ = new unsigned char[this->query_msg_size_];
   this->read_response_buffer_ = new unsigned char[this->response_msg_size_];
   // Counters.
   this->incoming_query_counts_.resize(this->parallelism_ + 1, 0);
   this->incoming_response_counts_.resize(this->parallelism_ + 1, 0);
+  this->sockets_with_noise_queries_ = 0;
   this->sockets_with_queries_ = 0;
   this->sockets_with_responses_ = 0;
   // Setup sockets.
@@ -181,20 +183,42 @@ IntraPartyTCPSocket::~IntraPartyTCPSocket() {
 void IntraPartyTCPSocket::SetQueryCounts(
     std::vector<uint32_t> &&incoming_query_counts) {
   this->incoming_query_counts_ = incoming_query_counts;
-  this->sockets_with_queries_ = 0;
-  for (uint32_t count : this->incoming_query_counts_) {
-    if (count > 0) {
-      this->sockets_with_queries_++;
-    }
-  }
 }
 
 // Configure poll(...).
 uint32_t IntraPartyTCPSocket::FdCount() { return this->parallelism_ - 1; }
+bool IntraPartyTCPSocket::PollNoiseQueries(pollfd *fds) {
+  this->sockets_with_noise_queries_ = 0;
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    fds[m - 1].revents = 0;
+    if (this->noise_query_counts_.at(m) > 0) {
+      this->sockets_with_noise_queries_++;
+      fds[m - 1].fd = this->sockets_.at(m);
+      fds[m - 1].events = POLLIN;
+    } else {
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+    }
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
+    fds[m - 2].revents = 0;
+    if (this->noise_query_counts_.at(m) > 0) {
+      this->sockets_with_noise_queries_++;
+      fds[m - 2].fd = this->sockets_.at(m);
+      fds[m - 2].events = POLLIN;
+    } else {
+      fds[m - 2].fd = -1;
+      fds[m - 2].events = 0;
+    }
+  }
+  return this->sockets_with_noise_queries_ == 0;
+}
 bool IntraPartyTCPSocket::PollQueries(pollfd *fds) {
+  this->sockets_with_queries_ = 0;
   for (uint32_t m = 1; m < this->machine_id_; m++) {
     fds[m - 1].revents = 0;
     if (this->incoming_query_counts_.at(m) > 0) {
+      this->sockets_with_queries_++;
       fds[m - 1].fd = this->sockets_.at(m);
       fds[m - 1].events = POLLIN;
     } else {
@@ -205,6 +229,7 @@ bool IntraPartyTCPSocket::PollQueries(pollfd *fds) {
   for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
     fds[m - 2].revents = 0;
     if (this->incoming_query_counts_.at(m) > 0) {
+      this->sockets_with_queries_++;
       fds[m - 2].fd = this->sockets_.at(m);
       fds[m - 2].events = POLLIN;
     } else {
@@ -239,6 +264,36 @@ bool IntraPartyTCPSocket::PollResponses(pollfd *fds) {
 }
 
 // Blocking reads.
+bool IntraPartyTCPSocket::ReadNoiseQuery(uint32_t fd_index, pollfd *fds) {
+  // Translate index to a machine id!
+  uint32_t machine_id = fd_index + 1;
+  if (machine_id >= this->machine_id_) {
+    machine_id++;
+  }
+  assert(machine_id <= this->parallelism_);
+  assert(machine_id != this->machine_id_);
+  assert(machine_id > 0);
+  assert(this->noise_query_counts_.at(machine_id) > 0);
+  assert(this->incoming_query_counts_.at(machine_id) > 0);
+
+  // Blocking read.
+  ReadUntil(this->sockets_.at(machine_id), this->read_query_buffer_,
+            this->query_msg_size_);
+
+  // Update fds.
+  bool done = false;
+  fds[fd_index].revents = 0;
+  if (--this->noise_query_counts_.at(machine_id) == 0) {
+    fds[fd_index].fd = -1;
+    fds[fd_index].events = 0;
+    done = (--this->sockets_with_noise_queries_ == 0);
+  }
+  this->incoming_query_counts_.at(machine_id)--;
+
+  // Call event handler.
+  this->listener_->OnReceiveQuery(machine_id, this->read_query_buffer_);
+  return done;
+}
 bool IntraPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
   // Translate index to a machine id!
   uint32_t machine_id = fd_index + 1;
@@ -256,10 +311,10 @@ bool IntraPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
 
   // Update fds.
   bool done = false;
+  fds[fd_index].revents = 0;
   if (--this->incoming_query_counts_.at(machine_id) == 0) {
     fds[fd_index].fd = -1;
     fds[fd_index].events = 0;
-    fds[fd_index].revents = 0;
     done = (--this->sockets_with_queries_ == 0);
   }
 
@@ -284,10 +339,10 @@ bool IntraPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
 
   // Update fds.
   bool done = false;
+  fds[fd_index].revents = 0;
   if (--this->incoming_response_counts_.at(machine_id) == 0) {
     fds[fd_index].fd = -1;
     fds[fd_index].events = 0;
-    fds[fd_index].revents = 0;
     done = (--this->sockets_with_responses_ == 0);
   }
 
@@ -298,6 +353,10 @@ bool IntraPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
 }
 
 // Broadcast collection (blocking).
+// Simple Synchronization collections.
+void IntraPartyTCPSocket::CollectQueriesReady() { this->CollectSync(); }
+void IntraPartyTCPSocket::CollectResponsesReady() { this->CollectSync(); }
+// Batch size is special because it has value to read.
 void IntraPartyTCPSocket::CollectBatchSizes() {
   uint32_t batch_size = 0;
   for (uint32_t m = 1; m <= this->parallelism_; m++) {
@@ -310,30 +369,12 @@ void IntraPartyTCPSocket::CollectBatchSizes() {
   }
   this->listener_->OnCollectedBatchSizes();
 }
-void IntraPartyTCPSocket::CollectQueriesReady() {
-  unsigned char ready = 0;
-  for (uint32_t m = 1; m <= this->parallelism_; m++) {
-    if (m != this->machine_id_) {
-      ReadUntil(this->sockets_.at(m), reinterpret_cast<unsigned char *>(&ready),
-                sizeof(ready));
-      assert(ready == 1);
-      ready = 0;
-    }
-  }
-}
-void IntraPartyTCPSocket::CollectResponsesReady() {
-  unsigned char ready = 0;
-  for (uint32_t m = 1; m <= this->parallelism_; m++) {
-    if (m != this->machine_id_) {
-      ReadUntil(this->sockets_.at(m), reinterpret_cast<unsigned char *>(&ready),
-                sizeof(ready));
-      assert(ready == 1);
-      ready = 0;
-    }
-  }
-}
 
 // Broadcasts.
+// Simple Synchronization broadcasts.
+void IntraPartyTCPSocket::BroadcastQueriesReady() { this->BroadcastSync(); }
+void IntraPartyTCPSocket::BroadcastResponsesReady() { this->BroadcastSync(); }
+// Batch size is special because it has value to read.
 void IntraPartyTCPSocket::BroadcastBatchSize(uint32_t batch_size) {
   for (int socket : this->sockets_) {
     if (socket > -1) {
@@ -343,19 +384,26 @@ void IntraPartyTCPSocket::BroadcastBatchSize(uint32_t batch_size) {
   }
   this->listener_->OnReceiveBatchSize(this->machine_id_, batch_size);
 }
-void IntraPartyTCPSocket::BroadcastQueriesReady() {
-  unsigned char msg = 1;
-  for (int socket : this->sockets_) {
-    if (socket > -1) {
-      SendAssert(socket, reinterpret_cast<unsigned char *>(&msg), sizeof(msg));
+// Noise query counts is even more special, because it has a different
+// value per machine-pair.
+// Also, collection is implicit in this broadcast.
+void IntraPartyTCPSocket::BroadcastNoiseQueryCounts(
+    std::vector<uint32_t> &&noise_query_counts) {
+  // Send noise query count to each machine.
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      SendAssert(this->sockets_.at(m),
+                 reinterpret_cast<unsigned char *>(&noise_query_counts.at(m)),
+                 sizeof(uint32_t));
     }
   }
-}
-void IntraPartyTCPSocket::BroadcastResponsesReady() {
-  unsigned char msg = 1;
-  for (int socket : this->sockets_) {
-    if (socket > -1) {
-      SendAssert(socket, reinterpret_cast<unsigned char *>(&msg), sizeof(msg));
+  // Read noise query count from each machine and store it.
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      ReadUntil(
+          this->sockets_.at(m),
+          reinterpret_cast<unsigned char *>(&this->noise_query_counts_.at(m)),
+          sizeof(uint32_t));
     }
   }
 }
@@ -387,6 +435,27 @@ void IntraPartyTCPSocket::SendResponse(uint32_t machine_id,
   } else {
     int socket = this->sockets_.at(machine_id);
     SendAssert(socket, response, this->response_msg_size_);
+  }
+}
+
+// Synchronization points.
+void IntraPartyTCPSocket::BroadcastSync() {
+  unsigned char msg = 1;
+  for (int socket : this->sockets_) {
+    if (socket > -1) {
+      SendAssert(socket, reinterpret_cast<unsigned char *>(&msg), sizeof(msg));
+    }
+  }
+}
+void IntraPartyTCPSocket::CollectSync() {
+  unsigned char ready = 0;
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      ReadUntil(this->sockets_.at(m), reinterpret_cast<unsigned char *>(&ready),
+                sizeof(ready));
+      assert(ready == 1);
+      ready = 0;
+    }
   }
 }
 
