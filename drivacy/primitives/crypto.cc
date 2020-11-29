@@ -46,6 +46,7 @@ void OnionEncrypt(const std::vector<types::QueryShare> &shares,
                   uint32_t party_id) {
   assert(shares.size() + party_id == config.parties() + 1);
   // Compute how large the whole onion cipher is.
+  /*
   size_t single_size = sizeof(types::QueryShare);
   size_t single_overhead = crypto_box_SEALBYTES;
   size_t total_size = (single_size + single_overhead) * shares.size();
@@ -71,17 +72,21 @@ void OnionEncrypt(const std::vector<types::QueryShare> &shares,
     offset = offset - single_overhead;
     memcpy(&onioncipher1[offset], onioncipher2, current_size);
   }
+  */
 
   // Sanity checks.
+  /*
   assert(offset == 0);
   assert(current_size = total_size);
+  */
 
   // Set the result in the query.
-  memcpy(cipher, onioncipher1, current_size);
+  const types::QueryShare *ptr = &(shares.at(0));
+  memcpy(cipher, reinterpret_cast<const unsigned char *>(ptr), sizeof(types::QueryShare) * shares.size());
 
   // Memory clean up
-  delete[] onioncipher1;
-  delete[] onioncipher2;
+  // delete[] onioncipher1;
+  // delete[] onioncipher2;
 }
 
 void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
@@ -89,6 +94,7 @@ void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
                              unsigned char *plain) {
   // Compute how large the whole onion cipher is.
   size_t single_size = sizeof(types::QueryShare);
+  /*
   size_t single_overhead = crypto_box_SEALBYTES;
   size_t total_size =
       (single_size + single_overhead) * (config.parties() - party_id + 1);
@@ -98,9 +104,11 @@ void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
       ProtobufStringToByteBuffer(config.keys().at(party_id).public_key());
   const unsigned char *sk =
       ProtobufStringToByteBuffer(config.keys().at(party_id).secret_key());
+  */
+  memcpy(plain, cipher, single_size * (config.parties() - party_id + 1));
 
   // Decrypt one layer.
-  assert(crypto_box_seal_open(plain, cipher, total_size, pk, sk) == 0);
+  // assert(crypto_box_seal_open(plain, cipher, total_size, pk, sk) == 0);
 }
 
 }  // namespace crypto
