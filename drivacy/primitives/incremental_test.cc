@@ -14,14 +14,19 @@
 #include <iostream>
 
 #include "drivacy/primitives/util.h"
+#include "drivacy/types/types.h"
 
 uint32_t Test(uint64_t value, uint64_t numparties) {
   // Pre-secret share into numparties-many shares.
   auto shares = drivacy::primitives::PreIncrementalSecretShares(numparties);
+  std::vector<drivacy::types::Message> wrappers;
+  for (auto &share : shares) {
+    wrappers.emplace_back(0, 0, share, 0);
+  }
 
   // Compute the final piece of the sharing using value and preshares.
   uint32_t tally =
-      drivacy::primitives::GenerateIncrementalSecretShares(value, shares);
+      drivacy::primitives::GenerateIncrementalSecretShares(value, wrappers);
 
   // Reconstruct the value incrementally, in order of shares.
   for (const auto &share : shares) {

@@ -1,0 +1,44 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+# Parties/Server side protocol.
+cc_library(
+    name = "protocol",
+    srcs = [
+        "backend.cc",
+        "query.cc",
+        "noise.cc",
+        "response.cc",
+        "shuffle.cc",
+    ],
+    hdrs = [
+        "backend.h",
+        "query.h",
+        "noise.h",
+        "response.h",
+        "shuffle.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/primitives:sharing",
+        "//drivacy/primitives:noise",
+        "//drivacy/protocol/online:client",
+        "//drivacy/types:types",
+    ],
+)
+
+# Client side protocol.
+cc_library(
+    name = "client",
+    srcs = [
+        "client.cc",
+    ],
+    hdrs = [
+        "client.h",
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/primitives:crypto",
+        "//drivacy/primitives:sharing",
+        "//drivacy/types:types",
+    ],
+)

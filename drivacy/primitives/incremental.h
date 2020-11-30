@@ -19,8 +19,7 @@ std::vector<types::IncrementalSecretShare> PreIncrementalSecretShares(
 
 // Compute the tally to secret share query using the given preshares.
 uint32_t GenerateIncrementalSecretShares(
-    uint32_t query,
-    const std::vector<types::IncrementalSecretShare> &preshares);
+    uint32_t query, const std::vector<types::Message> &preshares);
 
 // (Partial/incremental) reconstruction: given a current tally and a share,
 // the function returns a new tally that includes this share.

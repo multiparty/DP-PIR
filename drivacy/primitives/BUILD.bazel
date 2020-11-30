@@ -82,6 +82,7 @@ cc_test(
     ],
     deps = [
         ":sharing",
+        "//drivacy/types:types",
     ],
 )
 cc_test(

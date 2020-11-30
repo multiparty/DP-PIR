@@ -72,6 +72,8 @@ class OnionMessage {
 struct Query {
   Tag tag;
   uint32_t tally;
+  Query() {}
+  Query(Tag tag, uint32_t tally) : tag(tag), tally(tally) {}
 };
 using Response = uint32_t;
 using QueryState = Tag;

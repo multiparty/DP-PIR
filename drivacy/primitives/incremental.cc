@@ -50,11 +50,11 @@ std::vector<types::IncrementalSecretShare> PreIncrementalSecretShares(
 }
 
 uint32_t GenerateIncrementalSecretShares(
-    uint32_t query,
-    const std::vector<types::IncrementalSecretShare> &preshares) {
+    uint32_t query, const std::vector<types::Message> &preshares) {
   uint64_t t = query;
   for (uint32_t i = preshares.size(); i > 0; i--) {
-    const types::IncrementalSecretShare &share = preshares.at(i - 1);
+    const types::IncrementalSecretShare &share =
+        preshares.at(i - 1).reference.incremental_share;
     uint64_t y_inv = ModInverse(share.y, util::Prime());
     t += (t < share.x ? util::Prime() : 0);
     t -= share.x;
