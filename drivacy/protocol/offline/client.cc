@@ -10,12 +10,14 @@
 
 namespace drivacy {
 namespace protocol {
+namespace offline {
 namespace client {
 
-std::vector<types::Message> SampleCommonReference(
-    uint32_t party_id, uint32_t party_count) {
+std::vector<types::Message> SampleCommonReference(uint32_t seed,
+                                                  uint32_t party_id,
+                                                  uint32_t party_count) {
   std::vector<types::Message> result;
- 
+
   // Create all preshares.
   uint32_t numparties = party_count - party_id;
   std::vector<uint32_t> additive_shares =
@@ -24,11 +26,10 @@ std::vector<types::Message> SampleCommonReference(
       primitives::PreIncrementalSecretShares(numparties);
 
   // Fill shares and tags in.
-  types::Tag tag = 0;  // TODO(babman): fix this to be unique.
+  types::Tag tag = seed;  // TODO(babman): fix this to be unique.
   for (uint32_t i = 0; i < party_count - party_id; i++) {
-    types::Tag next_tag = tag + 1;
-    result.emplace_back(tag, next_tag,
-                        incremental_shares.at(i),
+    types::Tag next_tag = tag;
+    result.emplace_back(tag, next_tag, incremental_shares.at(i),
                         additive_shares.at(i));
     tag = next_tag;
   }
@@ -37,5 +38,6 @@ std::vector<types::Message> SampleCommonReference(
 }
 
 }  // namespace client
+}  // namespace offline
 }  // namespace protocol
 }  // namespace drivacy

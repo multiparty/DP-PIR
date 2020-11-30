@@ -64,8 +64,8 @@ std::unique_ptr<unsigned char[]> OnionEncrypt(
     offset = offset - sizeof(types::Message);
     memcpy(onioncipher1 + offset, msg, sizeof(types::Message));
     assert(crypto_box_seal(onioncipher2 + offset - crypto_box_SEALBYTES,
-                           onioncipher1 + offset,
-                           total_size - offset, pk) == 0);
+                           onioncipher1 + offset, total_size - offset,
+                           pk) == 0);
 
     offset = offset - crypto_box_SEALBYTES;
     swap = onioncipher1;
@@ -82,9 +82,9 @@ std::unique_ptr<unsigned char[]> OnionEncrypt(
   return std::unique_ptr<unsigned char[]>(onioncipher1);
 }
 
-types::OnionMessage SingleLayerOnionDecrypt(uint32_t party_id,
-                                            const types::CipherText cipher,
-                                            const types::Configuration &config) {
+types::OnionMessage SingleLayerOnionDecrypt(
+    uint32_t party_id, const types::CipherText &cipher,
+    const types::Configuration &config) {
   // Compute how large the whole onion cipher is.
   size_t cipher_size = OnionCipherSize(party_id, config.parties());
   size_t plain_size = cipher_size - crypto_box_SEALBYTES;

@@ -30,6 +30,7 @@ cc_library(
         "@com_google_absl//absl/functional:bind_front",
         "@com_google_absl//absl/strings:str_format",
         "//:uWebSockets",
+        "//drivacy/primitives:crypto",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/io:abstract_socket",

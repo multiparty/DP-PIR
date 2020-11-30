@@ -19,7 +19,7 @@ using Table = std::unordered_map<uint32_t, uint32_t>;
 
 // Primitive datatypes.
 using Tag = uint32_t;
-using CipherText = unsigned char *;
+using CipherText = const unsigned char *;
 
 struct IncrementalSecretShare {
   uint32_t x;  // The additive component.
@@ -34,10 +34,10 @@ struct CommonReference {
   IncrementalSecretShare incremental_share;
   uint32_t preshare;
   // Constructors..
-  explicit CommonReference() {}
+  CommonReference() {}
   explicit CommonReference(Tag next_tag, IncrementalSecretShare share,
                            uint32_t preshare)
-      : next_tag(next_tag), incremental_share(share), preshare(preshare) { }
+      : next_tag(next_tag), incremental_share(share), preshare(preshare) {}
 };
 
 // This is what gets encrypted.
@@ -45,7 +45,7 @@ struct Message {
   Tag tag;
   CommonReference reference;
   // Constructors..
-  explicit Message() {}
+  Message() {}
   explicit Message(Tag tag, Tag next_tag, IncrementalSecretShare share,
                    uint32_t preshare)
       : tag(tag), reference(next_tag, share, preshare) {}
@@ -62,7 +62,8 @@ class OnionMessage {
 
   const Tag &tag() const;
   const CommonReference &common_reference() const;
-  CipherText onion_cipher() const;
+  CipherText cipher() const;
+
  private:
   std::unique_ptr<unsigned char[]> buffer_;
 };
@@ -73,8 +74,7 @@ struct Query {
   uint32_t tally;
 };
 using Response = uint32_t;
-using BufferedQuery = const unsigned char *;
-using BufferedResponse = const unsigned char *;
+using QueryState = Tag;
 
 // A client state. This survives between a query and its response.
 struct ClientState {

@@ -17,8 +17,7 @@
 
 uint32_t Test(uint64_t value, uint64_t numparties) {
   // Pre-secret share into numparties-many shares.
-  auto shares =
-      drivacy::primitives::PreIncrementalSecretShares(numparties);
+  auto shares = drivacy::primitives::PreIncrementalSecretShares(numparties);
 
   // Compute the final piece of the sharing using value and preshares.
   uint32_t tally =
@@ -37,7 +36,8 @@ uint32_t Test(uint64_t value, uint64_t numparties) {
 int main() {
   for (int i = 0; i < 100; i++) {
     uint32_t numparties = drivacy::primitives::util::Rand32(2, 7);
-    uint32_t value = drivacy::primitives::util::Rand32(0, drivacy::primitives::util::Prime());
+    uint32_t value = drivacy::primitives::util::Rand32(
+        0, drivacy::primitives::util::Prime());
     uint32_t reconstructed = Test(value, numparties);
     if (value != reconstructed) {
       std::cout << "Test failed!" << std::endl;

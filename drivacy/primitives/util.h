@@ -34,7 +34,7 @@ using Generator = std::mt19937;
 
 inline Generator SeedGenerator(uint32_t seed) { return std::mt19937(seed); }
 inline uint32_t SRand32(Generator *generator, uint32_t lower_bound,
-                       uint32_t upper_bound) {
+                        uint32_t upper_bound) {
   uint64_t span = upper_bound - lower_bound;
   uint64_t generator_span = std::mt19937::max() - std::mt19937::min();
   generator_span += 1;  // std::mt19937::max is inclusive.

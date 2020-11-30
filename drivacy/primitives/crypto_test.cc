@@ -13,9 +13,9 @@
 #include "drivacy/primitives/crypto.h"
 
 #include <iostream>
-#include <vector>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -35,7 +35,11 @@ std::vector<drivacy::types::Message> GenerateInput() {
 
 bool Equals(const drivacy::types::OnionMessage &msg1,
             const drivacy::types::Message &msg2) {
-  return msg1.tag() == msg2.tag && msg1.common_reference().next_tag == msg2.reference.next_tag && msg1.common_reference().incremental_share.y == msg2.reference.incremental_share.y && msg1.common_reference().preshare == msg2.reference.preshare;
+  return msg1.tag() == msg2.tag &&
+         msg1.common_reference().next_tag == msg2.reference.next_tag &&
+         msg1.common_reference().incremental_share.y ==
+             msg2.reference.incremental_share.y &&
+         msg1.common_reference().preshare == msg2.reference.preshare;
 }
 
 bool Test(const drivacy::types::Configuration &config) {
@@ -51,9 +55,10 @@ bool Test(const drivacy::types::Configuration &config) {
     // Onion decrypt.
     drivacy::types::CipherText onion = encrypted.get();
     for (uint32_t i = party_id; i <= PARTY_COUNT; i++) {
-      drivacy::types::OnionMessage message = 
-          drivacy::primitives::crypto::SingleLayerOnionDecrypt(i, onion, config);
-      onion = message.onion_cipher();
+      drivacy::types::OnionMessage message =
+          drivacy::primitives::crypto::SingleLayerOnionDecrypt(i, onion,
+                                                               config);
+      onion = message.cipher();
       if (!Equals(message, input.at(i - party_id))) {
         std::cout << "Message decrypted wrong!" << std::endl;
         return false;

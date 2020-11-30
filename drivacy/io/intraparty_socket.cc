@@ -23,6 +23,8 @@
 #include <string>
 #include <utility>
 
+#include "drivacy/primitives/crypto.h"
+
 namespace drivacy {
 namespace io {
 namespace socket {
@@ -139,17 +141,20 @@ IntraPartyTCPSocket::IntraPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   // Store configuration parameters.
   this->party_count_ = config.parties();
   this->parallelism_ = config.parallelism();
-  this->query_msg_size_ = types::ForwardQuerySize(party_id, this->party_count_);
-  this->response_msg_size_ = types::ForwardResponseSize();
+  this->message_size_ =
+      primitives::crypto::OnionCipherSize(party_id + 1, this->party_count_);
   // Create sockets_ map
   this->sockets_.resize(this->parallelism_ + 1, -1);
-  this->noise_query_counts_.resize(this->parallelism_ + 1, 0);
   // Input/read buffers.
-  this->read_query_buffer_ = new unsigned char[this->query_msg_size_];
-  this->read_response_buffer_ = new unsigned char[this->response_msg_size_];
+  this->read_message_buffer_ = new unsigned char[this->message_size_];
   // Counters.
+  this->noise_message_counts_.resize(this->parallelism_ + 1, 0);
+  this->incoming_message_counts.resize(this->parallelism_ + 1, 0);
+  this->noise_query_counts_.resize(this->parallelism_ + 1, 0);
   this->incoming_query_counts_.resize(this->parallelism_ + 1, 0);
   this->incoming_response_counts_.resize(this->parallelism_ + 1, 0);
+  this->sockets_with_noise_messages_ = 0;
+  this->sockets_with_messages_ = 0;
   this->sockets_with_noise_queries_ = 0;
   this->sockets_with_queries_ = 0;
   this->sockets_with_responses_ = 0;
@@ -175,11 +180,14 @@ IntraPartyTCPSocket::~IntraPartyTCPSocket() {
     }
   }
   // Delete read buffers.
-  delete[] this->read_query_buffer_;
-  delete[] this->read_response_buffer_;
+  delete[] this->read_message_buffer_;
 }
 
 // Set expected query counts.
+void IntraPartyTCPSocket::SetMessageCounts(
+    std::vector<uint32_t> &&incoming_message_counts) {
+  this->incoming_message_counts = incoming_message_counts;
+}
 void IntraPartyTCPSocket::SetQueryCounts(
     std::vector<uint32_t> &&incoming_query_counts) {
   this->incoming_query_counts_ = incoming_query_counts;
@@ -187,6 +195,58 @@ void IntraPartyTCPSocket::SetQueryCounts(
 
 // Configure poll(...).
 uint32_t IntraPartyTCPSocket::FdCount() { return this->parallelism_ - 1; }
+bool IntraPartyTCPSocket::PollNoiseMessages(pollfd *fds) {
+  this->sockets_with_noise_messages_ = 0;
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    fds[m - 1].revents = 0;
+    if (this->noise_message_counts_.at(m) > 0) {
+      this->sockets_with_noise_messages_++;
+      fds[m - 1].fd = this->sockets_.at(m);
+      fds[m - 1].events = POLLIN;
+    } else {
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+    }
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
+    fds[m - 2].revents = 0;
+    if (this->noise_message_counts_.at(m) > 0) {
+      this->sockets_with_noise_messages_++;
+      fds[m - 2].fd = this->sockets_.at(m);
+      fds[m - 2].events = POLLIN;
+    } else {
+      fds[m - 2].fd = -1;
+      fds[m - 2].events = 0;
+    }
+  }
+  return this->sockets_with_noise_messages_ == 0;
+}
+bool IntraPartyTCPSocket::PollMessages(pollfd *fds) {
+  this->sockets_with_messages_ = 0;
+  for (uint32_t m = 1; m < this->machine_id_; m++) {
+    fds[m - 1].revents = 0;
+    if (this->incoming_message_counts.at(m) > 0) {
+      this->sockets_with_messages_++;
+      fds[m - 1].fd = this->sockets_.at(m);
+      fds[m - 1].events = POLLIN;
+    } else {
+      fds[m - 1].fd = -1;
+      fds[m - 1].events = 0;
+    }
+  }
+  for (uint32_t m = this->machine_id_ + 1; m <= this->parallelism_; m++) {
+    fds[m - 2].revents = 0;
+    if (this->incoming_message_counts.at(m) > 0) {
+      this->sockets_with_messages_++;
+      fds[m - 2].fd = this->sockets_.at(m);
+      fds[m - 2].events = POLLIN;
+    } else {
+      fds[m - 2].fd = -1;
+      fds[m - 2].events = 0;
+    }
+  }
+  return this->sockets_with_messages_ == 0;
+}
 bool IntraPartyTCPSocket::PollNoiseQueries(pollfd *fds) {
   this->sockets_with_noise_queries_ = 0;
   for (uint32_t m = 1; m < this->machine_id_; m++) {
@@ -264,6 +324,64 @@ bool IntraPartyTCPSocket::PollResponses(pollfd *fds) {
 }
 
 // Blocking reads.
+bool IntraPartyTCPSocket::ReadNoiseMessage(uint32_t fd_index, pollfd *fds) {
+  // Translate index to a machine id!
+  uint32_t machine_id = fd_index + 1;
+  if (machine_id >= this->machine_id_) {
+    machine_id++;
+  }
+  assert(machine_id <= this->parallelism_);
+  assert(machine_id != this->machine_id_);
+  assert(machine_id > 0);
+  assert(this->noise_message_counts_.at(machine_id) > 0);
+  assert(this->incoming_message_counts.at(machine_id) > 0);
+
+  // Blocking read.
+  ReadUntil(this->sockets_.at(machine_id), this->read_message_buffer_,
+            this->message_size_);
+
+  // Update fds.
+  bool done = false;
+  fds[fd_index].revents = 0;
+  if (--this->noise_message_counts_.at(machine_id) == 0) {
+    fds[fd_index].fd = -1;
+    fds[fd_index].events = 0;
+    done = (--this->sockets_with_noise_messages_ == 0);
+  }
+  this->incoming_message_counts.at(machine_id)--;
+
+  // Call event handler.
+  this->listener_->OnReceiveMessage(machine_id, this->read_message_buffer_);
+  return done;
+}
+bool IntraPartyTCPSocket::ReadMessage(uint32_t fd_index, pollfd *fds) {
+  // Translate index to a machine id!
+  uint32_t machine_id = fd_index + 1;
+  if (machine_id >= this->machine_id_) {
+    machine_id++;
+  }
+  assert(machine_id <= this->parallelism_);
+  assert(machine_id != this->machine_id_);
+  assert(machine_id > 0);
+  assert(this->incoming_message_counts.at(machine_id) > 0);
+
+  // Blocking read.
+  ReadUntil(this->sockets_.at(machine_id), this->read_message_buffer_,
+            this->message_size_);
+
+  // Update fds.
+  bool done = false;
+  fds[fd_index].revents = 0;
+  if (--this->incoming_message_counts.at(machine_id) == 0) {
+    fds[fd_index].fd = -1;
+    fds[fd_index].events = 0;
+    done = (--this->sockets_with_messages_ == 0);
+  }
+
+  // Call event handler.
+  this->listener_->OnReceiveMessage(machine_id, this->read_message_buffer_);
+  return done;
+}
 bool IntraPartyTCPSocket::ReadNoiseQuery(uint32_t fd_index, pollfd *fds) {
   // Translate index to a machine id!
   uint32_t machine_id = fd_index + 1;
@@ -277,8 +395,9 @@ bool IntraPartyTCPSocket::ReadNoiseQuery(uint32_t fd_index, pollfd *fds) {
   assert(this->incoming_query_counts_.at(machine_id) > 0);
 
   // Blocking read.
-  ReadUntil(this->sockets_.at(machine_id), this->read_query_buffer_,
-            this->query_msg_size_);
+  ReadUntil(this->sockets_.at(machine_id),
+            reinterpret_cast<unsigned char *>(&this->read_query_buffer_),
+            sizeof(types::Query));
 
   // Update fds.
   bool done = false;
@@ -306,8 +425,9 @@ bool IntraPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
   assert(this->incoming_query_counts_.at(machine_id) > 0);
 
   // Blocking read.
-  ReadUntil(this->sockets_.at(machine_id), this->read_query_buffer_,
-            this->query_msg_size_);
+  ReadUntil(this->sockets_.at(machine_id),
+            reinterpret_cast<unsigned char *>(&this->read_query_buffer_),
+            sizeof(types::Query));
 
   // Update fds.
   bool done = false;
@@ -334,8 +454,9 @@ bool IntraPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
   assert(this->incoming_response_counts_.at(machine_id) > 0);
 
   // Blocking read.
-  ReadUntil(this->sockets_.at(machine_id), this->read_response_buffer_,
-            this->response_msg_size_);
+  ReadUntil(this->sockets_.at(machine_id),
+            reinterpret_cast<unsigned char *>(&this->read_response_buffer_),
+            sizeof(types::Response));
 
   // Update fds.
   bool done = false;
@@ -347,13 +468,13 @@ bool IntraPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
   }
 
   // Call event handler.
-  this->listener_->OnReceiveResponse(
-      machine_id, types::Response::Deserialize(this->read_response_buffer_));
+  this->listener_->OnReceiveResponse(machine_id, this->read_response_buffer_);
   return done;
 }
 
 // Broadcast collection (blocking).
 // Simple Synchronization collections.
+void IntraPartyTCPSocket::CollectMessagesReady() { this->CollectSync(); }
 void IntraPartyTCPSocket::CollectQueriesReady() { this->CollectSync(); }
 void IntraPartyTCPSocket::CollectResponsesReady() { this->CollectSync(); }
 // Batch size is special because it has value to read.
@@ -372,6 +493,7 @@ void IntraPartyTCPSocket::CollectBatchSizes() {
 
 // Broadcasts.
 // Simple Synchronization broadcasts.
+void IntraPartyTCPSocket::BroadcastMessagesReady() { this->BroadcastSync(); }
 void IntraPartyTCPSocket::BroadcastQueriesReady() { this->BroadcastSync(); }
 void IntraPartyTCPSocket::BroadcastResponsesReady() { this->BroadcastSync(); }
 // Batch size is special because it has value to read.
@@ -387,6 +509,26 @@ void IntraPartyTCPSocket::BroadcastBatchSize(uint32_t batch_size) {
 // Noise query counts is even more special, because it has a different
 // value per machine-pair.
 // Also, collection is implicit in this broadcast.
+void IntraPartyTCPSocket::BroadcastNoiseMessageCounts(
+    std::vector<uint32_t> &&noise_message_counts) {
+  // Send noise query count to each machine.
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      SendAssert(this->sockets_.at(m),
+                 reinterpret_cast<unsigned char *>(&noise_message_counts.at(m)),
+                 sizeof(uint32_t));
+    }
+  }
+  // Read noise query count from each machine and store it.
+  for (uint32_t m = 1; m <= this->parallelism_; m++) {
+    if (m != this->machine_id_) {
+      ReadUntil(
+          this->sockets_.at(m),
+          reinterpret_cast<unsigned char *>(&this->noise_message_counts_.at(m)),
+          sizeof(uint32_t));
+    }
+  }
+}
 void IntraPartyTCPSocket::BroadcastNoiseQueryCounts(
     std::vector<uint32_t> &&noise_query_counts) {
   // Send noise query count to each machine.
@@ -409,11 +551,20 @@ void IntraPartyTCPSocket::BroadcastNoiseQueryCounts(
 }
 
 // Sending queries and responses.
-void IntraPartyTCPSocket::SendQuery(uint32_t machine_id,
-                                    const types::OutgoingQuery &query) {
-  types::ForwardQuery serialized = query.Serialize();
+void IntraPartyTCPSocket::SendMessage(uint32_t machine_id,
+                                      const types::CipherText &message) {
   if (machine_id == this->machine_id_) {
-    this->listener_->OnReceiveQuery(machine_id, serialized);
+    this->listener_->OnReceiveMessage(machine_id, message);
+  } else {
+    // Send over the socket.
+    int socket = this->sockets_.at(machine_id);
+    SendAssert(socket, message, this->message_size_);
+  }
+}
+void IntraPartyTCPSocket::SendQuery(uint32_t machine_id,
+                                    const types::Query &query) {
+  if (machine_id == this->machine_id_) {
+    this->listener_->OnReceiveQuery(machine_id, query);
   } else {
     // Track how many queries are sent to a machine, we expect an equal
     // number of responses to come back to us form that machine.
@@ -424,17 +575,18 @@ void IntraPartyTCPSocket::SendQuery(uint32_t machine_id,
     count++;
     // Send over the socket.
     int socket = this->sockets_.at(machine_id);
-    SendAssert(socket, serialized, this->query_msg_size_);
+    SendAssert(socket, reinterpret_cast<const unsigned char *>(&query),
+               sizeof(types::Query));
   }
 }
 void IntraPartyTCPSocket::SendResponse(uint32_t machine_id,
-                                       const types::ForwardResponse &response) {
+                                       const types::Response &response) {
   if (machine_id == this->machine_id_) {
-    types::Response deserialized = types::Response::Deserialize(response);
-    this->listener_->OnReceiveResponse(machine_id, deserialized);
+    this->listener_->OnReceiveResponse(machine_id, response);
   } else {
     int socket = this->sockets_.at(machine_id);
-    SendAssert(socket, response, this->response_msg_size_);
+    SendAssert(socket, reinterpret_cast<const unsigned char *>(&response),
+               sizeof(types::Response));
   }
 }
 

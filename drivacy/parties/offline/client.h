@@ -9,11 +9,12 @@
 // locally in the same process, and they interact directly via the enclosing
 // simulation code.
 
-#ifndef DRIVACY_PARTIES_CLIENT_H_
-#define DRIVACY_PARTIES_CLIENT_H_
+#ifndef DRIVACY_PARTIES_OFFLINE_CLIENT_H_
+#define DRIVACY_PARTIES_OFFLINE_CLIENT_H_
 
+#include <cassert>
 #include <cstdint>
-#include <functional>
+#include <vector>
 
 #include "drivacy/io/websocket_client.h"
 #include "drivacy/types/config.pb.h"
@@ -21,9 +22,7 @@
 
 namespace drivacy {
 namespace parties {
-
-// A function taking two arguments: the original query and its response values.
-using ResponseHandler = std::function<void(uint64_t, uint64_t)>;
+namespace offline {
 
 class Client : public io::socket::WebSocketClientListener {
  public:
@@ -43,19 +42,11 @@ class Client : public io::socket::WebSocketClientListener {
   Client(const Client &) = delete;
   Client &operator=(const Client &) = delete;
 
-  // Set the response handler.
-  void SetOnResponseHandler(ResponseHandler response_handler) {
-    this->response_handler_ = response_handler;
-  }
+  // Subscribe to the service by making count many preprocessing requests.
+  void Subscribe(uint32_t count);
 
-  // Called to start the listening on the socket (blocking!)
-  void Listen();
-
-  // Make and send a query using our protocol targeting key = value.
-  void MakeQuery(uint64_t value);
-
-  // Executed when a batch size, query, or response are received.
-  void OnReceiveResponse(const types::ForwardResponse &response) override;
+  // Useless...
+  void OnReceiveResponse(const types::Response &response) { assert(false); }
 
  private:
   // Configuration.
@@ -64,11 +55,13 @@ class Client : public io::socket::WebSocketClientListener {
   // Websocket client.
   io::socket::WebSocketClient socket_;
   // State for response handling.
-  types::ClientState state_;
-  ResponseHandler response_handler_;
+  std::vector<std::vector<types::Message>> common_references_;
+  // Saving the common references.
+  void SaveCommonReference();
 };
 
+}  // namespace offline
 }  // namespace parties
 }  // namespace drivacy
 
-#endif  // DRIVACY_PARTIES_CLIENT_H_
+#endif  // DRIVACY_PARTIES_OFFLINE_CLIENT_H_

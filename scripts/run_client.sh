@@ -7,5 +7,5 @@ if [ -z "$1" ] || [ "$1" == "-h" ]; then
 fi
 
 # Run parties
-valgrind ./bazel-bin/drivacy/client --table=drivacy/testdata/table3.json \
+valgrind ./bazel-bin/drivacy/client_offline \
     --config=drivacy/testdata/config3.json --machine=$1 --queries=$2

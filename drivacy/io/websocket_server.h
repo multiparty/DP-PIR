@@ -26,12 +26,13 @@ namespace socket {
 class WebSocketServerListener {
  public:
   // Handlers for when a query or response are received.
-  virtual void OnReceiveQuery(const types::IncomingQuery &query) = 0;
+  virtual void OnReceiveMessage(const types::CipherText &message) = 0;
+  virtual void OnReceiveQuery(const types::Query &query) = 0;
 };
 
 class WebSocketServer {
  public:
-  WebSocketServer(uint32_t party_id, uint32_t machine_id,
+  WebSocketServer(uint32_t party_id, uint32_t machine_id, bool online,
                   const types::Configuration &config,
                   WebSocketServerListener *listener);
 
@@ -46,12 +47,12 @@ class WebSocketServer {
   // Configurations.
   uint32_t party_id_;
   uint32_t machine_id_;
+  bool online_;
   uint32_t party_count_;
   types::Configuration config_;
   WebSocketServerListener *listener_;
   // Message sizes.
-  uint32_t incoming_query_msg_size_;
-  uint32_t response_msg_size_;
+  uint32_t message_size_;
   // Client sockets in order of receiving queries (not connecting).
   std::list<uWS::WebSocket<false, true> *> sockets_;
   uWS::App app_;
@@ -60,7 +61,7 @@ class WebSocketServer {
   // Handle incoming query from a client (parses and then calls QueryListener).
   void OnMessage(uWS::WebSocket<false, true> *ws, std::string_view message,
                  uWS::OpCode op_code);
-  void HandleQuery(const std::string &msg) const;
+  void Handle(const std::string &msg) const;
 };
 
 }  // namespace socket

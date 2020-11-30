@@ -9,8 +9,8 @@
 #include <cstring>
 #include <iostream>
 #include <list>
+#include <unordered_set>
 #include <vector>
-#include <unordered_set> 
 
 #include "absl/status/status.h"
 #include "drivacy/types/types.h"
@@ -80,8 +80,7 @@ absl::Status Test(uint32_t parallelism,
     bool done = false;
     drivacy::protocol::offline::Shuffler &shuffler = shufflers[machine_id - 1];
     for (uint32_t m = 1; m <= parallelism; m++) {
-      std::list<drivacy::types::CipherText> &incoming =
-          exchange[machine_id][m];
+      std::list<drivacy::types::CipherText> &incoming = exchange[machine_id][m];
       for (drivacy::types::CipherText msg : incoming) {
         assert(!done);
         done = shuffler.ShuffleMessage(m, msg);

@@ -12,10 +12,11 @@ const Tag &OnionMessage::tag() const {
 }
 
 const CommonReference &OnionMessage::common_reference() const {
-  return *reinterpret_cast<CommonReference *>(this->buffer_.get() + sizeof(Tag));
+  return *reinterpret_cast<CommonReference *>(this->buffer_.get() +
+                                              sizeof(Tag));
 }
 
-CipherText OnionMessage::onion_cipher() const {
+CipherText OnionMessage::cipher() const {
   return this->buffer_.get() + sizeof(Message);
 }
 

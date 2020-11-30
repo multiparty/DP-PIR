@@ -6,9 +6,9 @@ load("test.bzl", "end_to_end_test")
 exports_files(glob(["testdata/*.json"]), ["//visibility:public"])
 
 cc_binary(
-    name = "main",
+    name = "party_offline",
     srcs = [
-        "main.cc",
+        "party_offline.cc",
     ],
     deps = [
         "@com_google_absl//absl/flags:flag",
@@ -16,7 +16,7 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "//drivacy/parties:party",
+        "//drivacy/parties/offline:party",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/util:file",
@@ -25,9 +25,9 @@ cc_binary(
 )
 
 cc_binary(
-    name = "client",
+    name = "client_offline",
     srcs = [
-        "client.cc",
+        "client_offline.cc",
     ],
     deps = [
         "@com_google_absl//absl/flags:flag",
@@ -35,7 +35,7 @@ cc_binary(
         "@com_google_absl//absl/flags:usage",
         "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
-        "//drivacy/parties:client",
+        "//drivacy/parties/offline:client",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/util:file",
@@ -66,8 +66,8 @@ end_to_end_test(
     config = "//drivacy:testdata/config1.json",
     parties = 2,
     parallelism = 1,
-    batch = 100,
-    queries = 400,
+    batch = 5,
+    queries = 5,
     span = "0.0",
     cutoff = "1.0",
     tags = ["exclusive"],
@@ -81,7 +81,7 @@ end_to_end_test(
     parties = 2,
     parallelism = 1,
     batch = 20,
-    queries = 60,
+    queries = 20,
     span = "3.333",
     cutoff = "7.675",
     tags = ["exclusive"],
@@ -95,7 +95,7 @@ end_to_end_test(
     parties = 5,
     parallelism = 1,
     batch = 20,
-    queries = 40,
+    queries = 20,
     span = "10",
     cutoff = "29.957",
     tags = ["exclusive"],
@@ -109,7 +109,7 @@ end_to_end_test(
     parties = 3,
     parallelism = 3,
     batch = 10,
-    queries = 30,
+    queries = 10,
     span = "10.0",
     cutoff = "29.957",
     tags = ["exclusive"],

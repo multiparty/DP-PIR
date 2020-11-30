@@ -13,7 +13,8 @@ cc_library(
     visibility = ["//drivacy:__subpackages__"],
     deps = [
         "//drivacy/io:socket",
-        "//drivacy/protocol:client",
+        "//drivacy/primitives:crypto",
+        "//drivacy/protocol/offline:client",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
     ],
@@ -35,7 +36,8 @@ cc_library(
     deps = [
         "//drivacy/io:socket",
         "//drivacy/io:listener",
-        "//drivacy/protocol:protocol",
+        "//drivacy/primitives:crypto",
+        "//drivacy/protocol/offline:protocol",
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
     ],

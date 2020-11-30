@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <vector>
 
 #include "drivacy/primitives/util.h"
 

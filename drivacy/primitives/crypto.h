@@ -34,7 +34,7 @@ std::unique_ptr<unsigned char[]> OnionEncrypt(
     const types::Configuration &config, uint32_t party_id);
 
 types::OnionMessage SingleLayerOnionDecrypt(uint32_t party_id,
-                                            const types::CipherText cipher,
+                                            const types::CipherText &cipher,
                                             const types::Configuration &config);
 
 }  // namespace crypto

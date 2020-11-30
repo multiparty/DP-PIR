@@ -40,10 +40,14 @@ class UnifiedListener {
 
   // Listen to either queries or responses until are underlying sockets are
   // consumed.
+  void ListenToNoiseMessages();
+  void ListenToMessages();
   void ListenToNoiseQueries();
   void ListenToQueries();
   void ListenToResponses();
 
+  void ListenToNoiseMessagesNonblocking();
+  void ListenToMessagesNonblocking();
   void ListenToNoiseQueriesNonblocking();
   void ListenToQueriesNonblocking();
 

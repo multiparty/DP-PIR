@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "absl/functional/bind_front.h"
+#include "drivacy/primitives/crypto.h"
 
 namespace drivacy {
 namespace io {
@@ -27,10 +28,12 @@ struct PerSocketData {};
 
 // Constructor
 WebSocketServer::WebSocketServer(uint32_t party_id, uint32_t machine_id,
+                                 bool online,
                                  const types::Configuration &config,
                                  WebSocketServerListener *listener)
     : party_id_(party_id),
       machine_id_(machine_id),
+      online_(online),
       config_(config),
       listener_(listener),
       app_(),
@@ -39,9 +42,8 @@ WebSocketServer::WebSocketServer(uint32_t party_id, uint32_t machine_id,
   this->party_count_ = config.parties();
 
   // Figure out various message sizes.
-  this->incoming_query_msg_size_ =
-      types::IncomingQuery::Size(party_id, this->party_count_);
-  this->response_msg_size_ = types::Response::Size();
+  this->message_size_ =
+      primitives::crypto::OnionCipherSize(party_id, this->party_count_);
 
   // Find port.
   this->port_ = this->config_.network()
@@ -78,25 +80,30 @@ void WebSocketServer::Stop() {
 void WebSocketServer::OnMessage(uWS::WebSocket<false, true> *ws,
                                 std::string_view message, uWS::OpCode op_code) {
   assert(op_code == uWS::OpCode::BINARY);
-  this->sockets_.push_back(ws);
-  this->HandleQuery(std::string(message));
+  if (this->online_) {
+    this->sockets_.push_back(ws);
+  }
+  this->Handle(std::string(message));
 }
 
-void WebSocketServer::HandleQuery(const std::string &message) const {
-  assert(this->incoming_query_msg_size_ == message.size());
-  const unsigned char *buffer =
-      reinterpret_cast<const unsigned char *>(message.c_str());
-  this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
-      buffer, this->incoming_query_msg_size_));
+void WebSocketServer::Handle(const std::string &message) const {
+  if (this->online_) {
+    assert(sizeof(types::Query) == message.size());
+    this->listener_->OnReceiveQuery(
+        *reinterpret_cast<const types::Query *>(message.c_str()));
+  } else {
+    assert(this->message_size_ == message.size());
+    this->listener_->OnReceiveMessage(
+        reinterpret_cast<types::CipherText>(message.c_str()));
+  }
 }
 
 void WebSocketServer::SendResponse(const types::Response &response) {
+  assert(this->online_);
   auto *ws = this->sockets_.front();
   this->sockets_.pop_front();
-
-  const unsigned char *buffer = response.Serialize();
-  ws->send(std::string(reinterpret_cast<const char *>(buffer),
-                       this->response_msg_size_),
+  ws->send(std::string(reinterpret_cast<const char *>(response),
+                       sizeof(types::Response)),
            uWS::OpCode::BINARY, false);
 }
 

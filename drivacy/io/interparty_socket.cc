@@ -22,6 +22,8 @@
 #include <iostream>
 #include <string>
 
+#include "drivacy/primitives/crypto.h"
+
 namespace drivacy {
 namespace io {
 namespace socket {
@@ -105,13 +107,13 @@ InterPartyTCPSocket::InterPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   this->party_count_ = config.parties();
 
   // Initialize the various message sizes.
-  this->incoming_query_msg_size_ =
-      types::IncomingQuery::Size(party_id, this->party_count_);
-  this->outgoing_query_msg_size_ =
-      types::OutgoingQuery::Size(party_id, this->party_count_);
-  this->response_msg_size_ = types::Response::Size();
+  this->incoming_message_size_ =
+      primitives::crypto::OnionCipherSize(party_id, this->party_count_);
+  this->outgoing_message_size_ =
+      primitives::crypto::OnionCipherSize(party_id + 1, this->party_count_);
 
   // Default counter values.
+  this->messages_count_ = 0;
   this->queries_count_ = 0;
   this->responses_count_ = 0;
 
@@ -120,8 +122,7 @@ InterPartyTCPSocket::InterPartyTCPSocket(uint32_t party_id, uint32_t machine_id,
   this->upper_socket_ = -1;
 
   // Input/read buffers.
-  this->read_query_buffer_ = new unsigned char[this->incoming_query_msg_size_];
-  this->read_response_buffer_ = new unsigned char[this->response_msg_size_];
+  this->read_message_buffer_ = new unsigned char[this->incoming_message_size_];
 
   // Read ports from config.
   const auto &network = this->config_.network();
@@ -153,8 +154,7 @@ InterPartyTCPSocket::~InterPartyTCPSocket() {
   if (this->upper_socket_ > -1) {
     close(this->upper_socket_);
   }
-  delete[] this->read_query_buffer_;
-  delete[] this->read_response_buffer_;
+  delete[] this->read_message_buffer_;
 }
 
 // Configure poll(...).
@@ -163,6 +163,18 @@ uint32_t InterPartyTCPSocket::FdCount() {
   return 1;
 }
 
+bool InterPartyTCPSocket::PollMessages(pollfd *fds) {
+  fds->revents = 0;
+  if (this->messages_count_ > 0) {
+    fds->fd = this->lower_socket_;
+    fds->events = POLLIN;
+    return false;
+  } else {
+    fds->fd = -1;
+    fds->events = 0;
+    return true;
+  }
+}
 bool InterPartyTCPSocket::PollQueries(pollfd *fds) {
   fds->revents = 0;
   if (this->queries_count_ > 0) {
@@ -195,16 +207,38 @@ void InterPartyTCPSocket::ReadBatchSize() {
     ReadUntil(this->lower_socket_,
               reinterpret_cast<unsigned char *>(&this->queries_count_),
               sizeof(uint32_t));
+    this->messages_count_ = this->queries_count_;
     this->listener_->OnReceiveBatchSize(this->queries_count_);
   }
+}
+
+bool InterPartyTCPSocket::ReadMessage(uint32_t fd_index, pollfd *fds) {
+  assert(fd_index == 0 && this->lower_socket_ != -1 &&
+         this->messages_count_ > 0);
+  // Blocking read.
+  ReadUntil(this->lower_socket_, this->read_message_buffer_,
+            this->incoming_message_size_);
+
+  // Chek if done and update fds.
+  bool done = (--this->messages_count_ == 0);
+  if (done) {
+    fds->fd = -1;
+    fds->events = 0;
+  }
+  fds->revents = 0;
+
+  // Call event handler.
+  this->listener_->OnReceiveMessage(this->read_message_buffer_);
+  return done;
 }
 
 bool InterPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
   assert(fd_index == 0 && this->lower_socket_ != -1 &&
          this->queries_count_ > 0);
   // Blocking read.
-  ReadUntil(this->lower_socket_, this->read_query_buffer_,
-            this->incoming_query_msg_size_);
+  ReadUntil(this->lower_socket_,
+            reinterpret_cast<unsigned char *>(&this->read_query_buffer_),
+            sizeof(types::Query));
 
   // Chek if done and update fds.
   bool done = (--this->queries_count_ == 0);
@@ -215,8 +249,7 @@ bool InterPartyTCPSocket::ReadQuery(uint32_t fd_index, pollfd *fds) {
   fds->revents = 0;
 
   // Call event handler.
-  this->listener_->OnReceiveQuery(types::IncomingQuery::Deserialize(
-      this->read_query_buffer_, this->incoming_query_msg_size_));
+  this->listener_->OnReceiveQuery(this->read_query_buffer_);
   return done;
 }
 
@@ -224,8 +257,9 @@ bool InterPartyTCPSocket::ReadResponse(uint32_t fd_index, pollfd *fds) {
   assert(fd_index == 0 && this->upper_socket_ != -1 &&
          this->responses_count_ > 0);
   // Blocking read.
-  ReadUntil(this->upper_socket_, this->read_response_buffer_,
-            this->response_msg_size_);
+  ReadUntil(this->upper_socket_,
+            reinterpret_cast<unsigned char *>(&this->read_response_buffer_),
+            sizeof(types::Response));
 
   // Chek if done and update fds.
   bool done = (--this->responses_count_ == 0);
@@ -246,16 +280,23 @@ void InterPartyTCPSocket::SendBatchSize(uint32_t batch_size) {
   SendAssert(this->upper_socket_, buffer, sizeof(uint32_t));
 }
 
-void InterPartyTCPSocket::SendQuery(const types::ForwardQuery &query) {
+void InterPartyTCPSocket::SendMessage(const types::CipherText &message) {
+  SendAssert(this->upper_socket_, message, this->outgoing_message_size_);
+}
+
+void InterPartyTCPSocket::SendQuery(const types::Query &query) {
   // Write message to out buffer.
   this->responses_count_++;
-  SendAssert(this->upper_socket_, query, this->outgoing_query_msg_size_);
+  SendAssert(this->upper_socket_,
+             reinterpret_cast<const unsigned char *>(&query),
+             sizeof(types::Query));
 }
 
 void InterPartyTCPSocket::SendResponse(const types::Response &response) {
   // Write message to out buffer.
-  const unsigned char *buffer = response.Serialize();
-  SendAssert(this->lower_socket_, buffer, this->response_msg_size_);
+  SendAssert(this->lower_socket_,
+             reinterpret_cast<const unsigned char *>(&response),
+             sizeof(types::Response));
 }
 
 }  // namespace socket

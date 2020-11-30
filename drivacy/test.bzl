@@ -26,13 +26,13 @@ do
     if [[ "$1" == "--valgrind" ]]
     then
       valgrind ./{_party} --table={table} --config={config} --party=$party \
-               --machine=$machine --batches={batches} --batch={batch} \
+               --machine=$machine --batch={batch} \
                --span={span} --cutoff={cutoff} \
                > logs/party$party-$machine.log 2>&1 &
       PARTY_IDS+=($!)
     else
       {_party} --table={table} --config={config} --party=$party \
-               --machine=$machine --batches={batches} --batch={batch} \
+               --machine=$machine --batch={batch} \
                --span={span} --cutoff={cutoff} \
                > logs/party$party-$machine.log 2>&1 &
       PARTY_IDS+=($!)
@@ -129,13 +129,6 @@ exit $EXIT_CODE
 """
 
 def _end_to_end_test_impl(ctx):
-    # automatically compute count of batches if needed.
-    batches = ctx.attr.batches
-    if batches == 0:
-      batches = ctx.attr.queries // ctx.attr.batch
-    if batches * ctx.attr.batch != ctx.attr.queries:
-      fail("Batches count, batch size, and queries are incompatible!")
-
     ctx.actions.write(
         is_executable = True,
         output = ctx.outputs.executable,
@@ -144,7 +137,6 @@ def _end_to_end_test_impl(ctx):
             _client=ctx.file._client.short_path,
             parties=ctx.attr.parties,
             parallelism=ctx.attr.parallelism,
-            batches=batches,
             batch=ctx.attr.batch,
             queries=ctx.attr.queries,
             table=ctx.file.table.short_path,
@@ -169,13 +161,13 @@ end_to_end_test = rule(
             doc = "Party main entry point.",
             mandatory = False,
             allow_single_file = True,
-            default = "//drivacy:main",
+            default = "//drivacy:party_offline",
         ),
         "_client": attr.label(
             doc = "Client main entry point.",
             mandatory = False,
             allow_single_file = True,
-            default = "//drivacy:client",
+            default = "//drivacy:client_offline",
         ),
         "table": attr.label(
             doc = "The path to table.json.",
@@ -194,11 +186,6 @@ end_to_end_test = rule(
         "parallelism": attr.int(
             doc = "The number of machines per party.",
             mandatory = True,
-        ),
-        "batches": attr.int(
-            doc = "Count of batches for which the protocol is running.",
-            mandatory = False,
-            default = 0,
         ),
         "batch": attr.int(
             doc = "The batch size.",

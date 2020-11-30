@@ -23,7 +23,7 @@ namespace socket {
 
 class WebSocketClientListener {
  public:
-  virtual void OnReceiveResponse(const types::ForwardResponse &response) = 0;
+  virtual void OnReceiveResponse(const types::Response &response) = 0;
 };
 
 class WebSocketClient {
@@ -38,10 +38,12 @@ class WebSocketClient {
     delete this->socket_;
   }
 
-  // We can only send queries from a client.
-  void SendQuery(const types::ForwardQuery &query);
+  // We can only send messages and queries from a client.
+  void SendMessage(const types::CipherText &message);
+  void SendQuery(const types::Query &query);
 
   // Start the socket and listen to messages: blocking.
+  // Only use this during the online protocol.
   void Listen();
 
  private:
@@ -50,8 +52,7 @@ class WebSocketClient {
   // The client socket.
   easywsclient::WebSocket *socket_;
   // Message sizes.
-  uint32_t outgoing_query_msg_size_;
-  uint32_t response_msg_size_;
+  uint32_t message_size_;
   // The total number of queries sent.
   uint32_t queries_sent_count_;
   // Handle incoming responses from server (calls response_listener_).

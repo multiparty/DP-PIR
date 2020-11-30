@@ -29,7 +29,6 @@
 // Phase 1 is encoded in MachineOfNextMessage(), and phase 2 is encoded in
 // ShuffleMessage().
 
-
 #ifndef DRIVACY_PROTOCOL_OFFLINE_SHUFFLE_H_
 #define DRIVACY_PROTOCOL_OFFLINE_SHUFFLE_H_
 
@@ -78,7 +77,7 @@ class Shuffler {
   uint32_t MachineOfNextMessage();
 
   // Shuffle message into shuffler.
-  bool ShuffleMessage(uint32_t machine_id, const types::CipherText message);
+  bool ShuffleMessage(uint32_t machine_id, const types::CipherText &message);
 
   // Get the next query in the shuffled order.
   types::CipherText NextMessage();

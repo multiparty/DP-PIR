@@ -3,6 +3,7 @@
 // Our Incremental and non-malleable secret sharing scheme.
 
 #include "drivacy/primitives/incremental.h"
+
 #include <iostream>
 
 #include "drivacy/primitives/util.h"
@@ -12,24 +13,24 @@ namespace primitives {
 
 namespace {
 
-// multiplicative modulo inverse using extended Euclid algorithm. 
-  
+// multiplicative modulo inverse using extended Euclid algorithm.
+
 void GcdExtended(uint32_t a, uint32_t b, int64_t *x, int64_t *y) {
-  // Base Case 
+  // Base Case
   if (a == 0) {
     *x = 0;
-    *y = 1; 
+    *y = 1;
     return;
   }
 
   int64_t x1, y1;
-  GcdExtended(b % a, a, &x1, &y1); 
+  GcdExtended(b % a, a, &x1, &y1);
   *x = y1 - (b / a) * x1;
   *y = x1;
 }
-  
-// Function to find modulo inverse of a 
-uint32_t ModInverse(uint32_t a, uint32_t m) { 
+
+// Function to find modulo inverse of a
+uint32_t ModInverse(uint32_t a, uint32_t m) {
   int64_t x, y;
   GcdExtended(a, m, &x, &y);
   return (x < 0 ? x + m : x) % m;
