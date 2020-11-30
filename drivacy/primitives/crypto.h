@@ -6,6 +6,7 @@
 #define DRIVACY_PRIMITIVES_CRYPTO_H_
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "drivacy/types/config.pb.h"
@@ -18,20 +19,23 @@ namespace crypto {
 // Generate key pair for encryption.
 types::KeyPair GenerateEncryptionKeyPair();
 
+// The size of an onion ciher produced with:
+// OnionEncrypt(..., ..., party_id);
+// Size of the buffer read by party_id, and sent by party_id - 1.
 uint32_t OnionCipherSize(uint32_t party_id, uint32_t party_count);
 
-// Onion encrypt the given shares into the cipher buffer.
-// party_id is the id of the party to which the first share belongs.
-// so that shares[0]::onion[i] is encrypted with party i's key.
-// while shares[1]::onion[i+1] is encrypted with party i+1's key.
-// Precondition: party_id + shares.length() == config.parties() + 1
-void OnionEncrypt(const std::vector<types::QueryShare> &shares,
-                  const types::Configuration &config, unsigned char *cipher,
-                  uint32_t party_id);
+// Onion encrypt the given messages.
+// party_id is the id of the party to which the first message belongs.
+// so that messages[0]::onion[i] is encrypted with party i's key.
+// while messages[1]::onion[i+1] is encrypted with party i+1's key.
+// Precondition: party_id + messages.length() == config.parties() + 1
+std::unique_ptr<unsigned char[]> OnionEncrypt(
+    const std::vector<types::Message> &messages,
+    const types::Configuration &config, uint32_t party_id);
 
-void SingleLayerOnionDecrypt(uint32_t party_id, const unsigned char *cipher,
-                             const types::Configuration &config,
-                             unsigned char *plain);
+types::OnionMessage SingleLayerOnionDecrypt(uint32_t party_id,
+                                            const types::CipherText cipher,
+                                            const types::Configuration &config);
 
 }  // namespace crypto
 }  // namespace primitives

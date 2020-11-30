@@ -9,23 +9,22 @@
 namespace drivacy {
 namespace primitives {
 
-std::vector<uint64_t> GenerateAdditiveSecretShares(uint64_t query,
-                                                   uint64_t numparty) {
-  std::vector<uint64_t> shares;
+std::vector<uint32_t> GenerateAdditiveSecretShares(uint32_t numparty) {
+  std::vector<uint32_t> shares;
 
-  uint64_t t = 0;
+  uint32_t t = 0;
   for (size_t i = 0; i < numparty - 1; i++) {
-    uint64_t x = util::Rand64(0, util::Prime());
+    uint32_t x = util::Rand32(0, util::Prime());
     t = (t + x) % util::Prime();
     shares.push_back(x);
   }
-  uint64_t last_x = util::Mod(query - t, util::Prime());
+  uint64_t last_x = util::Prime() - t;
   shares.push_back(last_x);
 
   return shares;
 }
 
-uint64_t AdditiveReconstruct(uint64_t tally, uint64_t share) {
+uint32_t AdditiveReconstruct(uint32_t tally, uint32_t share) {
   return (tally + share) % util::Prime();
 }
 

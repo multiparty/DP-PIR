@@ -14,13 +14,9 @@ namespace drivacy {
 namespace primitives {
 namespace util {
 
-inline uint64_t Prime() {
+inline uint32_t Prime() {
   // 26 bits prime. // 29 bits prime. // 26 bits prime.
   return 67108859;  // 536870909;     // 67108859;
-}
-
-inline uint64_t Mod(uint64_t a, uint64_t modulus) {
-  return a < 0 ? (a % modulus + modulus) : a + modulus;
 }
 
 inline float RandUniform() {
@@ -29,7 +25,7 @@ inline float RandUniform() {
 
 // Random number using std::rand() (unseeded)
 // TODO(babman): replace this with something proper.
-inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {
+inline uint32_t Rand32(uint32_t lower_bound, uint32_t upper_bound) {
   return (std::rand() % (upper_bound - lower_bound)) + lower_bound;
 }
 
@@ -37,7 +33,7 @@ inline uint64_t Rand64(uint64_t lower_bound, uint64_t upper_bound) {
 using Generator = std::mt19937;
 
 inline Generator SeedGenerator(uint32_t seed) { return std::mt19937(seed); }
-inline uint32_t Rand32(Generator *generator, uint32_t lower_bound,
+inline uint32_t SRand32(Generator *generator, uint32_t lower_bound,
                        uint32_t upper_bound) {
   uint64_t span = upper_bound - lower_bound;
   uint64_t generator_span = std::mt19937::max() - std::mt19937::min();

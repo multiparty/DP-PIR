@@ -1,6 +1,7 @@
 # Copyright 2020 multiparty.org
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+load("//drivacy:valgrind.bzl", "valgrind_test")
 
 # Secret Sharing Schemes we use in the protocol.
 cc_library(
@@ -33,8 +34,20 @@ cc_library(
     deps = [
         "//:libsodium",
         "//drivacy/types:config_cc_proto",
-        "//drivacy/types:types_definitions",
+        "//drivacy/types:types",
     ],
+)
+
+cc_binary(
+    name = "crypto_test_cc",
+    srcs = [
+        "crypto_test.cc",
+    ],
+    deps = [
+        ":crypto",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+    ]
 )
 
 # Private utility library.
@@ -66,3 +79,8 @@ cc_test(
         ":sharing",
     ],
 )
+valgrind_test(
+    name = "crypto_test",
+    binary = "crypto_test_cc",
+)
+

@@ -19,22 +19,13 @@ proto_library(
 
 # types.h|cc
 cc_library(
-    name = "types_definitions",
-    srcs = [],
+    name = "types",
+    srcs = [
+        "types.cc",
+    ],
     hdrs = [
         "types.h",
     ],
     deps = [],
-    visibility = ["//drivacy:__subpackages__"],
-)
-cc_library(
-    name = "types",
-    srcs = [
-        "types.cc"
-    ],
-    deps = [
-        "//drivacy/types:types_definitions",
-        "//drivacy/primitives:crypto",
-    ],
     visibility = ["//drivacy:__subpackages__"],
 )

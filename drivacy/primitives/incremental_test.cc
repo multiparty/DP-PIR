@@ -15,13 +15,16 @@
 
 #include "drivacy/primitives/util.h"
 
-uint64_t Test(uint64_t value, uint64_t numparties) {
-  // Secret share value into numparties-many shares.
+uint32_t Test(uint64_t value, uint64_t numparties) {
+  // Pre-secret share into numparties-many shares.
   auto shares =
-      drivacy::primitives::GenerateIncrementalSecretShares(value, numparties);
+      drivacy::primitives::PreIncrementalSecretShares(numparties);
+
+  // Compute the final piece of the sharing using value and preshares.
+  uint32_t tally =
+      drivacy::primitives::GenerateIncrementalSecretShares(value, shares);
 
   // Reconstruct the value incrementally, in order of shares.
-  uint64_t tally = 1;  // Initially, tally = 1.
   for (const auto &share : shares) {
     // Tally is updated by every incremental reconstruction.
     tally = drivacy::primitives::IncrementalReconstruct(tally, share);
@@ -33,9 +36,9 @@ uint64_t Test(uint64_t value, uint64_t numparties) {
 
 int main() {
   for (int i = 0; i < 100; i++) {
-    uint64_t value = std::rand() % drivacy::primitives::util::Prime();
-    uint32_t numparties = std::rand() % 5 + 2;  // [2, 7)
-    uint64_t reconstructed = Test(value, numparties);
+    uint32_t numparties = drivacy::primitives::util::Rand32(2, 7);
+    uint32_t value = drivacy::primitives::util::Rand32(0, drivacy::primitives::util::Prime());
+    uint32_t reconstructed = Test(value, numparties);
     if (value != reconstructed) {
       std::cout << "Test failed!" << std::endl;
       std::cout << "Value: " << value << " Parties: " << numparties
