@@ -48,11 +48,11 @@ do
   echo "Running client $machine"
   if [[ "$1" == "--valgrind" ]]
   then
-    valgrind ./{_client} --table={table} --config={config} --machine=$machine \
+    valgrind ./{_client} --config={config} --machine=$machine \
              --queries={queries} > logs/client-$machine 2>&1 &
     CLIENT_IDS+=($!)
   else
-    ./{_client} --table={table} --config={config} --machine=$machine \
+    ./{_client} --config={config} --machine=$machine \
                 --queries={queries} > logs/client-$machine 2>&1 &
     CLIENT_IDS+=($!)
   fi
@@ -64,11 +64,10 @@ echo ""
 (
   sleep {max_time} &&
   echo "Timeout expired!" &&
-  for ID in "${{CLIENT_IDS[@]}}"; do kill -9 $ID; done &&
-  for ID in "${{PARTY_IDS[@]}}"; do kill -9 $ID; done &&
+  for ID in "${{CLIENT_IDS[@]}}"; do kill $ID; done &&
+  for ID in "${{PARTY_IDS[@]}}"; do kill $ID; done &&
   echo "Killed all" &&
-  echo "" &&
-  exit 1
+  echo ""
 ) &
 TIMEOUT_PID=$!
 

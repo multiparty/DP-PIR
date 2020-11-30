@@ -6,7 +6,7 @@
 #ifndef DRIVACY_PARTIES_OFFLINE_PARTY_H_
 #define DRIVACY_PARTIES_OFFLINE_PARTY_H_
 
-#define DEBUG_MSG
+// #define DEBUG_MSG
 
 #include <cassert>
 #include <cstdint>
