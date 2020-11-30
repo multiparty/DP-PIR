@@ -2,7 +2,7 @@
 
 # Display help
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
-  echo "Usage: ./run_parties.sh #parties #parallelism batch_size span cutoff"
+  echo "Usage: ./run_parties_offline.sh #parties #parallelism batch_size span cutoff"
   exit 0
 fi
 

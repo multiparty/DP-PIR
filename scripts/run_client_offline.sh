@@ -2,7 +2,7 @@
 
 # Display help
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
-  echo "Usage: ./run_client.sh #machine_id #queries"
+  echo "Usage: ./run_client_offline.sh #machine_id #queries"
   exit 0
 fi
 

@@ -44,6 +44,44 @@ cc_binary(
 )
 
 cc_binary(
+    name = "party_online",
+    srcs = [
+        "party_online.cc",
+    ],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/parties/online:party",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+        "//drivacy/util:file",
+        "//drivacy/util:status",
+    ],
+)
+
+cc_binary(
+    name = "client_online",
+    srcs = [
+        "client_online.cc",
+    ],
+    deps = [
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/strings",
+        "//drivacy/parties/online:client",
+        "//drivacy/types:config_cc_proto",
+        "//drivacy/types:types",
+        "//drivacy/util:file",
+        "//drivacy/util:status",
+    ],
+)
+
+cc_binary(
     name = "config",
     srcs = [
         "config.cc",
@@ -60,8 +98,11 @@ cc_binary(
 )
 
 # end to end tests
+# Offline phase
 end_to_end_test(
-    name = "end-to-end-1",
+    name = "end-to-end-offline-1",
+    party = ":party_offline",
+    client = ":client_offline",
     table = "//drivacy:testdata/table1.json",
     config = "//drivacy:testdata/config1.json",
     parties = 2,
@@ -71,11 +112,12 @@ end_to_end_test(
     span = "0.0",
     cutoff = "1.0",
     tags = ["exclusive"],
-    max_time = 5,
+    max_time = 80,
 )
-
 end_to_end_test(
-    name = "end-to-end-2",
+    name = "end-to-end-offline-2",
+    party = ":party_offline",
+    client = ":client_offline",
     table = "//drivacy:testdata/table2.json",
     config = "//drivacy:testdata/config2.json",
     parties = 5,
@@ -87,9 +129,10 @@ end_to_end_test(
     tags = ["exclusive"],
     max_time = 80,
 )
-
 end_to_end_test(
-    name = "end-to-end-3",
+    name = "end-to-end-offline-3",
+    party = ":party_offline",
+    client = ":client_offline",
     table = "//drivacy:testdata/table2.json",
     config = "//drivacy:testdata/config2.json",
     parties = 5,
@@ -101,9 +144,72 @@ end_to_end_test(
     tags = ["exclusive"],
     max_time = 80,
 )
-
 end_to_end_test(
-    name = "end-to-end-4",
+    name = "end-to-end-offline-4",
+    party = ":party_offline",
+    client = ":client_offline",
+    table = "//drivacy:testdata/table3.json",
+    config = "//drivacy:testdata/config3.json",
+    parties = 3,
+    parallelism = 3,
+    batch = 10,
+    queries = 10,
+    span = "10.0",
+    cutoff = "29.957",
+    tags = ["exclusive"],
+    max_time = 80,
+)
+
+# Online phase.
+end_to_end_test(
+    name = "end-to-end-online-1",
+    party = ":party_online",
+    client = ":client_online",
+    table = "//drivacy:testdata/table1.json",
+    config = "//drivacy:testdata/config1.json",
+    parties = 2,
+    parallelism = 1,
+    batch = 100,
+    queries = 100,
+    span = "0.0",
+    cutoff = "1.0",
+    tags = ["exclusive"],
+    max_time = 80,
+)
+end_to_end_test(
+    name = "end-to-end-online-2",
+    party = ":party_online",
+    client = ":client_online",
+    table = "//drivacy:testdata/table2.json",
+    config = "//drivacy:testdata/config2.json",
+    parties = 5,
+    parallelism = 1,
+    batch = 20,
+    queries = 20,
+    span = "3.333",
+    cutoff = "7.675",
+    tags = ["exclusive"],
+    max_time = 80,
+)
+end_to_end_test(
+    name = "end-to-end-online-3",
+    party = ":party_online",
+    client = ":client_online",
+    table = "//drivacy:testdata/table2.json",
+    config = "//drivacy:testdata/config2.json",
+    parties = 5,
+    parallelism = 1,
+    batch = 20,
+    queries = 20,
+    span = "10",
+    cutoff = "29.957",
+    tags = ["exclusive"],
+    max_time = 80,
+)
+end_to_end_test(
+    name = "end-to-end-online-4",
+    party = ":party_online",
+    client = ":client_online",
     table = "//drivacy:testdata/table3.json",
     config = "//drivacy:testdata/config3.json",
     parties = 3,

@@ -48,6 +48,9 @@ class HeadParty : public Party, public io::socket::WebSocketServerListener {
   // Send responses via the client socket instead of the default socket!
   void SendResponses() override;
 
+  // Useless.
+  void OnReceiveMessage(const types::CipherText &message) { assert(false); }
+
  protected:
   // WebSocket server.
   io::socket::WebSocketServer client_socket_;

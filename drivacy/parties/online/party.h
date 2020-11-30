@@ -78,8 +78,7 @@ class Party : public io::socket::InterPartySocketListener,
   // by the intra party socket when the corresponding event occurs.
   bool OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) override;
   void OnCollectedBatchSizes() override;
-  void OnReceiveQuery(uint32_t machine_id,
-                      const types::Query &query) override;
+  void OnReceiveQuery(uint32_t machine_id, const types::Query &query) override;
   void OnReceiveResponse(uint32_t machine_id,
                          const types::Response &response) override;
 

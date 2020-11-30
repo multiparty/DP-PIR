@@ -39,11 +39,11 @@ let reportedCount;
 let totalParties;
 let totalClients;
 let clientsPerMachine;
-let batches;
 let batch_size;
 let queries;
 let span;
 let cutoff;
+let mode;
 
 // Store the table and config file contents.
 let table;
@@ -70,12 +70,11 @@ function formatIP(ipString) {
   }
 }
 
-function configure(parties, parallelism, _clients, _batches, _batch_size,
-                   _queries, _span, _cutoff, tablePath) {
+function configure(parties, parallelism, _clients, _batch_size,
+                   _queries, _span, _cutoff, tablePath, _mode) {
   parties = Number(parties);
   parallelism = Number(parallelism);
   _clients = Number(_clients);
-  _batches = Number(_batches);
   _batch_size = Number(_batch_size);
   _queries = Number(_queries);
   _span = Number(_span);
@@ -87,11 +86,11 @@ function configure(parties, parallelism, _clients, _batches, _batch_size,
   totalParties = parties * parallelism;
   totalClients = parallelism * _clients;
   clientsPerMachine = _clients;
-  batches = _batches;
   batch_size = _batch_size;
   queries = _queries;
   span = _span;
   cutoff = _cutoff;
+  mode = _mode;
 
   // Reset maps.
   partyMap = {};
@@ -234,8 +233,8 @@ app.get('/signup/party/', (req, res) => {
   }
   console.log('');
   // Reply.
-  res.send(partyID + ' ' + machineID + ' ' + batches + ' ' + batch_size + ' ' +
-           span + ' ' + cutoff + '\n');
+  res.send(partyID + ' ' + machineID + ' ' + ' ' + batch_size + ' ' +
+           span + ' ' + cutoff + ' ' + mode + '\n');
 });
 app.get('/signup/client', (req, res) => {
   // Wait for all parties to connect first.
@@ -260,7 +259,8 @@ app.get('/signup/client', (req, res) => {
   }
   console.log('');
   // Reply.
-  res.send(machineID + ' ' + clientParallelID + ' ' + queries + '\n');
+  res.send(machineID + ' ' + clientParallelID + ' ' + queries + ' ' + mode +
+           '\n');
 });
 
 // Report finishing.
@@ -300,9 +300,9 @@ app.listen(PORT, () => {
       console.log('Available commands:');
       console.log('- exit');
       console.log('- kill');
-      console.log('- new <parties> <parallelism> <batches> <batch_size> ' +
+      console.log('- new <parties> <parallelism> <batch_size> ' +
                   '<clients per machine> <queries per client> <dpspan> ' +
-                  '<dpcutoff> <table path>');
+                  '<dpcutoff> <table path> <mode>');
       console.log('- clients');
     }
     if (line.startsWith('exit')) {
@@ -314,8 +314,8 @@ app.listen(PORT, () => {
       return;
     }
     if (line.startsWith('new')) {
-      const [parties, parallelism, batches, batch_size, clients, queries,
-             span, cutoff, table] = line.split(' ').slice(1);
+      const [parties, parallelism, batch_size, clients, queries, span, cutoff,
+             table, mode] = line.split(' ').slice(1);
       if (shouldKill) {
         console.log('Kill is pending!');
         return;
@@ -336,8 +336,12 @@ app.listen(PORT, () => {
         console.log('Queries and batch are incompatible');
         return;
       }
-      configure(parties, parallelism, clients, batches, batch_size, queries,
-                span, cutoff, table);
+      if (mode != 'online' && mode != 'offline') {
+        console.log('Enter valid mode');
+        return;
+      }
+      configure(parties, parallelism, clients, batch_size, queries, span,
+                cutoff, table, mode);
     }
     if (line.startsWith('clients')) {
       allowClients = true;

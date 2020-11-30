@@ -12,6 +12,7 @@
 
 #include "drivacy/parties/online/party.h"
 
+// NOLINTNEXTLINE
 #include <chrono>
 #include <utility>
 
@@ -70,10 +71,10 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
 #endif
   // Sample noise.
   TIMER(0);
-  this->noise_ =
-      protocol::online::noise::MakeNoisyQueries(
-          this->party_id_, this->machine_id_, this->config_.parallelism(),
-          this->table_, this->span_, this->cutoff_, this->commons_list_);
+  this->noise_ = protocol::online::noise::MakeNoisyQueries(
+      this->party_id_, this->machine_id_, this->config_.parallelism(),
+      this->table_, this->span_, this->cutoff_, this->commons_list_,
+      this->config_.parties());
   this->noise_size_ = this->noise_.size();
   TIME("Sampled noise", 0);
   // Update batch size.
@@ -120,8 +121,7 @@ void Party::InjectNoise() {
   // Shuffle in the noise queries.
   TIMER(0);
   for (types::Query &query : this->noise_) {
-    uint32_t machine_id =
-        this->shuffler_.MachineOfNextQuery(0);
+    uint32_t machine_id = this->shuffler_.MachineOfNextQuery(0);
     this->intra_party_socket_.SendQuery(machine_id, query);
     // In case we are receiving noise from other parallel machines
     // while operating on these noise!
@@ -148,13 +148,11 @@ void Party::OnReceiveQuery(const types::Query &query) {
 
   // Distributed two phase shuffling - Phase 1.
   // Assign query to some machine.
-  uint32_t machine_id =
-      this->shuffler_.MachineOfNextQuery(pair.second);
+  uint32_t machine_id = this->shuffler_.MachineOfNextQuery(pair.second);
   this->intra_party_socket_.SendQuery(machine_id, pair.first);
 }
 
-void Party::OnReceiveQuery(uint32_t machine_id,
-                           const types::Query &query) {
+void Party::OnReceiveQuery(uint32_t machine_id, const types::Query &query) {
 #ifdef DEBUG_MSG
   std::cout << "On receive query 2 " << party_id_ << "-" << machine_id_
             << std::endl;

@@ -23,6 +23,7 @@ cc_library(
         "//drivacy/primitives:noise",
         "//drivacy/protocol/online:client",
         "//drivacy/types:types",
+        "//drivacy/util:fake",
     ],
 )
 
@@ -40,5 +41,6 @@ cc_library(
         "//drivacy/primitives:crypto",
         "//drivacy/primitives:sharing",
         "//drivacy/types:types",
+        "//drivacy/util:fake",
     ],
 )

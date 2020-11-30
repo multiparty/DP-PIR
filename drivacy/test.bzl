@@ -25,13 +25,13 @@ do
     echo "Running party $party-$machine"
     if [[ "$1" == "--valgrind" ]]
     then
-      valgrind ./{_party} --table={table} --config={config} --party=$party \
+      valgrind ./{party} --table={table} --config={config} --party=$party \
                --machine=$machine --batch={batch} \
                --span={span} --cutoff={cutoff} \
                > logs/party$party-$machine.log 2>&1 &
       PARTY_IDS+=($!)
     else
-      {_party} --table={table} --config={config} --party=$party \
+      {party} --table={table} --config={config} --party=$party \
                --machine=$machine --batch={batch} \
                --span={span} --cutoff={cutoff} \
                > logs/party$party-$machine.log 2>&1 &
@@ -43,16 +43,18 @@ echo ""
 
 # Run clients
 echo "Running clients..."
+table_arg=""
+if [[ {online} -eq 1 ]]; then table_arg="--table={table}"; fi
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
   echo "Running client $machine"
   if [[ "$1" == "--valgrind" ]]
   then
-    valgrind ./{_client} --config={config} --machine=$machine \
+    valgrind ./{client} --config={config} $table_arg --machine=$machine \
              --queries={queries} > logs/client-$machine 2>&1 &
     CLIENT_IDS+=($!)
   else
-    ./{_client} --config={config} --machine=$machine \
+    ./{client} --config={config} $table_arg --machine=$machine \
                 --queries={queries} > logs/client-$machine 2>&1 &
     CLIENT_IDS+=($!)
   fi
@@ -132,8 +134,8 @@ def _end_to_end_test_impl(ctx):
         is_executable = True,
         output = ctx.outputs.executable,
         content = SCRIPT.format(
-            _party=ctx.file._party.short_path,
-            _client=ctx.file._client.short_path,
+            party=ctx.file.party.short_path,
+            client=ctx.file.client.short_path,
             parties=ctx.attr.parties,
             parallelism=ctx.attr.parallelism,
             batch=ctx.attr.batch,
@@ -143,10 +145,11 @@ def _end_to_end_test_impl(ctx):
             span=ctx.attr.span,
             cutoff=ctx.attr.cutoff,
             max_time=ctx.attr.max_time,
+            online=int(ctx.file.party.short_path.endswith("online"))
         ),
     )
 
-    files = [ctx.file._party, ctx.file._client, ctx.file.table, ctx.file.config]
+    files = [ctx.file.party, ctx.file.client, ctx.file.table, ctx.file.config]
     return DefaultInfo(
         runfiles = ctx.runfiles(files = files),
     )
@@ -156,17 +159,15 @@ end_to_end_test = rule(
     implementation = _end_to_end_test_impl,
     test = True,
     attrs = {
-        "_party": attr.label(
+        "party": attr.label(
             doc = "Party main entry point.",
-            mandatory = False,
+            mandatory = True,
             allow_single_file = True,
-            default = "//drivacy:party_offline",
         ),
-        "_client": attr.label(
+        "client": attr.label(
             doc = "Client main entry point.",
-            mandatory = False,
+            mandatory = True,
             allow_single_file = True,
-            default = "//drivacy:client_offline",
         ),
         "table": attr.label(
             doc = "The path to table.json.",

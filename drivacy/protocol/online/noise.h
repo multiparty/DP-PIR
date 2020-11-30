@@ -18,7 +18,8 @@ namespace noise {
 std::vector<types::Query> MakeNoisyQueries(
     uint32_t party_id, uint32_t machine_id, uint32_t parallelism,
     const types::Table &table, double span, double cutoff,
-    const std::vector<std::vector<types::Message>> &commons);
+    const std::vector<std::vector<types::Message>> &commons,
+    uint32_t party_count);
 
 }  // namespace noise
 }  // namespace online

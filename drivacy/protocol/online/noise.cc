@@ -11,6 +11,7 @@
 
 #include "drivacy/primitives/noise.h"
 #include "drivacy/protocol/online/client.h"
+#include "drivacy/util/fake.h"
 
 namespace drivacy {
 namespace protocol {
@@ -37,7 +38,8 @@ std::pair<uint32_t, uint32_t> FindRange(uint32_t machine_id,
 std::vector<types::Query> MakeNoisyQueries(
     uint32_t party_id, uint32_t machine_id, uint32_t parallelism,
     const types::Table &table, double span, double cutoff,
-    const std::vector<std::vector<types::Message>> &commons) {
+    const std::vector<std::vector<types::Message>> &commons,
+    uint32_t party_count) {
   std::vector<types::Query> result;
   // Only consider entries within our range.
   auto [start, end] = FindRange(machine_id, parallelism, table.size());
@@ -47,8 +49,9 @@ std::vector<types::Query> MakeNoisyQueries(
     if (start <= index && index < end) {
       uint32_t count = primitives::SampleFromDistribution(span, cutoff);
       for (uint32_t i = 0; i < count; i++) {
-        result.push_back(
-            client::CreateQuery(query, commons.at(index - start), party_id));
+        result.push_back(client::CreateQuery(
+            query,  // commons.at(index - start), party_id));
+            fake::FakeIt(party_count - party_id), party_id));
       }
     }
     index++;

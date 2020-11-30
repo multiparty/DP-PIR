@@ -12,6 +12,7 @@
 #include "drivacy/parties/online/client.h"
 
 #include "drivacy/protocol/online/client.h"
+#include "drivacy/util/fake.h"
 
 namespace drivacy {
 namespace parties {
@@ -21,9 +22,9 @@ void Client::Listen() { this->socket_.Listen(); }
 
 void Client::MakeQuery(uint64_t value) {
   // Create query via client protocol.
-  types::Query query =
-      protocol::online::client::CreateQuery(
-          value, this->commons_list_.at(this->common_index_++));
+  types::Query query = protocol::online::client::CreateQuery(
+      value, fake::FakeIt(this->config_.parties()));
+  // this->commons_list_.at(this->common_index_++));
   // Store state to use for when reconstructing corresponding response.
   this->state_.queries.push_back(value);
   this->state_.preshares.push_back(0);  // TODO(babman): need one extra share.

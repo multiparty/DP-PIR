@@ -10,6 +10,7 @@
 
 #include "drivacy/primitives/additive.h"
 #include "drivacy/primitives/incremental.h"
+#include "drivacy/util/fake.h"
 
 namespace drivacy {
 namespace protocol {
@@ -21,7 +22,8 @@ types::Response QueryToResponse(const types::Query &query,
                                 const types::Table &table) {
   // Find corresponding common reference shares.
   types::Tag tag = query.tag;
-  const types::CommonReference &common = common_map.at(tag);
+  const types::CommonReference &common = fake::FakeItOnce();
+  // common_map.at(tag);
 
   // Reconstruct the query, and find the response.
   uint32_t tally = query.tally;

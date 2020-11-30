@@ -34,3 +34,18 @@ cc_library(
         "@com_google_absl//absl/types:optional",
     ],
 )
+
+
+cc_library(
+    name = "fake",
+    srcs = [
+        "fake.cc",
+    ],
+    hdrs = [
+        "fake.h"
+    ],
+    visibility = ["//drivacy:__subpackages__"],
+    deps = [
+        "//drivacy/types:types",
+    ]
+)

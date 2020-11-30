@@ -102,7 +102,7 @@ void WebSocketServer::SendResponse(const types::Response &response) {
   assert(this->online_);
   auto *ws = this->sockets_.front();
   this->sockets_.pop_front();
-  ws->send(std::string(reinterpret_cast<const char *>(response),
+  ws->send(std::string(reinterpret_cast<const char *>(&response),
                        sizeof(types::Response)),
            uWS::OpCode::BINARY, false);
 }

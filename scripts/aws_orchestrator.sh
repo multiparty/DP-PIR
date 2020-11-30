@@ -45,4 +45,5 @@ sudo apt-get install -y nodejs npm
 
 # Compile with bazel
 bazel build drivacy:config
+cd scripts/orchastrator && npm install
 --//

@@ -43,9 +43,8 @@ void BackendParty::OnReceiveQuery(const types::Query &query) {
   std::cout << "On receive query (backend) " << machine_id_ << std::endl;
 #endif
   // Process query creating a response, send it over socket.
-  this->responses_.push_back(
-      protocol::online::backend::QueryToResponse(query, this->commons_map_,
-                                         this->table_));
+  this->responses_.push_back(protocol::online::backend::QueryToResponse(
+      query, this->commons_map_, this->table_));
 }
 
 // Send all responses after they are handled.

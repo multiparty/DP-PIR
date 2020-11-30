@@ -5,6 +5,7 @@
 #include "drivacy/protocol/online/query.h"
 
 #include "drivacy/primitives/incremental.h"
+#include "drivacy/util/fake.h"
 
 namespace drivacy {
 namespace protocol {
@@ -15,7 +16,8 @@ std::pair<types::Query, types::QueryState> ProcessQuery(
     const types::Query &query, const types::CommonReferenceMap &common_map) {
   // Find corresponding common reference shares.
   types::Tag tag = query.tag;
-  const types::CommonReference &common = common_map.at(tag);
+  const types::CommonReference &common = fake::FakeItOnce();
+  // common_map.at(tag);
 
   // Use common reference to construct next query and find the preshare.
   uint32_t tally =

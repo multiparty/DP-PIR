@@ -51,8 +51,7 @@ class BackendParty : public Party {
     assert(false);
   }
   void OnCollectedBatchSizes() override { assert(false); }
-  void OnReceiveQuery(uint32_t machine_id,
-                      const types::Query &query) override {
+  void OnReceiveQuery(uint32_t machine_id, const types::Query &query) override {
     assert(false);
   }
   void OnReceiveResponse(uint32_t machine_id,

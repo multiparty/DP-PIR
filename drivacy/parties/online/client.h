@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <vector>
 
 #include "drivacy/io/websocket_client.h"
 #include "drivacy/types/config.pb.h"

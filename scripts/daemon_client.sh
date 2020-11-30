@@ -22,6 +22,13 @@ do
   machine_id=${params[0]}
   client_id=${params[1]}
   queries=${params[2]}
+  online=${params[3]}
+  
+  table_arg="--table=data/table.json"
+  if [[ $online == "offline" ]]
+  then
+    table_arg=""
+  fi
 
   # Read table and configurations.
   curl "$ORCHASTRATOR/config" > data/config.json 2> /dev/null
@@ -29,8 +36,8 @@ do
 
   # Run client and time the command
   echo "Running client for ${machine_id} with ${queries}"
-  \time -f "%e" ./bazel-bin/drivacy/client --config=data/config.json \
-      --table=data/table.json --machine=${machine_id} --queries=${queries} \
+  \time -f "%e" ./bazel-bin/drivacy/client_${online} --config=data/config.json \
+      ${table_arg} --machine=${machine_id} --queries=${queries} \
       1> client-${machine_id}-${client_id}.log 2> time.log && \
       curl "$ORCHASTRATOR/done/${machine_id}/${client_id}/$(tail -1 time.log)" \
       2> /dev/null &
