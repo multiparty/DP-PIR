@@ -30,7 +30,7 @@ types::Query CreateQuery(uint64_t value,
 }
 
 uint64_t ReconstructResponse(const types::Response &response,
-                             uint64_t preshare) {
+                             const types::QueryState &preshare) {
   return primitives::AdditiveReconstruct(response, preshare);
 }
 

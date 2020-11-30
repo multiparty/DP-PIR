@@ -76,14 +76,14 @@ struct Query {
   Query(Tag tag, uint32_t tally) : tag(tag), tally(tally) {}
 };
 using Response = uint32_t;
-using QueryState = Tag;
+using QueryState = uint32_t;
 
 // A client state. This survives between a query and its response.
 struct ClientState {
   // A copy of previously made queries for sanity checks.
   std::list<uint32_t> queries;
   // The corresponding stored preshare (matches queries by index).
-  std::list<uint32_t> preshares;
+  std::list<QueryState> preshares;
 };
 
 }  // namespace types
