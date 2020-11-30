@@ -50,6 +50,20 @@ cc_binary(
     ]
 )
 
+cc_library(
+    name = "noise",
+    srcs = [
+        "noise.cc",
+    ],
+    hdrs = [
+        "noise.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":util",
+    ],
+)
+
 # Private utility library.
 cc_library(
     name = "util",
@@ -83,4 +97,13 @@ valgrind_test(
     name = "crypto_test",
     binary = "crypto_test_cc",
 )
-
+cc_test(
+    name = "noise_test",
+    srcs = [
+        "noise_test.cc",
+    ],
+    deps = [
+        ":noise",
+        ":util",
+    ]
+)

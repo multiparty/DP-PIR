@@ -33,12 +33,22 @@ struct CommonReference {
   Tag next_tag;
   IncrementalSecretShare incremental_share;
   uint32_t preshare;
+  // Constructors..
+  explicit CommonReference() {}
+  explicit CommonReference(Tag next_tag, IncrementalSecretShare share,
+                           uint32_t preshare)
+      : next_tag(next_tag), incremental_share(share), preshare(preshare) { }
 };
 
 // This is what gets encrypted.
 struct Message {
   Tag tag;
   CommonReference reference;
+  // Constructors..
+  explicit Message() {}
+  explicit Message(Tag tag, Tag next_tag, IncrementalSecretShare share,
+                   uint32_t preshare)
+      : tag(tag), reference(next_tag, share, preshare) {}
 };
 
 // A map representing all common references installed at a server.

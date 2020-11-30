@@ -45,3 +45,14 @@ valgrind_test = rule(
         ),
     },
 )
+
+def many_tests(binary, params_list):
+    for params in params_list:
+        strs = [str(p) for p in params]
+        name = '-'.join(strs)
+        cmdargs = ' '.join(strs)
+        valgrind_test(
+            name = "shuffle-test-{}".format(name),
+            binary = binary,
+            cmdargs = cmdargs,
+        )

@@ -42,7 +42,7 @@ std::vector<types::IncrementalSecretShare> PreIncrementalSecretShares(
   std::vector<types::IncrementalSecretShare> shares;
   for (uint32_t i = 0; i < numparty; i++) {
     uint32_t x = util::Rand32(0, util::Prime());
-    uint32_t y = util::Rand32(0, util::Prime());
+    uint32_t y = util::Rand32(1, util::Prime());
     shares.push_back({x, y});
   }
   return shares;
