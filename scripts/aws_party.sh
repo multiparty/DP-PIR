@@ -18,7 +18,7 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-ORCHASTRATOR="http://18.191.187.75:8000"
+ORCHASTRATOR="http://13.58.24.89:8000"
 CORES=1
 
 # clone repo once!

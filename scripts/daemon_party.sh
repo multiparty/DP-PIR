@@ -21,11 +21,10 @@ do
   params=($response)
   party_id=${params[0]}
   machine_id=${params[1]}
-  batches=${params[2]}
-  batch=${params[3]}
-  span=${params[4]}
-  cutoff=${params[5]}
-  online=${params[6]}
+  batch=${params[2]}
+  span=${params[3]}
+  cutoff=${params[4]}
+  online=${params[5]}
 
   # Read table and configurations.
   curl "$ORCHASTRATOR/config" > data/config.json 2> /dev/null
