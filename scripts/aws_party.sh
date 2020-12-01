@@ -18,7 +18,6 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-ORCHASTRATOR="http://13.58.24.89:8000"
 CORES=1
 
 # clone repo once!
@@ -56,6 +55,6 @@ bazel build ...
 # Run daemon
 for i in $(seq 1 $CORES)
 do
-  ./scripts/daemon_party.sh "$ORCHASTRATOR"
+  ./scripts/daemon_party.sh
 done
 --//
