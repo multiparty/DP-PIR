@@ -34,7 +34,7 @@ do
   echo "Running party for ${party_id}-${machine_id} with ${batch} ${span} ${cutoff}"
   ./bazel-bin/drivacy/party_${online} --config=data/config.json --table=data/table.json \
                            --party=${party_id} --machine=${machine_id} \
-                           --batches=${batches} --batch=${batch} --span=${span} \
+                           --batch=${batch} --span=${span} \
                            --cutoff=${cutoff} > party-${party_id}-${machine_id}.log &
   pid=$!
 
