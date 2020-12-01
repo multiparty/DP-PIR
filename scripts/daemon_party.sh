@@ -2,6 +2,7 @@ ORCHASTRATOR="http://3.21.228.215:8000"
 
 # Setup directory for storing config and table data.
 mkdir -p data
+bazel build ... --config=opt
 
 # Notify orchastrator that you exists.
 curl "$ORCHASTRATOR/giveip/party" 2> /dev/null
