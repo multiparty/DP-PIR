@@ -53,7 +53,7 @@ then
 fi
 
 # Compile with bazel
-bazel build ...
+bazel build ... --config=opt
 
 # Run daemon
 for i in $(seq 1 $CORES)
