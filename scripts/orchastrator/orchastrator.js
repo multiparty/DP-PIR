@@ -40,7 +40,7 @@ let reportedPartiesCount;
 let totalParties;
 let totalClients;
 let clientsPerMachine;
-let batch_size;
+let batchSize;
 let queries;
 let span;
 let cutoff;
@@ -72,12 +72,12 @@ function formatIP(ipString) {
   }
 }
 
-function configure(parties, parallelism, _clients, _batch_size,
+function configure(parties, parallelism, _clients, _batchSize,
                    _queries, _span, _cutoff, tablePath, _mode) {
   parties = Number(parties);
   parallelism = Number(parallelism);
   _clients = Number(_clients);
-  _batch_size = Number(_batch_size);
+  _batchSize = Number(_batchSize);
   _queries = Number(_queries);
   _span = Number(_span);
   _cutoff = Number(_cutoff);
@@ -88,7 +88,7 @@ function configure(parties, parallelism, _clients, _batch_size,
   totalParties = parties * parallelism;
   totalClients = parallelism * _clients;
   clientsPerMachine = _clients;
-  batch_size = _batch_size;
+  batchSize = _batchSize;
   queries = _queries;
   span = _span;
   cutoff = _cutoff;
@@ -237,7 +237,7 @@ app.get('/signup/party/', (req, res) => {
   }
   console.log('');
   // Reply.
-  res.send(partyID + ' ' + machineID + ' ' + ' ' + batch_size + ' ' +
+  res.send(partyID + ' ' + machineID + ' ' + ' ' + batchSize + ' ' +
            span + ' ' + cutoff + ' ' + mode + '\n');
 });
 app.get('/signup/client', (req, res) => {
@@ -274,8 +274,8 @@ app.get('/doneclient/:machine_id/:client_id/:time', (req, res) => {
   reportedClientsCount++;
   const machineID = Number(req.params.machine_id);
   const clientID = Number(req.params.client_id);
-  clientTimes[machine_id] = clientTimes[machine_id] || {};
-  clientTimes[machine_id][client_id] = Number(req.params.time);
+  clientTimes[machineID] = clientTimes[machineID] || {};
+  clientTimes[machineID][clientID] = Number(req.params.time);
   if (reportedClientsCount == totalClients) {
     console.log('All clients reported!');
   }
@@ -285,10 +285,10 @@ app.get('/doneparty/:party_id/:machine_id/:time', (req, res) => {
   console.log('Party ', req.params.party_id, '-', req.params.machine_id,
               ' finished in ', req.params.time, '!');
   reportedPartiesCount++;
-  const party_id = Number(req.params.party_id);
-  const machine_id = Number(req.params.machine_id);
-  partyTimes[party_id] = partyTimes[party_id] || {};
-  partyTimes[party_id][machine_id] = Number(req.params.time) / 1000.0;
+  const partyID = Number(req.params.party_id);
+  const machineID = Number(req.params.machine_id);
+  partyTimes[partyID] = partyTimes[partyID] || {};
+  partyTimes[partyID][machineID] = Number(req.params.time) / 1000.0;
   if (reportedPartiesCount == totalParties) {
     console.log('All parties reported!');
   }
@@ -296,8 +296,8 @@ app.get('/doneparty/:party_id/:machine_id/:time', (req, res) => {
 });
 
 // Show/print times and staticstics
-function showTime(type, party_id) {
-  let timesObj = type == 'clients' ? clientTimes : partyTimes[party_id];
+function showTime(type, partyID) {
+  let timesObj = type == 'clients' ? clientTimes : partyTimes[partyID];
   if (timesObj == null) {
     return;
   }
@@ -334,7 +334,7 @@ app.listen(PORT, () => {
                   '<clients per machine> <queries per client> <dpspan> ' +
                   '<dpcutoff> <table path> <mode>');
       console.log('- clients');
-      console.log('- time <clients|parties> [party_id]
+      console.log('- time <clients|parties> [party_id]');
     }
     if (line.startsWith('exit')) {
       process.exit(0);
@@ -345,7 +345,7 @@ app.listen(PORT, () => {
       return;
     }
     if (line.startsWith('new')) {
-      const [parties, parallelism, batch_size, clients, queries, span, cutoff,
+      const [parties, parallelism, batchSize, clients, queries, span, cutoff,
              table, mode] = line.split(' ').slice(1);
       if (shouldKill) {
         console.log('Kill is pending!');
@@ -363,7 +363,7 @@ app.listen(PORT, () => {
         console.log('Not enough clients');
         return;
       }
-      if (Number(queries) * Number(clients) % batch_size != 0) {
+      if (Number(queries) * Number(clients) % batchSize != 0) {
         console.log('Queries and batch are incompatible');
         return;
       }
@@ -371,15 +371,15 @@ app.listen(PORT, () => {
         console.log('Enter valid mode');
         return;
       }
-      configure(parties, parallelism, clients, batch_size, queries, span,
+      configure(parties, parallelism, clients, batchSize, queries, span,
                 cutoff, table, mode);
     }
     if (line.startsWith('clients')) {
       allowClients = true;
     }
     if (line.startsWith('time')) {
-      const [type, party_id] = line.split(' ').slice(1);
-      showTime(type, party_id);
+      const [type, partyID] = line.split(' ').slice(1);
+      showTime(type, partyID);
     }
   });
 });
