@@ -1,4 +1,4 @@
-ORCHASTRATOR="http://3.21.228.215:8000"
+ORCHASTRATOR="http://18.216.28.28:8000"
 
 # Setup directory for storing config and table data.
 mkdir -p data
