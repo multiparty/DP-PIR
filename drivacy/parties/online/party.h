@@ -63,7 +63,7 @@ class Party : public io::socket::InterPartySocketListener,
         this->machine_id_, this->config_.parallelism(), this->table_.size(),
         this->span_, this->cutoff_);
     // Timing related.
-    this->first_query_ = true;
+    this->first_query_ = false;
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it

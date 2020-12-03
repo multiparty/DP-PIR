@@ -21,6 +21,7 @@ void BackendParty::Start() {
   std::cout << "Backend Starting ... " << machine_id_ << std::endl;
 #endif
   this->inter_party_socket_.ReadBatchSize();
+  this->first_query_ = true;
   this->listener_.ListenToMessages();
   this->SaveCommonReference();
 }

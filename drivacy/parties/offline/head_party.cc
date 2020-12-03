@@ -24,6 +24,7 @@ void HeadParty::Start() {
   this->InjectNoise();
   // Now we can listen to incoming queries (from previous party or from
   // machines parallel).
+  this->first_query_ = true;
   this->client_socket_.Listen();
 }
 

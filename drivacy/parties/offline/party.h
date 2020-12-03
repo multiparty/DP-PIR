@@ -52,7 +52,7 @@ class Party : public io::socket::InterPartySocketListener,
     this->listener_.AddSocket(&this->inter_party_socket_);
     this->listener_.AddSocket(&this->intra_party_socket_);
     // For timing and benchmarking.
-    this->first_query_ = true;
+    this->first_query_ = false;
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it

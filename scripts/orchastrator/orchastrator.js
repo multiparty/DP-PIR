@@ -297,7 +297,8 @@ app.get('/doneparty/:party_id/:machine_id/:time', (req, res) => {
 
 // Show/print times and staticstics
 function showTime(type, partyID) {
-  let timesObj = type == 'clients' ? clientTimes : partyTimes[partyID];
+  let timesObj = type == 'clients' ? clientTimes : partyTimes;
+  timesObj = partyID != null ? timesObj[partyID] : timesObj;
   if (timesObj == null) {
     return;
   }
@@ -308,9 +309,20 @@ function showTime(type, partyID) {
   let avg = 0.0;
   const entries = Object.entries(timesObj);
   for (const [_, t] of entries) {
-    max = Math.max(max, t);
-    min = Math.min(min, t);
-    avg += t;
+    if (partyID != null) {
+      const nestedEntries = Object.entries(t);
+      let nestedAvg = 0;
+      for (const [_, t1] of nestedEntries) {
+        max = Math.max(max, t1);
+        min = Math.min(min, t1);
+        nestedAvg += t1;
+      }
+      avg += nestedAvg / nestedEntries.length;
+    } else {
+      max = Math.max(max, t);
+      min = Math.min(min, t);
+      avg += t;
+    }
   }
   console.log('Max:', max);
   console.log('Min:', min);

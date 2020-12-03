@@ -43,6 +43,7 @@ void Party::Start() {
   this->InjectNoise();
   // Now we can listen to incoming queries (from previous party or from
   // machines parallel).
+  this->first_query_ = true;
   this->listener_.ListenToMessages();
   // After all queries are handled, broadcast ready.
   this->intra_party_socket_.BroadcastMessagesReady();
