@@ -40,7 +40,7 @@ if __name__ == "__main__":
   delta = float(sys.argv[2])
 
   # Print parameters.
-  span = 1.0 / epsilon
+  span = 2.0 / epsilon
   cutoff = inverse_laplace_cdf(span, delta / 2.0)
   if cutoff >= 0:
     print('Cannot positive cutoff ', cutoff)

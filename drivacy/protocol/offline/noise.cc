@@ -6,8 +6,6 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <iostream>
-#include <utility>
 
 #include "drivacy/primitives/noise.h"
 #include "drivacy/protocol/offline/client.h"
@@ -17,17 +15,18 @@ namespace protocol {
 namespace offline {
 namespace noise {
 
-// Upper bound on how much noise we might generate.
-uint64_t UpperBound(uint32_t machine_id, uint32_t parallelism,
-                    uint32_t table_size, double span, double cutoff) {
-  if (span == 0) {
-    return 0;
+std::vector<uint32_t> SampleNoiseHistogram(uint32_t machine_id,
+                                           uint32_t parallelism,
+                                           uint32_t table_size, uint32_t span,
+                                           uint32_t cutoff) {
+  std::vector<uint32_t> result;
+  // Only consider entries within our range.
+  auto [start, end] =
+      primitives::FindRange(machine_id, parallelism, table_size);
+  for (uint32_t i = start; i < end; i++) {
+    result.push_back(primitives::SampleFromDistribution(span, cutoff));
   }
-
-  uint32_t range_size = std::ceil(1.0 * table_size / parallelism);
-  uint32_t last_range_size = table_size - (machine_id - 1) * range_size;
-  range_size = range_size < last_range_size ? range_size : last_range_size;
-  return primitives::UpperBound(span, cutoff) * range_size;
+  return result;
 }
 
 std::vector<std::vector<types::Message>> CommonReferenceForNoise(

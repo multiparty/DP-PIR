@@ -12,8 +12,17 @@
 namespace drivacy {
 namespace primitives {
 
-uint32_t UpperBound(double span, double cutoff) {
-  return static_cast<uint32_t>(std::floor(2 * cutoff)) + 1;
+std::pair<uint32_t, uint32_t> FindRange(uint32_t machine_id,
+                                        uint32_t parallelism,
+                                        uint32_t table_size) {
+  assert(table_size > parallelism);
+  uint32_t range_size = std::ceil(1.0 * table_size / parallelism);
+  uint32_t range_start = (machine_id - 1) * range_size;
+  uint32_t range_end = range_start + range_size;
+  if (range_end > table_size) {
+    range_end = table_size;
+  }
+  return std::make_pair(range_start, range_end);
 }
 
 uint32_t SampleFromDistribution(double span, double cutoff) {
@@ -24,8 +33,11 @@ uint32_t SampleFromDistribution(double span, double cutoff) {
   // Truncate/clamp to within [-cutoff, cutoff]
   lap = lap < -1 * cutoff ? -1 * cutoff : lap;
   lap = lap > cutoff ? cutoff : lap;
-  // Laplace-ish in (0, floor(cutoff * 2) + 1].
-  return static_cast<uint32_t>(std::floor(lap + cutoff)) + 1;
+  // Laplace-ish in [0, floor(cutoff * 2)].
+  // TODO(babman): below is the real value, but for experiments we use the mean
+  // to avoid having to average out over many experiments.
+  // return static_cast<uint32_t>(std::floor(lap + cutoff));
+  return static_cast<uint32_t>(std::floor(cutoff));
 }
 
 }  // namespace primitives

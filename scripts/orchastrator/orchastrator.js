@@ -33,7 +33,8 @@ let clientMap = {};
 let runningIPs;
 let runningIPsCount;
 let killedCount;
-let reportedCount;
+let reportedClientsCount;
+let reportedPartiesCount;
 
 // A configuration's run.
 let totalParties;
@@ -51,7 +52,8 @@ let config;
 
 // store the time it took to finish things.
 // machine/client id ==> time it took for that machine to finish
-let times;
+let clientTimes;
+let partyTimes;
 
 /*** HELPER FUNCTIONS (over global state) ***/
 function formatIP(ipString) {
@@ -98,8 +100,10 @@ function configure(parties, parallelism, _clients, _batch_size,
   runningIPs = {};
   runningIPsCount = 0;
   killedCount = 0;
-  reportedCount = 0;
-  times = {};
+  reportedClientsCount = 0;
+  reportedPartiesCount = 0;
+  clientTimes = {};
+  partyTimes = {};
 
   // Configure parties.
   const partyIPsCounts = {};
@@ -148,7 +152,7 @@ function configure(parties, parallelism, _clients, _batch_size,
     if (machineID > parallelism)
       break;
   }
-  
+
   // Read table.
   tablePath = path.join(__dirname, tablePath);
   table = fs.readFileSync(tablePath, 'utf8');
@@ -264,30 +268,56 @@ app.get('/signup/client', (req, res) => {
 });
 
 // Report finishing.
-app.get('/done/:machine_id/:client_id/:time', (req, res) => {
+app.get('/doneclient/:machine_id/:client_id/:time', (req, res) => {
   console.log('Client ', req.params.machine_id, '-', req.params.client_id,
               ' finished in ', req.params.time, '!');
-  reportedCount++;
+  reportedClientsCount++;
   const machineID = Number(req.params.machine_id);
   const clientID = Number(req.params.client_id);
-  const uniqueID = (machineID - 1) * clientsPerMachine + clientID;
-  times[uniqueID] = Number(req.params.time);
-  if (reportedCount == totalClients) {
-    let max = times[1];
-    let min = times[1];
-    let avg = times[1];
-    for (let i = 2; i <= totalClients; i++) {
-      max = Math.max(max, times[i]);
-      min = Math.min(min, times[i]);
-      avg += times[i];
-    }
-    console.log('Max:', max);
-    console.log('Min:', min);
-    console.log('Avg:', avg / totalClients);
-    console.log('');
+  clientTimes[machine_id] = clientTimes[machine_id] || {};
+  clientTimes[machine_id][client_id] = Number(req.params.time);
+  if (reportedClientsCount == totalClients) {
+    console.log('All clients reported!');
   }
   res.send('\n');
 });
+app.get('/doneparty/:party_id/:machine_id/:time', (req, res) => {
+  console.log('Party ', req.params.party_id, '-', req.params.machine_id,
+              ' finished in ', req.params.time, '!');
+  reportedPartiesCount++;
+  const party_id = Number(req.params.party_id);
+  const machine_id = Number(req.params.machine_id);
+  partyTimes[party_id] = partyTimes[party_id] || {};
+  partyTimes[party_id][machine_id] = Number(req.params.time) / 1000.0;
+  if (reportedPartiesCount == totalParties) {
+    console.log('All parties reported!');
+  }
+  res.send('\n');
+});
+
+// Show/print times and staticstics
+function showTime(type, party_id) {
+  let timesObj = type == 'clients' ? clientTimes : partyTimes[party_id];
+  if (timesObj == null) {
+    return;
+  }
+  console.log(timesObj);
+  // Compute max, min, and avg of times.
+  let max = Number.MIN_VALUE;
+  let min = Number.MAX_VALUE;
+  let avg = 0.0;
+  const entries = Object.entries(timesObj);
+  for (const [_, t] of entries) {
+    max = Math.max(max, t);
+    min = Math.min(min, t);
+    avg += t;
+  }
+  console.log('Max:', max);
+  console.log('Min:', min);
+  console.log('Avg:', avg / entries.length);
+  console.log('All times are in seconds!');
+  console.log('');
+}
 
 /*** CLI interfae ***/
 app.listen(PORT, () => {
@@ -304,6 +334,7 @@ app.listen(PORT, () => {
                   '<clients per machine> <queries per client> <dpspan> ' +
                   '<dpcutoff> <table path> <mode>');
       console.log('- clients');
+      console.log('- time <clients|parties> [party_id]
     }
     if (line.startsWith('exit')) {
       process.exit(0);
@@ -345,6 +376,10 @@ app.listen(PORT, () => {
     }
     if (line.startsWith('clients')) {
       allowClients = true;
+    }
+    if (line.startsWith('time')) {
+      const [type, party_id] = line.split(' ').slice(1);
+      showTime(type, party_id);
     }
   });
 });

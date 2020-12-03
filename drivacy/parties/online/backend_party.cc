@@ -25,6 +25,7 @@ void BackendParty::Start() {
   this->inter_party_socket_.ReadBatchSize();
   this->listener_.ListenToQueries();
   this->SendResponses();
+  this->OnEnd();
 }
 
 // Store batch size and reset counters.
@@ -42,6 +43,12 @@ void BackendParty::OnReceiveQuery(const types::Query &query) {
 #ifdef DEBUG_MSG
   std::cout << "On receive query (backend) " << machine_id_ << std::endl;
 #endif
+  // Start timing as soon as first query is received.
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Process query creating a response, send it over socket.
   this->responses_.push_back(protocol::online::backend::QueryToResponse(
       query, this->commons_map_, this->table_));

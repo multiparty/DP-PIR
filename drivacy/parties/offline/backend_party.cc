@@ -40,6 +40,12 @@ void BackendParty::OnReceiveMessage(const types::CipherText &message) {
 #ifdef DEBUG_MSG
   std::cout << "On receive message (backend) " << machine_id_ << std::endl;
 #endif
+  // Start timing as soon as first query is received.
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Process message.
   types::OnionMessage onion_message =
       primitives::crypto::SingleLayerOnionDecrypt(this->party_id_, message,

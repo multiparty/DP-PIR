@@ -12,11 +12,8 @@
 
 #include "drivacy/parties/online/party.h"
 
-// NOLINTNEXTLINE
-#include <chrono>
 #include <utility>
 
-#include "drivacy/protocol/online/noise.h"
 #include "drivacy/protocol/online/query.h"
 #include "drivacy/protocol/online/response.h"
 
@@ -61,6 +58,7 @@ void Party::Start() {
   this->intra_party_socket_.CollectResponsesReady();
   // All responses are ready, we can forward them to the previous party!
   this->SendResponses();
+  this->OnEnd();
 }
 
 // Batch size information and handling.
@@ -71,10 +69,10 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
 #endif
   // Sample noise.
   TIMER(0);
-  this->noise_ = protocol::online::noise::MakeNoisyQueries(
-      this->party_id_, this->machine_id_, this->config_.parallelism(),
-      this->table_, this->span_, this->cutoff_, this->commons_list_,
-      this->config_.parties());
+  this->noise_ = protocol::online::noise::MakeNoiseQueriesFromHistogram(
+      this->party_id_, this->machine_id_, this->config_.parties(),
+      this->config_.parallelism(), this->table_, this->noise_histogram_,
+      this->commons_list_);
   this->noise_size_ = this->noise_.size();
   TIME("Sampled noise", 0);
   // Update batch size.
@@ -142,6 +140,11 @@ void Party::OnReceiveQuery(const types::Query &query) {
   std::cout << "On receive query " << party_id_ << "-" << machine_id_
             << std::endl;
 #endif
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Process query.
   std::pair<types::Query, types::QueryState> pair =
       protocol::online::query::ProcessQuery(query, this->commons_map_);
@@ -157,6 +160,11 @@ void Party::OnReceiveQuery(uint32_t machine_id, const types::Query &query) {
   std::cout << "On receive query 2 " << party_id_ << "-" << machine_id_
             << std::endl;
 #endif
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Distributed two phase shuffling - Phase 2.
   // Shuffle query locally, and wait until all queries are shuffled.
   this->shuffler_.ShuffleQuery(machine_id, query);
@@ -215,6 +223,15 @@ void Party::SendResponses() {
     types::Response &response = this->shuffler_.NextResponse();
     this->inter_party_socket_.SendResponse(response);
   }
+}
+
+// Timing functions.
+void Party::OnStart() { this->start_time_ = std::chrono::system_clock::now(); }
+void Party::OnEnd() {
+  auto end = std::chrono::system_clock::now();
+  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+      end - this->start_time_);
+  std::cout << "Total time: " << diff.count() << std::endl;
 }
 
 }  // namespace online

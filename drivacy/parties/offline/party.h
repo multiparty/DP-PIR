@@ -9,6 +9,8 @@
 // #define DEBUG_MSG
 
 #include <cassert>
+// NOLINTNEXTLINE
+#include <chrono>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
@@ -46,12 +48,11 @@ class Party : public io::socket::InterPartySocketListener,
         output_batch_size_(0),
         shuffler_(party_id, machine_id, config.parties(),
                   config.parallelism()) {
-    // It is known how much noise we need to add.
-    this->noise_size_ = protocol::offline::noise::UpperBound(
-        machine_id, config.parallelism(), table.size(), span, cutoff);
     // virtual funtion binds to correct subclass.
     this->listener_.AddSocket(&this->inter_party_socket_);
     this->listener_.AddSocket(&this->intra_party_socket_);
+    // For timing and benchmarking.
+    this->first_query_ = true;
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -107,6 +108,7 @@ class Party : public io::socket::InterPartySocketListener,
   uint32_t output_batch_size_;
   // Noise used in this batch.
   uint32_t noise_size_;
+  std::vector<uint32_t> noise_;
   // Shuffler (for distrbuted 2 phase shuffling).
   protocol::offline::Shuffler shuffler_;
   // Stores all installed common reference messages.
@@ -115,6 +117,11 @@ class Party : public io::socket::InterPartySocketListener,
   virtual void SendMessages();
   virtual void InjectNoise();
   virtual void SaveCommonReference();
+  // For timing.
+  bool first_query_;
+  std::chrono::time_point<std::chrono::system_clock> start_time_;
+  void OnStart();
+  void OnEnd();
 };
 
 }  // namespace offline

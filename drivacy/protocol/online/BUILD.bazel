@@ -21,6 +21,7 @@ cc_library(
     deps = [
         "//drivacy/primitives:sharing",
         "//drivacy/primitives:noise",
+        "//drivacy/protocol/offline:protocol",
         "//drivacy/protocol/online:client",
         "//drivacy/types:types",
         "//drivacy/util:fake",

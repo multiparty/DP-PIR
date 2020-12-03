@@ -61,6 +61,10 @@ class InterPartyTCPSocket : public AbstractSocket {
   void SendQuery(const types::Query &query);
   void SendResponse(const types::Response &response);
 
+  // Only for timing and benchmarking...
+  void SendDone();
+  void WaitForDone();
+
  private:
   // Configuration.
   uint32_t party_id_;

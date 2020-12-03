@@ -36,7 +36,8 @@ do
   ./bazel-bin/drivacy/party_${online} --config=data/config.json --table=data/table.json \
                            --party=${party_id} --machine=${machine_id} \
                            --batch=${batch} --span=${span} \
-                           --cutoff=${cutoff} > party-${party_id}-${machine_id}.log &
+                           --cutoff=${cutoff} > party-${party_id}-${machine_id}.log && \
+      curl "$ORCHASTRATOR/doneparty/${party_id}/${machine_id}/$(grep -oP 'Total time: \K[^ ]+$' party-${party_id}-${machine_id}.log)" &
   pid=$!
 
   # Watch out for kill signal sent from orchastrator.

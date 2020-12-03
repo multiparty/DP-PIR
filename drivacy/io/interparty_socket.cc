@@ -299,6 +299,23 @@ void InterPartyTCPSocket::SendResponse(const types::Response &response) {
              sizeof(types::Response));
 }
 
+// Only for timing and benchmarking...
+void InterPartyTCPSocket::SendDone() {
+  if (this->lower_socket_ != -1) {
+    unsigned char done = 1;
+    SendAssert(this->lower_socket_,
+               reinterpret_cast<const unsigned char *>(&done), sizeof(done));
+  }
+}
+void InterPartyTCPSocket::WaitForDone() {
+  if (this->upper_socket_ != -1) {
+    unsigned char done;
+    ReadUntil(this->upper_socket_, reinterpret_cast<unsigned char *>(&done),
+              sizeof(done));
+    assert(done == 1);
+  }
+}
+
 }  // namespace socket
 }  // namespace io
 }  // namespace drivacy

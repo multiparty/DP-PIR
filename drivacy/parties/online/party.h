@@ -16,12 +16,15 @@
 // #define DEBUG_MSG
 
 #include <cassert>
+// NOLINTNEXTLINE
+#include <chrono>
 #include <cstdint>
 #include <vector>
 
 #include "drivacy/io/interparty_socket.h"
 #include "drivacy/io/intraparty_socket.h"
 #include "drivacy/io/unified_listener.h"
+#include "drivacy/protocol/online/noise.h"
 #include "drivacy/protocol/online/shuffle.h"
 #include "drivacy/types/config.pb.h"
 #include "drivacy/types/types.h"
@@ -55,6 +58,12 @@ class Party : public io::socket::InterPartySocketListener,
     // virtual funtion binds to correct subclass.
     this->listener_.AddSocket(&this->inter_party_socket_);
     this->listener_.AddSocket(&this->intra_party_socket_);
+    // TODO(babman): should read this along side with refrences from a file.
+    this->noise_histogram_ = protocol::online::noise::SampleNoiseHistogram(
+        this->machine_id_, this->config_.parallelism(), this->table_.size(),
+        this->span_, this->cutoff_);
+    // Timing related.
+    this->first_query_ = true;
   }
 
   // Not movable or copyable: when an instance is constructed, a pointer to it
@@ -106,6 +115,7 @@ class Party : public io::socket::InterPartySocketListener,
   uint32_t input_batch_size_;
   uint32_t output_batch_size_;
   // Noise used in this batch.
+  std::vector<uint32_t> noise_histogram_;
   std::vector<types::Query> noise_;
   uint32_t noise_size_;
   // Shuffler (for distrbuted 2 phase shuffling).
@@ -117,6 +127,11 @@ class Party : public io::socket::InterPartySocketListener,
   virtual void SendQueries();
   virtual void SendResponses();
   virtual void InjectNoise();
+  // For timing.
+  bool first_query_;
+  std::chrono::time_point<std::chrono::system_clock> start_time_;
+  void OnStart();
+  void OnEnd();
 };
 
 }  // namespace online

@@ -45,6 +45,7 @@ void HeadParty::Continue() {
   this->intra_party_socket_.CollectResponsesReady();
   // All responses are ready, we can forward them to the previous party!
   this->SendResponses();
+  this->OnEnd();
   // This returns back into client_socket->Listen() called in Start().
   this->client_socket_.Stop();
 }

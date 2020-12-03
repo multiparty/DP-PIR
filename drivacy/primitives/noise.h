@@ -4,6 +4,7 @@
 // configurations.
 
 #include <cstdint>
+#include <utility>
 
 #ifndef DRIVACY_PRIMITIVES_NOISE_H_
 #define DRIVACY_PRIMITIVES_NOISE_H_
@@ -11,7 +12,9 @@
 namespace drivacy {
 namespace primitives {
 
-uint32_t UpperBound(double span, double cutoff);
+std::pair<uint32_t, uint32_t> FindRange(uint32_t machine_id,
+                                        uint32_t parallelism,
+                                        uint32_t table_size);
 
 uint32_t SampleFromDistribution(double span, double cutoff);
 

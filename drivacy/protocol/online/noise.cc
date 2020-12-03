@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "drivacy/primitives/noise.h"
+#include "drivacy/protocol/offline/noise.h"
 #include "drivacy/protocol/online/client.h"
 #include "drivacy/util/fake.h"
 
@@ -18,36 +19,28 @@ namespace protocol {
 namespace online {
 namespace noise {
 
-namespace {
-
-std::pair<uint32_t, uint32_t> FindRange(uint32_t machine_id,
-                                        uint32_t parallelism,
-                                        uint32_t table_size) {
-  assert(table_size > parallelism);
-  uint32_t range_size = std::ceil(1.0 * table_size / parallelism);
-  uint32_t range_start = (machine_id - 1) * range_size;
-  uint32_t range_end = range_start + range_size;
-  if (range_end > table_size) {
-    range_end = table_size;
-  }
-  return std::make_pair(range_start, range_end);
+std::vector<uint32_t> SampleNoiseHistogram(uint32_t machine_id,
+                                           uint32_t parallelism,
+                                           uint32_t table_size, uint32_t span,
+                                           uint32_t cutoff) {
+  return offline::noise::SampleNoiseHistogram(machine_id, parallelism,
+                                              table_size, span, cutoff);
 }
 
-}  // namespace
-
-std::vector<types::Query> MakeNoisyQueries(
-    uint32_t party_id, uint32_t machine_id, uint32_t parallelism,
-    const types::Table &table, double span, double cutoff,
-    const std::vector<std::vector<types::Message>> &commons,
-    uint32_t party_count) {
+std::vector<types::Query> MakeNoiseQueriesFromHistogram(
+    uint32_t party_id, uint32_t machine_id, uint32_t party_count,
+    uint32_t parallelism, const types::Table &table,
+    const std::vector<uint32_t> &noise_histogram,
+    const std::vector<std::vector<types::Message>> &commons) {
   std::vector<types::Query> result;
   // Only consider entries within our range.
-  auto [start, end] = FindRange(machine_id, parallelism, table.size());
+  auto [start, end] =
+      primitives::FindRange(machine_id, parallelism, table.size());
+  assert(noise_histogram.size() == end - start);
   uint32_t index = 0;
-  // Sample noise for each table entry independently.
   for (const auto &[query, _] : table) {
     if (start <= index && index < end) {
-      uint32_t count = primitives::SampleFromDistribution(span, cutoff);
+      uint32_t count = noise_histogram.at(index - start);
       for (uint32_t i = 0; i < count; i++) {
         result.push_back(client::CreateQuery(
             query,  // commons.at(index - start), party_id));

@@ -12,8 +12,6 @@
 
 #include "drivacy/parties/offline/party.h"
 
-// NOLINTNEXTLINE
-#include <chrono>
 #include <memory>
 #include <utility>
 
@@ -61,6 +59,16 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
   std::cout << "On Receive batch size " << party_id_ << "-" << machine_id_
             << " = " << batch_size << std::endl;
 #endif
+  // Sample noise.
+  TIMER(0);
+  this->noise_size_ = 0;
+  this->noise_ = protocol::offline::noise::SampleNoiseHistogram(
+      this->machine_id_, this->config_.parallelism(), this->table_.size(),
+      this->span_, this->cutoff_);
+  for (uint32_t count : this->noise_) {
+    this->noise_size_ += count;
+  }
+  TIME("Sampled noise", 0);
   // Update batch size.
   this->input_batch_size_ = batch_size + this->noise_size_;
   // Send batch size to all other machines of our same party.
@@ -133,6 +141,11 @@ void Party::OnReceiveMessage(const types::CipherText &message) {
   std::cout << "On receive message " << party_id_ << "-" << machine_id_
             << std::endl;
 #endif
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Process message.
   types::OnionMessage onion_message =
       primitives::crypto::SingleLayerOnionDecrypt(this->party_id_, message,
@@ -155,6 +168,11 @@ void Party::OnReceiveMessage(uint32_t machine_id,
   std::cout << "On receive message 2 " << party_id_ << "-" << machine_id_
             << std::endl;
 #endif
+  if (this->first_query_) {
+    this->first_query_ = false;
+    this->OnStart();
+  }
+
   // Distributed two phase shuffling - Phase 2.
   // Shuffle query locally, and wait until all queries are shuffled.
   this->shuffler_.ShuffleMessage(machine_id, message);
@@ -176,6 +194,12 @@ void Party::SaveCommonReference() {
   std::cout << "save common references " << party_id_ << "-" << machine_id_
             << std::endl;
 #endif
+  // We are done, wait for next party to tell us they are done before timing.
+  this->inter_party_socket_.WaitForDone();
+  this->OnEnd();
+  this->inter_party_socket_.SendDone();
+
+  /*
   for (const auto &[tag, common_reference] : this->common_references_) {
     std::cout << tag << std::endl;
     std::cout << common_reference.next_tag << " "
@@ -183,6 +207,16 @@ void Party::SaveCommonReference() {
               << common_reference.incremental_share.y << " "
               << common_reference.preshare << std::endl;
   }
+  */
+}
+
+// Timing functions.
+void Party::OnStart() { this->start_time_ = std::chrono::system_clock::now(); }
+void Party::OnEnd() {
+  auto end = std::chrono::system_clock::now();
+  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+      end - this->start_time_);
+  std::cout << "Total time: " << diff.count() << std::endl;
 }
 
 }  // namespace offline

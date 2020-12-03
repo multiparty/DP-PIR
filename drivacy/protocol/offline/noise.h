@@ -16,10 +16,14 @@ namespace protocol {
 namespace offline {
 namespace noise {
 
-// Upper bound on how much noise we might generate.
-uint64_t UpperBound(uint32_t machine_id, uint32_t parallelism,
-                    uint32_t table_size, double span, double cutoff);
+// Sample the noise histogram to figure out how many common references
+// we need.
+std::vector<uint32_t> SampleNoiseHistogram(uint32_t machine_id,
+                                           uint32_t parallelism,
+                                           uint32_t table_size, uint32_t span,
+                                           uint32_t cutoff);
 
+// Create common references for the given count.
 std::vector<std::vector<types::Message>> CommonReferenceForNoise(
     uint32_t party_id, uint32_t party_count, uint32_t count, uint32_t seed);
 
