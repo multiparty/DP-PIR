@@ -47,17 +47,22 @@ table_arg=""
 if [[ {online} -eq 1 ]]; then table_arg="--table={table}"; fi
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
-  echo "Running client $machine"
-  if [[ "$1" == "--valgrind" ]]
-  then
-    valgrind ./{client} --config={config} $table_arg --machine=$machine \
-             --queries={queries} > logs/client-$machine 2>&1 &
-    CLIENT_IDS+=($!)
-  else
-    ./{client} --config={config} $table_arg --machine=$machine \
-                --queries={queries} > logs/client-$machine 2>&1 &
-    CLIENT_IDS+=($!)
-  fi
+  for (( client=1; client<={clients}; client++ ))
+  do
+    echo "Running client $machine-$client"
+    if [[ "$1" == "--valgrind" ]]
+    then
+      valgrind ./{client} --config={config} $table_arg --machine=$machine \
+               --client=$client --queries={queries} \
+               > logs/client-$machine-$client 2>&1 &
+      CLIENT_IDS+=($!)
+    else
+      ./{client} --config={config} $table_arg --machine=$machine \
+                 --client=$client --queries={queries} \
+                 > logs/client-$machine-$client 2>&1 &
+      CLIENT_IDS+=($!)
+    fi
+  done
 done
 echo ""
 
@@ -114,11 +119,14 @@ do
 done
 for (( machine=1; machine<={parallelism}; machine++ ))
 do
-  echo "Client $machine logs"
-  echo "=========================="
-  cat logs/client-$machine
-  echo "=========================="
-  echo ""
+  for (( client=1; client<={clients}; client++ ))
+  do
+    echo "Client $machine-$client logs"
+    echo "=========================="
+    cat logs/client-$machine-$client
+    echo "=========================="
+    echo ""
+  done
 done
 
 # Wait to make sure everything died properly.
@@ -138,6 +146,7 @@ def _end_to_end_test_impl(ctx):
             client=ctx.file.client.short_path,
             parties=ctx.attr.parties,
             parallelism=ctx.attr.parallelism,
+            clients=ctx.attr.clients,
             batch=ctx.attr.batch,
             queries=ctx.attr.queries,
             table=ctx.file.table.short_path,
@@ -182,6 +191,11 @@ end_to_end_test = rule(
         "parties": attr.int(
             doc = "The number of parties.",
             mandatory = True,
+        ),
+        "clients": attr.int(
+            doc = "The number of clients per machine.",
+            mandatory = False,
+            default = 1,
         ),
         "parallelism": attr.int(
             doc = "The number of machines per party.",

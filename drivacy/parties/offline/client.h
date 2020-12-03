@@ -29,8 +29,10 @@ class Client : public io::socket::WebSocketClientListener {
   // Construct the party given its configuration.
   // Creates a socket of the appropriate template type with an internal
   // back-pointer to the party.
-  Client(uint32_t machine_id, const types::Configuration &config)
+  Client(uint32_t machine_id, uint32_t client_id,
+         const types::Configuration &config)
       : machine_id_(machine_id),
+        client_id_(client_id),
         config_(config),
         socket_(machine_id, config, this) {}
 
@@ -51,6 +53,7 @@ class Client : public io::socket::WebSocketClientListener {
  private:
   // Configuration.
   uint32_t machine_id_;
+  uint32_t client_id_;
   const types::Configuration &config_;
   // Websocket client.
   io::socket::WebSocketClient socket_;

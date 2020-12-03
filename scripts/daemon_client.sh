@@ -37,8 +37,8 @@ do
   # Run client and time the command
   echo "Running client for ${machine_id} with ${queries}"
   \time -f "%e" ./bazel-bin/drivacy/client_${online} --config=data/config.json \
-                ${table_arg} --machine=${machine_id} --queries=${queries} \
-                1> client-${machine_id}-${client_id}.log 2> time.log && \
+                ${table_arg} --machine=${machine_id} --client=${client_id} \
+                --queries=${queries} 1> client-${machine_id}-${client_id}.log 2> time.log && \
       curl "$ORCHASTRATOR/doneclient/${machine_id}/${client_id}/$(tail -1 time.log)" \
           2> /dev/null &
   pid=$!

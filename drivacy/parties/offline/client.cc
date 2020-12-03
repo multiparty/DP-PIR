@@ -22,7 +22,10 @@ namespace parties {
 namespace offline {
 
 void Client::Subscribe(uint32_t count) {
-  uint32_t seed = (this->machine_id_ - 1) * count;
+  // TODO(babman): do not hard code this.
+  uint32_t total_per_machine = count * 20;
+  uint32_t seed = (this->machine_id_ - 1) * total_per_machine +
+                  (this->client_id_ - 1) * count;
   for (uint32_t i = 0; i < count; i++) {
     // Sample random tags and shares.
     this->common_references_.push_back(

@@ -28,9 +28,12 @@ ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, machine, 0, "The head machine id to query (required)");
 ABSL_FLAG(uint32_t, queries, 0, "The number of queries to make (required)");
+ABSL_FLAG(uint32_t, client, 0,
+          "The client id (unique among clients connected "
+          "to the same machine (required)");
 
-absl::Status Setup(uint32_t machine_id, uint32_t query_count,
-                   const std::string &table_path,
+absl::Status Setup(uint32_t machine_id, uint32_t client_id,
+                   uint32_t query_count, const std::string &table_path,
                    const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
@@ -43,7 +46,7 @@ absl::Status Setup(uint32_t machine_id, uint32_t query_count,
                    drivacy::util::file::ParseTable(json));
 
   // Setup party and listen to incoming queries and responses.
-  drivacy::parties::online::Client client(machine_id, config);
+  drivacy::parties::online::Client client(machine_id, client_id, config);
 
   // Verify correctness of query / response.
   std::vector<uint64_t> queries;
@@ -95,6 +98,7 @@ int main(int argc, char *argv[]) {
   const std::string &table_path = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t machine_id = absl::GetFlag(FLAGS_machine);
+  uint32_t client_id = absl::GetFlag(FLAGS_client);
   uint32_t query_count = absl::GetFlag(FLAGS_queries);
   if (table_path.empty()) {
     std::cout << "Please provide a valid table JSON file using --table"
@@ -111,6 +115,10 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
+  if (client_id == 0) {
+    std::cout << "Please provide a valid client id using --client" << std::endl;
+    return 1;
+  }
   if (query_count == 0) {
     std::cout << "Please provide a valid query count using --queries"
               << std::endl;
@@ -118,7 +126,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(machine_id, query_count, table_path, config_path);
+  absl::Status output =
+      Setup(machine_id, client_id, query_count, table_path, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

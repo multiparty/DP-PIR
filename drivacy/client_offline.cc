@@ -27,15 +27,18 @@
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, machine, 0, "The head machine id to query (required)");
 ABSL_FLAG(uint32_t, queries, 0, "The number of queries to make (required)");
+ABSL_FLAG(uint32_t, client, 0,
+          "The client id (unique among clients connected "
+          "to the same machine (required)");
 
-absl::Status Setup(uint32_t machine_id, uint32_t query_count,
-                   const std::string &config_path) {
+absl::Status Setup(uint32_t machine_id, uint32_t client_id,
+                   uint32_t query_count, const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
 
   // Setup party and listen to incoming queries and responses.
-  drivacy::parties::offline::Client client(machine_id, config);
+  drivacy::parties::offline::Client client(machine_id, client_id, config);
 
   // Subscribe.
   client.Subscribe(query_count);
@@ -58,6 +61,7 @@ int main(int argc, char *argv[]) {
   // Get command line flags.
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t machine_id = absl::GetFlag(FLAGS_machine);
+  uint32_t client_id = absl::GetFlag(FLAGS_client);
   uint32_t query_count = absl::GetFlag(FLAGS_queries);
   if (config_path.empty()) {
     std::cout << "Please provide a valid config file using --config"
@@ -69,6 +73,10 @@ int main(int argc, char *argv[]) {
               << std::endl;
     return 1;
   }
+  if (client_id == 0) {
+    std::cout << "Please provide a valid client id using --client" << std::endl;
+    return 1;
+  }
   if (query_count == 0) {
     std::cout << "Please provide a valid query count using --queries"
               << std::endl;
@@ -76,7 +84,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(machine_id, query_count, config_path);
+  absl::Status output = Setup(machine_id, client_id, query_count, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

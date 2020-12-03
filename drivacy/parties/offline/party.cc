@@ -153,7 +153,8 @@ void Party::OnReceiveMessage(const types::CipherText &message) {
                                                   this->config_);
 
   // Add the common reference to the map.
-  assert(this->common_references_.count(onion_message.tag()) == 0);
+  // TODO(babman):
+  // assert(this->common_references_.count(onion_message.tag()) == 0);
   this->common_references_.insert(
       {onion_message.tag(), onion_message.common_reference()});
 
