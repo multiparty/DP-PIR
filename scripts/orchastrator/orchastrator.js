@@ -309,7 +309,7 @@ function showTime(type, partyID) {
   let avg = 0.0;
   const entries = Object.entries(timesObj);
   for (const [_, t] of entries) {
-    if (partyID != null) {
+    if (partyID == null) {
       const nestedEntries = Object.entries(t);
       let nestedAvg = 0;
       for (const [_, t1] of nestedEntries) {
