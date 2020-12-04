@@ -99,7 +99,7 @@ void Party::OnCollectedBatchSizes() {
   // Give the socket the number of queries (and noise queries) to exchange.
   this->intra_party_socket_.SetMessageCounts(
       std::move(this->shuffler_.IncomingMessagesCount()));
-  this->intra_party_socket_.BroadcastNoiseQueryCounts(
+  this->intra_party_socket_.BroadcastNoiseMessageCounts(
       std::move(this->shuffler_.OutgoingNoiseMessagesCount(this->noise_size_)));
 }
 
