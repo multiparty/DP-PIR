@@ -51,6 +51,11 @@ void HeadParty::Continue() {
 void HeadParty::OnReceiveMessage(const types::CipherText &message) {
   // Process query.
   Party::OnReceiveMessage(message);
+  if (processed_client_requests_ % 10000 == 0) {
+    std::cout << this->processed_client_requests_ << " // "
+              << this->initial_batch_size_ << std::endl;
+  }
+
   if (++this->processed_client_requests_ == this->initial_batch_size_) {
     this->processed_client_requests_ = 0;
     this->Continue();

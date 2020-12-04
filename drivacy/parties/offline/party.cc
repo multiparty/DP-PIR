@@ -56,10 +56,8 @@ void Party::Start() {
 
 // Batch size information and handling.
 void Party::OnReceiveBatchSize(uint32_t batch_size) {
-#ifdef DEBUG_MSG
   std::cout << "On Receive batch size " << party_id_ << "-" << machine_id_
             << " = " << batch_size << std::endl;
-#endif
   // Sample noise.
   TIMER(0);
   this->noise_size_ = 0;
@@ -70,6 +68,7 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
     this->noise_size_ += count;
   }
   TIME("Sampled noise", 0);
+  std::cout << this->noise_size_ << std::endl;
   // Update batch size.
   this->input_batch_size_ = batch_size + this->noise_size_;
   // Send batch size to all other machines of our same party.
@@ -77,10 +76,8 @@ void Party::OnReceiveBatchSize(uint32_t batch_size) {
 }
 
 bool Party::OnReceiveBatchSize(uint32_t machine_id, uint32_t batch_size) {
-#ifdef DEBUG_MSG
   std::cout << "On Receive batch size 2 " << party_id_ << "-" << machine_id_
             << " = " << machine_id << ":" << batch_size << std::endl;
-#endif
   // Initialize shuffler, shuffler will let us know if it has all the batch
   // size information it needs.
   return this->shuffler_.Initialize(machine_id, batch_size);
@@ -181,9 +178,7 @@ void Party::OnReceiveMessage(uint32_t machine_id,
 }
 
 void Party::SendMessages() {
-#ifdef DEBUG_MSG
   std::cout << "send messages " << party_id_ << "-" << machine_id_ << std::endl;
-#endif
   for (uint32_t i = 0; i < this->output_batch_size_; i++) {
     types::CipherText cipher = this->shuffler_.NextMessage();
     this->inter_party_socket_.SendMessage(cipher);
