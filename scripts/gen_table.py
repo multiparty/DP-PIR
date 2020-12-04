@@ -3,23 +3,29 @@ import json
 from random import randint
 import sys
 
+HELP_FLAGS = { '-h': True, '--help': True }
 
-# table_size = sys.argv[1]
-# key_size = sys.argv[2]
-# value_size = sys.argv[3]
+if __name__ == "__main__":
+  # Print help message.
+  need_help = len(sys.argv) < 2
+  for arg in sys.argv:
+    if HELP_FLAGS.get(arg, False):
+      need_help = True
+      break
 
-table_size = input("Enter table size: ")
+  if need_help:
+    print("Usage: python3 gen_table.py <table_size>")
+    print("Always outputs to table.json")
+    sys.exit(0)
 
-max_value = pow(10,8)
-
-print("Max value:", max_value)
-
-table = []
+table_size = int(sys.argv[1])
+max_value = pow(10,6)
+table = {'table': []}
 for i in range(int(table_size)):
     pair = {}
     pair["key"] = i
     pair["value"] = randint(0, max_value)
-    table.append(pair)
-
+    table['table'].append(pair)
+    
 with open('table.json', 'w') as fp:
     json.dump(table, fp)
