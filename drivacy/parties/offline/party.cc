@@ -155,8 +155,8 @@ void Party::OnReceiveMessage(const types::CipherText &message) {
   // Add the common reference to the map.
   // TODO(babman):
   // assert(this->common_references_.count(onion_message.tag()) == 0);
-  this->common_references_.insert(
-      {onion_message.tag(), onion_message.common_reference()});
+  // this->common_references_.insert(
+  //    {onion_message.tag(), onion_message.common_reference()});
 
   // Distributed two phase shuffling - Phase 1.
   // Assign query to some machine.
