@@ -50,7 +50,9 @@ void HeadParty::Continue() {
 // immediately check if parallel machines sent us queries afterwards.
 void HeadParty::OnReceiveMessage(const types::CipherText &message) {
   // Process query.
+  std::cout << "Parent" << std::endl;
   Party::OnReceiveMessage(message);
+  std::cout << "Back" << std::endl;
   if (processed_client_requests_ % 10000 == 0) {
     std::cout << this->processed_client_requests_ << " // "
               << this->initial_batch_size_ << std::endl;
@@ -60,7 +62,9 @@ void HeadParty::OnReceiveMessage(const types::CipherText &message) {
     this->processed_client_requests_ = 0;
     this->Continue();
   } else {
+    std::cout << "Listen to non blocking" << std::endl;
     this->listener_.ListenToMessagesNonblocking();
+    std::cout << "Done listening" << std::endl;
   }
 }
 
