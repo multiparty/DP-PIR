@@ -29,12 +29,11 @@ void HeadParty::Start() {
 }
 
 void HeadParty::Continue() {
-#ifdef DEBUG_MSG
   std::cout << "Protocol continue (Frontend) " << machine_id_ << std::endl;
-#endif
   // Now we can listen to incoming queries (from previous party or from
   // machines parallel).
   this->listener_.ListenToMessages();
+  std::cout << "Done listening?" << std::endl;
   // After all queries are handled, broadcast ready.
   this->intra_party_socket_.BroadcastMessagesReady();
   this->intra_party_socket_.CollectMessagesReady();
