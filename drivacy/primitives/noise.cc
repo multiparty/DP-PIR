@@ -26,6 +26,9 @@ std::pair<uint32_t, uint32_t> FindRange(uint32_t machine_id,
 }
 
 uint32_t SampleFromDistribution(double span, double cutoff) {
+  if (span == 0) {
+    return 0;
+  }
   // Sample a plain laplace.
   int sign = (util::RandUniform() < 0.5) ? -1 : 1;
   float u = util::RandUniform();
