@@ -165,7 +165,7 @@ uint32_t InterPartyTCPSocket::FdCount() {
 
 bool InterPartyTCPSocket::PollMessages(pollfd *fds) {
   fds->revents = 0;
-  if (this->messages_count_ > 0) {
+  if (this->messages_count_ > 0 && this->lower_socket_ != -1) {
     fds->fd = this->lower_socket_;
     fds->events = POLLIN;
     return false;
