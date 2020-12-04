@@ -175,8 +175,8 @@ void UnifiedListener::ListenToMessagesNonblocking() {
     // Find all sockets that are ready to read.
     for (uint32_t i = 0; i < this->nfds_; i++) {
       if (this->fds_[i].revents & POLLIN) {
-        socket::AbstractSocket *socket = this->index_to_socket_[i];
-        uint32_t offset = this->index_to_nfds_[i];
+        uint32_t offset = i > 0 ? 1 : 0;
+        socket::AbstractSocket *socket = this->sockets_.at(offset);
         socket->ReadMessage(i - offset, this->fds_ + offset);
       }
     }
