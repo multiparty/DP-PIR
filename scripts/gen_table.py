@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import json
 from random import randint
 import sys
