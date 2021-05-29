@@ -54,3 +54,8 @@ if __name__ == "__main__":
   print('probability of having noise > 50 = ', 1 - laplace_cdf(span, 50 - cutoff))
   print('probability of having noise > 100 = ', 1 - laplace_cdf(span, 100 - cutoff))
   print('probability of having noise > 150 = ', 1 - laplace_cdf(span, 150 - cutoff))
+  print('probability of having noise > 200 = ', 1 - laplace_cdf(span, 200 - cutoff))
+  print('probability of having noise > 250 = ', 1 - laplace_cdf(span, 250 - cutoff))
+  print('probability of having noise > 300 = ', 1 - laplace_cdf(span, 300 - cutoff))
+  print('probability of having noise > 350 = ', 1 - laplace_cdf(span, 350 - cutoff))
+  print('probability of having noise > 400 = ', 1 - laplace_cdf(span, 400 - cutoff))
