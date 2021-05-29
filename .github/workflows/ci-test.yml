@@ -17,22 +17,29 @@ jobs:
     - name: Install gcc-9
       run: |
         sudo apt-get clean
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository ppa:jonathonf/gcc-9.0
         sudo apt-get update
+        sudo apt-get install -y software-properties-common curl
         sudo apt-get install -y gcc-9 g++-9
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
         sudo update-alternatives --set gcc "/usr/bin/gcc-9"
         sudo apt-get install valgrind
 
+    - name: Install bazel-3.4.1
+      run: |
+        echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list
+        curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
+        sudo apt-get update && sudo apt-get install -y bazel-3.4.1
+
     - name: Information
       run: |
-        bazel --version
+        bazel-3.4.1 --version
         g++ --version
         valgrind --version
 
     - name: Build all
-      run: bazel build //drivacy/...
+      run: |
+        bazel-3.4.1 build //drivacy/...
+        bazel-3.4.1 build //experiments/...
 
     - name: Test all
-      run: bazel test //drivacy/... --test_output=all
+      run: bazel-3.4.1 test //drivacy/... --test_output=all
