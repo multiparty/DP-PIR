@@ -57,6 +57,7 @@ void HeadParty::OnReceiveMessage(const types::CipherText &message) {
   }
 
   if (++this->processed_client_requests_ == this->initial_batch_size_) {
+    this->OnStart();  // Start timing here now that the batch has been received.
     this->processed_client_requests_ = 0;
     this->Continue();
   } else {

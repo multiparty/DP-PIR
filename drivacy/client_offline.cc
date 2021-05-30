@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 
+// NOLINTNEXTLINE
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -41,7 +43,14 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   drivacy::parties::offline::Client client(machine_id, client_id, config);
 
   // Subscribe.
+  auto start_ts = std::chrono::system_clock::now();
   client.Subscribe(query_count);
+
+  // Compute time taken.
+  auto end_ts = std::chrono::system_clock::now();
+  auto diff =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(end_ts - start_ts);
+  std::cout << "Total time: " << diff.count() << "ns" << std::endl;
 
   // Will never really get here...
   return absl::OkStatus();

@@ -211,9 +211,9 @@ void Party::SaveCommonReference() {
 void Party::OnStart() { this->start_time_ = std::chrono::system_clock::now(); }
 void Party::OnEnd() {
   auto end = std::chrono::system_clock::now();
-  auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(
+  auto diff = std::chrono::duration_cast<std::chrono::nanoseconds>(
       end - this->start_time_);
-  std::cout << "Total time: " << diff.count() << std::endl;
+  std::cout << "Total time: " << diff.count() << "ns" << std::endl;
 }
 
 }  // namespace offline

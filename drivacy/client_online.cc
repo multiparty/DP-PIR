@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 
+// NOLINTNEXTLINE
+#include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -60,6 +62,7 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   });
 
   // Query from table.
+  auto start_ts = std::chrono::system_clock::now();
   for (uint32_t i = 0; i < query_count;) {
     for (const auto &[query, response] : table) {
       queries.push_back(query);
@@ -79,7 +82,12 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   // Done...
   assert(queries.size() == current_query_index);
 
-  // Will never really get here...
+  // Compute time taken.
+  auto end_ts = std::chrono::system_clock::now();
+  auto diff =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(end_ts - start_ts);
+  std::cout << "Total time: " << diff.count() << "ns" << std::endl;
+
   return absl::OkStatus();
 }
 
