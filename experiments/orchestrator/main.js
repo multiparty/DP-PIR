@@ -90,10 +90,11 @@ app.post('/done/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const result = req.body;
   const worker = orchestrator.getWorkerById(id);
-  const filePath = worker.experiment.resultFile(worker);
+  const experiment = worker.experiment;
+  const filePath = experiment.resultFile(worker);
   fs.writeFileSync(filePath, result);
-  worker.experiment.finished(worker);
   worker.finished();
+  experiment.finished(worker);
   res.send("");
 });
 

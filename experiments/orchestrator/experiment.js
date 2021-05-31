@@ -51,10 +51,12 @@ AbstractExperiment.prototype.finished = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
     this.finishedClients++;
     if (this.finishedClients == this.clientsNum) {
-      this.status = Status.EXPERIMENT_CLEANUP;
-      console.log("Experiment " + this.id + " is cleaning up!");
-      for (const server of this.servers) {
-        server.kill();
+      if (this.experimentType == ExperimentType.CHECKLIST) {
+        this.status = Status.EXPERIMENT_CLEANUP;
+        console.log("Experiment " + this.id + " is cleaning up!");
+        for (const server of this.servers) {
+          server.kill();
+        }
       }
       if (this.serversNum == 0 || this.finishedServers == this.serversNum) {
         this.status = Status.EXPERIMENT_DONE;

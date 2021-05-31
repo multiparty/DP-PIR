@@ -2,6 +2,11 @@ const readline = require('readline');
 const { DPPIRMode } = require('./constants.js');
 const { DPPIRExperiment, ChecklistExperiment, SealPIRExperiment } = require('./experiment.js');
 
+// Expands array values (e.g. 10,20,30) also works for singular values.
+const expand = function (value) {
+  return value.split(",").map(v => parseInt(v));
+};
+
 // Create a new command line interface for reading commands from stdin.
 function Cmd(orchestrator) {
   this.orchestrator = orchestrator;
@@ -35,57 +40,78 @@ Cmd.prototype.printHelp = function () {
 // Interactive dialog for creating experiment(s) of a given type.
 Cmd.prototype.newDPPIR = async function () {
   // Read arguments.
-  const name = await this.question('Give this experiment a unique name: ');  
+  const baseName = await this.question('Give this experiment a unique name: ');
   const mode = await this.question('Choose mode [online|offline]: ');
   if (mode != DPPIRMode.ONLINE && mode != DPPIRMode.OFFLINE) {
     console.log('ERROR: Invalid mode "' + mode + '"');
     return;
   }
-  const tableSize = parseInt(await this.question('Enter the table size: '));
-  
-  // Read servers' parameters.
-  const parties = parseInt(await this.question('Enter number of parties: '));
-  const parallelism = parseInt(await this.question('Enter parallelism factor: '));
-  if (parties * parallelism > this.orchestrator.serversCount) {
-    console.log('ERROR: Not enough servers');
-    return;
-  }
+  const tableSizes = expand(await this.question('Enter the table size(s): '));
 
-  const batchSize = parseInt(await this.question('Enter the batch size (per machine): '));
-  const span = parseInt(await this.question('Enter the noise distribution span: '));
-  const cutoff = parseInt(await this.question('Enter the noise distribution cutoff: '));
+  // Read servers' parameters.
+  const parties = expand(await this.question('Enter number of parties(s): '));
+  const parallelisms = expand(await this.question('Enter parallelism factor(s): '));
+
+  const batchSizes = expand(await this.question('Enter the batch size(s) (per machine): '));
+  const spans = expand(await this.question('Enter the noise distribution span(s): '));
+  const cutoffs = expand(await this.question('Enter the noise distribution cutoff(s): '));
 
   // Read clients' arguments.
   const clients = parseInt(await this.question('Enter number of client per parallel machine: '));
-  if (clients * parallelism > this.orchestrator.clientsCount) {
-    console.log('ERROR: Not enough clients');
-    return;
-  }
+  for (const tableSize of tableSizes) {
+    for (const ps of parties) {
+      for (const pr of parallelisms) {
+        for (const batch of batchSizes) {
+          for (const span of spans) {
+            for (const cutoff of cutoffs) {
+              const queries = batch / clients;
+              if (ps * pr > this.orchestrator.serversCount) {
+                console.log('ERROR: Not enough servers');
+                return;
+              }
+              if (clients * pr > this.orchestrator.clientsCount) {
+                console.log('ERROR: Not enough clients');
+                return;
+              }
 
-  const queries = parseInt(await this.question('Enter the number of queries per client: '));
-  if (queries * clients != batchSize) {
-    console.log('ERROR: Queries and batch are incompatible');
-    return;
+              // Create experiment.
+              const cn = clients * pr;
+              const sn = ps * pr;
+              const name = baseName + '-' + tableSize + '-' + ps + '-' + pr
+                           + '-' + (batch * pr) + '-' + span + '-' + cutoff;
+              const experiment = new DPPIRExperiment(name, mode, cn, sn);
+              experiment.setTableSize(tableSize);
+              experiment.setServerParams(ps, pr, batch, span, cutoff);
+              experiment.setClientParams(clients, queries);
+              this.orchestrator.addExperiment(experiment);
+            }
+          }
+        }
+      }
+    }
   }
-
-  // Create experiment.
-  const experiment = new DPPIRExperiment(name, mode, clients * parallelism, parties * parallelism);
-  experiment.setTableSize(tableSize);
-  experiment.setServerParams(parties, parallelism, batchSize, span, cutoff);
-  experiment.setClientParams(clients, queries);
-  this.orchestrator.addExperiment(experiment);
 };
 Cmd.prototype.newChecklist = async function () {
-  const name = await this.question('Give this experiment a unique name: ');  
-  const tableSize = parseInt(await this.question('Enter the table size: '));
-  const queries = parseInt(await this.question('Enter the number of queries: '));
-  this.orchestrator.addExperiment(new ChecklistExperiment(name, tableSize, queries));  
+  const baseName = await this.question('Give this experiment a unique name: ');
+  const tableSizes = expand(await this.question('Enter the table size: '));
+  const queries = expand(await this.question('Enter the number of queries: '));
+  for (const tableSize of tableSizes) {
+    for (const qs of queries) {
+      const name = baseName + '-' + tableSize + '-' + qs;
+      this.orchestrator.addExperiment(new ChecklistExperiment(name, tableSize, qs));
+    }
+  }
 };
 Cmd.prototype.newSealPIR = async function () {
-  const name = await this.question('Give this experiment a unique name: ');  
-  const tableSize = parseInt(await this.question('Enter the table size: '));
-  const queries = parseInt(await this.question('Enter the number of queries: '));
-  this.orchestrator.addExperiment(new SealPIRExperiment(name, tableSize, queries));
+  const baseName = await this.question('Give this experiment a unique name: ');
+  const tableSizes = expand(await this.question('Enter the table size: '));
+  const queries = expand(await this.question('Enter the number of queries: '));
+  for (const tableSize of tableSizes) {
+    for (const qs of queries) {
+      const name = baseName + '-' + tableSize + '-' + qs;
+      this.orchestrator.addExperiment(new SealPIRExperiment(name, tableSize, qs));
+    }
+  }
 };
 
 // Start the command line interface.
