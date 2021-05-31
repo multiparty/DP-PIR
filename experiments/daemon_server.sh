@@ -65,6 +65,8 @@ do
     then
       echo "Kill"
       kill -9 $pid
+      ./experiments/checklist/stop_servers.sh 2>/dev/null
+      ./experiments/checklist/stop_servers.sh 2>/dev/null
       echo "Killed by Orchastrator!" >> party-${party_id}-${machine_id}.log
       break
     fi

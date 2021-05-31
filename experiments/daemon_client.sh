@@ -74,6 +74,8 @@ do
     then
       echo "Kill"
       kill -9 $pid
+      ./experiments/checklist/stop_servers.sh 2>/dev/null
+      ./experiments/checklist/stop_servers.sh 2>/dev/null
       echo "Killed by Orchastrator!" >> client-${machine_id}-${client_id}.log
       break
     fi
