@@ -63,7 +63,7 @@ app.get('/config/:id', async function (req, res) {
   }
 });
 
-// Returns 
+// Returns 1 if the worker's job should be killed, 0 otherwise.
 app.get('/shouldkill/:id', (req, res) => {
   const id = parseInt(req.params.id);
   if (orchestrator.getWorkerById(id).shouldKill()) {

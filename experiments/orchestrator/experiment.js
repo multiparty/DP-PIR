@@ -137,7 +137,7 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
     const ipList = self.servers.map(s => s.ip);  
     const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
     const command = scriptPath + ' --parties=' + self.parties
-                               + ' --parallelism=' + self.parallelism;
+                               + ' --parallelism=' + self.parallelism
                                + ' ' + ipList.join(' ');
     exec(command, (err, stdout, stderr) => {
       resolve(stdout);
