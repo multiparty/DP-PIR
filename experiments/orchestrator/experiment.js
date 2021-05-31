@@ -118,7 +118,11 @@ DPPIRExperiment.prototype.setClientParams = function (clients, queries) {
   this.queries = queries;
 };
 DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
-  // Read table.
+  if (this.table != null || this.config != null) {
+    return;
+  }
+
+  // Generate table.
   const self = this;
   this.table = await new Promise(function (resolve, reject) {
     const tableScript = path.join(__dirname, '../../scripts/gen_table.py');

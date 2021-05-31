@@ -34,6 +34,12 @@ do
   then
     # Read table and configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
+    while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
+    do
+      sleep 2
+      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
+      echo "config.."
+    done
     curl "$ORCHASTRATOR/table/${WORKER_ID}" > experiments/dppir/table.json 2> /dev/null
 
     ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \

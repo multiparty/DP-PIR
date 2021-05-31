@@ -52,9 +52,15 @@ app.get('/table/:id', (req, res) => {
   const id = parseInt(req.params.id);
   res.send(orchestrator.getWorkerById(id).experiment.table);
 });
-app.get('/config/:id', (req, res) => {
+app.get('/config/:id', async function (req, res) {
   const id = parseInt(req.params.id);
-  res.send(orchestrator.getWorkerById(id).experiment.config);
+  const experiment = orchestrator.getWorkerById(id).experiment;
+  if (experiment.serversNum == experiment.servers.length) {
+    await experiment.generateTableAndConfigurations();
+    res.send(experiment.config);
+  } else {
+    res.send("WAIT");
+  }
 });
 
 // Returns 

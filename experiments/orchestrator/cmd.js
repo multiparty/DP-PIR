@@ -73,7 +73,6 @@ Cmd.prototype.newDPPIR = async function () {
   experiment.setTableSize(tableSize);
   experiment.setServerParams(parties, parallelism, batchSize, span, cutoff);
   experiment.setClientParams(clients, queries);
-  await experiment.generateTableAndConfigurations();
   this.orchestrator.addExperiment(experiment);
 };
 Cmd.prototype.newChecklist = async function () {
