@@ -82,6 +82,7 @@ Orchestrator.prototype.kill = function (experimentId) {
       for (const worker of experiment.servers) {
         worker.kill();
       }
+      return;
     }
   }
   console.log("ERROR: no such experiment");
