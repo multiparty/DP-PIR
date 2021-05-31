@@ -54,8 +54,8 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   std::vector<uint64_t> queries;
   uint32_t current_query_index = 0;
   client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
-    assert(query == queries.at(current_query_index));
-    assert(response == table.at(query));
+    // assert(query == queries.at(current_query_index));
+    // assert(response == table.at(query));
     if (current_query_index++ % 10000 == 0) {
       std::cout << "Received " << (current_query_index - 1) << std::endl;
     }
