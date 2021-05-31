@@ -4,4 +4,5 @@ if [[ $# == 0 ]] || [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
   exit 0
 fi
 
-bazel-3.4.1 run //experiments/checklist:main --config=opt -- -numRows=$1 -rowLen=8 -tls=0 -serverAddr=$2 -serverAddr2=$3 q$4
+echo "Running checklist client with $1 $2 r$3 q$4"
+bazel-3.4.1 run //experiments/checklist:main --config=opt -- -numRows=$3 -rowLen=8 -tls=0 -serverAddr=$1 -serverAddr2=$2 q$4

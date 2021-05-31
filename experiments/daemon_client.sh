@@ -1,3 +1,4 @@
+#!/bin/bash
 ORCHASTRATOR="$1"
 
 # Setup directory for storing config and table data.
@@ -34,9 +35,23 @@ do
     # Read table and configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
     curl "$ORCHASTRATOR/table/${WORKER_ID}" > experiments/dppir/table.json 2> /dev/null
-    
+
     ./experiments/dppir/client.sh ${machine_id} ${client_id} \
                                   ${params[3]} ${params[4]} \
+        > client-${machine_id}-${client_id}.log 2>&1 &
+    pid=$!
+  elif [[ $type == "checklist" ]]
+  then
+    sleep 5  # wait to ensure that servers have had a chance to boot.
+    ./experiments/checklist/run_client.sh ${params[3]} ${params[4]} \
+                                          ${params[5]} ${params[6]} \
+        > client-${machine_id}-${client_id}.log 2>&1 &
+    pid=$!
+
+  elif [[ $type == "sealpir" ]]
+  then
+    bazel-3.4.1 run //experiments/sealpir:sealpir --config=opt -- \
+        --table=${params[3]} --queries=${params[4]} \
         > client-${machine_id}-${client_id}.log 2>&1 &
     pid=$!
   else
@@ -44,7 +59,7 @@ do
     sleep 5 &
     pid=$!
   fi
-  
+
   # Watch out for kill signal sent from orchastrator.
   while [[ -e /proc/$pid ]]
   do

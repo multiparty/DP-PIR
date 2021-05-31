@@ -1,3 +1,4 @@
+#!/bin/bash
 ORCHASTRATOR="$1"
 
 # Setup directory for storing config and table data.
@@ -30,13 +31,18 @@ do
   # Run the experiment according to $type in the background,
   # store the process ID in pid.
   if [[ $type == "dppir" ]]
-  then  
+  then
     # Read table and configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
     curl "$ORCHASTRATOR/table/${WORKER_ID}" > experiments/dppir/table.json 2> /dev/null
-    
+
     ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \
                                   ${params[4]} ${params[5]} ${params[6]} \
+        > party-${party_id}-${machine_id}.log 2>&1 &
+    pid=$!
+  elif [[ $type == "checklist" ]]
+  then
+    ./experiments/checklist/run_server.sh ${params[3]} ${params[4]} \
         > party-${party_id}-${machine_id}.log 2>&1 &
     pid=$!
   else
@@ -53,7 +59,7 @@ do
     then
       echo "Kill"
       kill -9 $pid
-      echo "Killed by Orchastrator!" >> party-${party_id}-${machine_id}.log    
+      echo "Killed by Orchastrator!" >> party-${party_id}-${machine_id}.log
       break
     fi
     sleep 15

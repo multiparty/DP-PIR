@@ -89,7 +89,8 @@ Orchestrator.prototype.kill = function (experimentId) {
 Orchestrator.prototype.assignExperiment = function (worker) {
   worker.ready();
   if (worker.workerType == WorkerType.CLIENT) {
-    if (this.clientExperimentsQueue.length == 0) {
+    if (this.clientExperimentsQueue.length == 0
+        || !this.clientExperimentsQueue[0].readyForClients()) {
       return null;
     }
     const experiment = this.clientExperimentsQueue[0];

@@ -85,6 +85,9 @@ AbstractExperiment.prototype.info = function () {
 AbstractExperiment.prototype.resultDirectory = function () {
   return path.join(OUTPUT_PREFIX, this.name_);
 };
+AbstractExperiment.prototype.readyForClients = function () {
+  return true;
+};
 
 // DPPIR experiment.
 function DPPIRExperiment(name, mode, clientsNum, serversNum) {
@@ -215,22 +218,37 @@ DPPIRExperiment.prototype.serialize = function (worker) {
 
 // Checklist experiment.
 function ChecklistExperiment(name, tableSize, queries) {
-  AbstractExperiment.call(this, name, ExperimentType.CHECKLIST, 1, 0);
+  AbstractExperiment.call(this, name, ExperimentType.CHECKLIST, 1, 2);
   this.tableSize = tableSize;
   this.queries = queries;
 }
 ChecklistExperiment.prototype = Object.create(AbstractExperiment.prototype);
 ChecklistExperiment.prototype.resultFile = function (worker) {
-  return this.resultDirectory() + '/' + 'checklist.log';
+  if (worker.workerType == WorkerType.CLIENT) {
+    return this.resultDirectory() + '/' + 'client.log';
+  } else {
+    return this.resultDirectory() + '/' + 'server' + worker.id + '.log';
+  }
 };
 ChecklistExperiment.prototype.serialize = function (worker) {
-  return [this.experimentType, 1, 1, this.tableSize, this.queries].join(' ');
+  if (worker.workerType == WorkerType.CLIENT) {
+    const ip1 = this.servers[0].ip + ':' + (10000 + this.servers[0].id);
+    const ip2 = this.servers[1].ip + ':' + (10000 + this.servers[1].id);
+    return [this.experimentType, 1, 1, ip1, ip2, this.tableSize, this.queries].join(' ');
+  }
+  if (worker.workerType == WorkerType.SERVER) {
+    const port = 10000 + worker.id;
+    return [this.experimentType, 1, worker.id, this.tableSize, port].join(' ');
+  }
 };
 ChecklistExperiment.prototype.info = function () {
   let str = AbstractExperiment.prototype.info.call(this);
   str += '\ttableSize: ' + this.tableSize + '\n';
   str += '\tqueries: ' + this.queries + '\n';
   return str;
+};
+ChecklistExperiment.prototype.readyForClients = function () {
+  return this.servers.length == this.serversNum;
 };
 
 // SealPIR experiment.
