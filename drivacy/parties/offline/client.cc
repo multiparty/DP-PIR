@@ -43,11 +43,11 @@ void Client::Subscribe(uint32_t count) {
 void Client::SaveCommonReference() {
   for (const auto &nested : this->common_references_) {
     for (const auto &tuple : nested) {
-      std::cout << tuple.tag << std::endl;
+      /*std::cout << tuple.tag << std::endl;
       std::cout << tuple.reference.next_tag << " "
                 << tuple.reference.incremental_share.x << " "
                 << tuple.reference.incremental_share.y << " "
-                << tuple.reference.preshare << std::endl;
+                << tuple.reference.preshare << std::endl;*/
     }
   }
 }
