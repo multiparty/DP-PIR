@@ -48,10 +48,12 @@ app.get('/giveip/client', (req, res) => {
 });
 
 // (DPPIR) Experiment configuration and table files.
+/*
 app.get('/table/:id', (req, res) => {
   const id = parseInt(req.params.id);
   res.send(orchestrator.getWorkerById(id).experiment.table);
 });
+*/
 app.get('/config/:id', async function (req, res) {
   const id = parseInt(req.params.id);
   const experiment = orchestrator.getWorkerById(id).experiment;

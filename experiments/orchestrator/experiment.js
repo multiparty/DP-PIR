@@ -101,7 +101,7 @@ function DPPIRExperiment(name, mode, clientsNum, serversNum) {
   this.currentPartyMachine = 0;
   this.currentClientMachine = 0;
   this.currentClientParallel = 0;
-  this.table = null;
+  // this.table = null;
   this.config = null;
 }
 DPPIRExperiment.prototype = Object.create(AbstractExperiment.prototype);
@@ -126,13 +126,13 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
 
   // Generate table.
   const self = this;
-  this.table = await new Promise(function (resolve, reject) {
+  /* this.table = await new Promise(function (resolve, reject) {
     const tableScript = path.join(__dirname, '../../scripts/gen_table.py');
     const tableCommand = tableScript + ' ' + self.tableSize;
     exec(tableCommand, (err, stdout, stderr) => {
       resolve(fs.readFileSync(path.join(__dirname, 'table.json'), 'utf8'));
     });
-  });
+  }); */
 
   // Generate configuration file!
   this.config = await new Promise(function (resolve, reject) {
@@ -214,11 +214,11 @@ DPPIRExperiment.prototype.info = function () {
 DPPIRExperiment.prototype.serialize = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
     const info = this.clientsMap[worker.id];
-    return [this.experimentType, info.machine_id, info.client_id, this.queries, this.mode].join(' ');
+    return [this.experimentType, info.machine_id, info.client_id, this.queries, this.mode, this.tableSize].join(' ');
   }
   if (worker.workerType == WorkerType.SERVER) {
     const info = this.serversMap[worker.id];
-    return [this.experimentType, info.party_id, info.machine_id, this.batchSize, this.span, this.cutoff, this.mode].join(' ');
+    return [this.experimentType, info.party_id, info.machine_id, this.batchSize, this.span, this.cutoff, this.mode, this.tableSize].join(' ');
   }
 };
 

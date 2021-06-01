@@ -32,7 +32,11 @@ do
   # store the process ID in pid.
   if [[ $type == "dppir" ]]
   then
-    # Read table and configurations.
+    # Generate a random table.
+    ./scripts/gen_table.py ${params[7]}
+    mv table.json experiments/dppir/table.json
+
+    # Read configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
     while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
     do
@@ -40,7 +44,6 @@ do
       curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
       echo "config.."
     done
-    curl "$ORCHASTRATOR/table/${WORKER_ID}" > experiments/dppir/table.json 2> /dev/null
 
     ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \
                                   ${params[4]} ${params[5]} ${params[6]} \
