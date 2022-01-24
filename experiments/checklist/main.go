@@ -112,9 +112,13 @@ func main() {
   // Print server times!
 	var server1Time time.Duration
 	var server2Time time.Duration
+	var server1Bytes int
+	var server2Bytes int
 	
 	proxyLeft.GetOnlineTimer(0, &server1Time)
 	proxyRight.GetOnlineTimer(0, &server2Time)
-	fmt.Printf("Server 1 time: %v\n", server1Time)
-	fmt.Printf("Server 2 time: %v\n", server2Time)
+	proxyLeft.GetOnlineBytes(0, &server1Bytes)
+	proxyRight.GetOnlineBytes(0, &server2Bytes)
+	fmt.Printf("Server 1 time: %v and bytes: %v\n", server1Time, server1Bytes)
+	fmt.Printf("Server 2 time: %v and bytes: %v\n", server2Time, server2Bytes)
 }

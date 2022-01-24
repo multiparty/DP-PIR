@@ -18,7 +18,6 @@ cc_library(
         "//drivacy/types:config_cc_proto",
         "//drivacy/types:types",
         "//drivacy/util:status",
-        "//third_party:rapidjson"
     ],
 )
 

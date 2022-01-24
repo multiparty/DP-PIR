@@ -38,7 +38,7 @@ std::vector<types::Query> MakeNoiseQueriesFromHistogram(
       primitives::FindRange(machine_id, parallelism, table.size());
   assert(noise_histogram.size() == end - start);
   uint32_t index = 0;
-  for (const auto &[query, _] : table) {
+  for (uint32_t query = 0; query < table.size(); query++) {
     if (start <= index && index < end) {
       uint32_t count = noise_histogram.at(index - start);
       for (uint32_t i = 0; i < count; i++) {

@@ -62,7 +62,6 @@ int main(int argc, char *argv[]) {
 
   // Command line usage message.
   absl::SetProgramUsageMessage(absl::StrFormat("usage: %s %s", argv[0],
-                                               "--table=path/to/table.json "
                                                "--config=path/to/config.json "
                                                "--queries=#queries"));
   absl::ParseCommandLine(argc, argv);

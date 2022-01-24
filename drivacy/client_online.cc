@@ -26,7 +26,7 @@
 #include "drivacy/util/file.h"
 #include "drivacy/util/status.h"
 
-ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
+ABSL_FLAG(uint32_t, table, 0, "The table size (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, machine, 0, "The head machine id to query (required)");
 ABSL_FLAG(uint32_t, queries, 0, "The number of queries to make (required)");
@@ -35,17 +35,14 @@ ABSL_FLAG(uint32_t, client, 0,
           "to the same machine (required)");
 
 absl::Status Setup(uint32_t machine_id, uint32_t client_id,
-                   uint32_t query_count, const std::string &table_path,
+                   uint32_t query_count, uint32_t table_size,
                    const std::string &config_path) {
   // Read configuration.
   drivacy::types::Configuration config;
   CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
 
   // Read input table.
-  ASSIGN_OR_RETURN(std::string json,
-                   drivacy::util::file::ReadFile(table_path.c_str()));
-  ASSIGN_OR_RETURN(drivacy::types::Table table,
-                   drivacy::util::file::ParseTable(json));
+  drivacy::types::Table table = drivacy::util::file::ParseTable(table_size);
 
   // Setup party and listen to incoming queries and responses.
   drivacy::parties::online::Client client(machine_id, client_id, config);
@@ -54,8 +51,8 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   std::vector<uint64_t> queries;
   uint32_t current_query_index = 0;
   client.SetOnResponseHandler([&](uint64_t query, uint64_t response) {
-    // assert(query == queries.at(current_query_index));
-    // assert(response == table.at(query));
+    assert(query == queries.at(current_query_index));
+    assert(response == query + 10);
     if (current_query_index++ % 10000 == 0) {
       std::cout << "Received " << (current_query_index - 1) << std::endl;
     }
@@ -64,7 +61,7 @@ absl::Status Setup(uint32_t machine_id, uint32_t client_id,
   // Query from table.
   auto start_ts = std::chrono::system_clock::now();
   for (uint32_t i = 0; i < query_count;) {
-    for (const auto &[query, response] : table) {
+    for (uint32_t query = 0; query < table.size(); query++) {
       queries.push_back(query);
       client.MakeQuery(query);
       if (i % 10000 == 0) {
@@ -103,16 +100,11 @@ int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.
-  const std::string &table_path = absl::GetFlag(FLAGS_table);
+  uint32_t table = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t machine_id = absl::GetFlag(FLAGS_machine);
   uint32_t client_id = absl::GetFlag(FLAGS_client);
   uint32_t query_count = absl::GetFlag(FLAGS_queries);
-  if (table_path.empty()) {
-    std::cout << "Please provide a valid table JSON file using --table"
-              << std::endl;
-    return 1;
-  }
   if (config_path.empty()) {
     std::cout << "Please provide a valid config file using --config"
               << std::endl;
@@ -135,7 +127,7 @@ int main(int argc, char *argv[]) {
 
   // Execute mock protocol.
   absl::Status output =
-      Setup(machine_id, client_id, query_count, table_path, config_path);
+      Setup(machine_id, client_id, query_count, table, config_path);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;

@@ -6,7 +6,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_r
 # Checklist (using our bazel-fork)
 git_repository(
     name = "checklist",
-    branch = "master",
+    branch = "new",
     remote = "https://github.com/KinanBab/checklist.git",
 )
 

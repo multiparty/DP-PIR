@@ -10,12 +10,13 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace drivacy {
 namespace types {
 
 // The table we are doing PIR against.
-using Table = std::unordered_map<uint32_t, uint32_t>;
+using Table = std::vector<uint32_t>;
 
 // Primitive datatypes.
 using Tag = uint32_t;

@@ -240,7 +240,7 @@ ChecklistExperiment.prototype.serialize = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
     const ip1 = this.servers[0].ip + ':' + (10000 + this.servers[0].id);
     const ip2 = this.servers[1].ip + ':' + (10000 + this.servers[1].id);
-    return [this.experimentType, 1, 1, ip1, ip2, this.tableSize, this.queries].join(' ');
+    return [this.experimentType, 1, 1, ip1, ip2, this.queries].join(' ');
   }
   if (worker.workerType == WorkerType.SERVER) {
     const port = 10000 + worker.id;

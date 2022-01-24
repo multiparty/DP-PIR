@@ -17,7 +17,7 @@ namespace file {
 
 util::OutputStatus<std::string> ReadFile(const std::string &path);
 
-util::OutputStatus<types::Table> ParseTable(const std::string &json);
+types::Table ParseTable(uint32_t table_size);
 
 // Read content of the json file at the given path, and uses protobuf to parse
 // it and store it inside protobuf.

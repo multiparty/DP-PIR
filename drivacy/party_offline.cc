@@ -23,7 +23,7 @@
 #include "drivacy/util/file.h"
 #include "drivacy/util/status.h"
 
-ABSL_FLAG(std::string, table, "", "The path to table JSON file (required)");
+ABSL_FLAG(uint32_t, table, 0, "The table size (required)");
 ABSL_FLAG(std::string, config, "", "The path to configuration file (required)");
 ABSL_FLAG(uint32_t, party, 0, "The id of the party [1-n] (required)");
 ABSL_FLAG(uint32_t, machine, 0, "The id of the machine [1-p] (required)");
@@ -34,8 +34,7 @@ ABSL_FLAG(double, span, -1.0,
 ABSL_FLAG(double, cutoff, 0.0,
           "The cutoff for shifting/clamping the noise distribution (required)");
 
-absl::Status Setup(uint32_t party_id, uint32_t machine_id,
-                   const std::string &table_path,
+absl::Status Setup(uint32_t party_id, uint32_t machine_id, uint32_t table_size,
                    const std::string &config_path, double span, double cutoff,
                    uint32_t batch_size) {
   // Read configuration.
@@ -43,10 +42,7 @@ absl::Status Setup(uint32_t party_id, uint32_t machine_id,
   CHECK_STATUS(drivacy::util::file::ReadProtobufFromJson(config_path, &config));
 
   // Read input table.
-  ASSIGN_OR_RETURN(std::string json,
-                   drivacy::util::file::ReadFile(table_path.c_str()));
-  ASSIGN_OR_RETURN(drivacy::types::Table table,
-                   drivacy::util::file::ParseTable(json));
+  drivacy::types::Table table = drivacy::util::file::ParseTable(table_size);
 
   // Setup party and listen to incoming queries and responses.
   if (party_id == 1) {
@@ -79,18 +75,13 @@ int main(int argc, char *argv[]) {
   absl::ParseCommandLine(argc, argv);
 
   // Get command line flags.
-  const std::string &table_path = absl::GetFlag(FLAGS_table);
+  uint32_t table = absl::GetFlag(FLAGS_table);
   const std::string &config_path = absl::GetFlag(FLAGS_config);
   uint32_t party_id = absl::GetFlag(FLAGS_party);
   uint32_t machine_id = absl::GetFlag(FLAGS_machine);
   uint32_t batch_size = absl::GetFlag(FLAGS_batch);
   double span = absl::GetFlag(FLAGS_span);
   double cutoff = absl::GetFlag(FLAGS_cutoff);
-  if (table_path.empty()) {
-    std::cout << "Please provide a valid table JSON file using --table"
-              << std::endl;
-    return 1;
-  }
   if (config_path.empty()) {
     std::cout << "Please provide a valid config file using --config"
               << std::endl;
@@ -115,7 +106,7 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(party_id, machine_id, table_path, config_path,
+  absl::Status output = Setup(party_id, machine_id, table, config_path,
                               span, cutoff, batch_size);
   if (!output.ok()) {
     std::cout << output << std::endl;

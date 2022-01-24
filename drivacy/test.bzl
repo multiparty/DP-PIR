@@ -149,7 +149,7 @@ def _end_to_end_test_impl(ctx):
             clients=ctx.attr.clients,
             batch=ctx.attr.batch,
             queries=ctx.attr.queries,
-            table=ctx.file.table.short_path,
+            table=ctx.attr.table,
             config=ctx.file.config.short_path,
             span=ctx.attr.span,
             cutoff=ctx.attr.cutoff,
@@ -158,7 +158,7 @@ def _end_to_end_test_impl(ctx):
         ),
     )
 
-    files = [ctx.file.party, ctx.file.client, ctx.file.table, ctx.file.config]
+    files = [ctx.file.party, ctx.file.client, ctx.file.config]
     return DefaultInfo(
         runfiles = ctx.runfiles(files = files),
     )
@@ -178,10 +178,9 @@ end_to_end_test = rule(
             mandatory = True,
             allow_single_file = True,
         ),
-        "table": attr.label(
-            doc = "The path to table.json.",
+        "table": attr.int(
+            doc = "The table size.",
             mandatory = True,
-            allow_single_file = True,
         ),
         "config": attr.label(
             doc = "The path to config.json.",

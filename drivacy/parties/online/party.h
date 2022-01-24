@@ -13,7 +13,7 @@
 #ifndef DRIVACY_PARTIES_ONLINE_PARTY_H_
 #define DRIVACY_PARTIES_ONLINE_PARTY_H_
 
-// #define DEBUG_MSG
+//#define DEBUG_MSG
 
 #include <cassert>
 // NOLINTNEXTLINE

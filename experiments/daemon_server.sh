@@ -32,10 +32,6 @@ do
   # store the process ID in pid.
   if [[ $type == "dppir" ]]
   then
-    # Generate a random table.
-    ./scripts/gen_table.py ${params[7]}
-    mv table.json experiments/dppir/table.json
-
     # Read configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config.json 2> /dev/null
     while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
@@ -46,7 +42,7 @@ do
     done
 
     ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \
-                                  ${params[4]} ${params[5]} ${params[6]} \
+                                  ${params[4]} ${params[5]} ${params[6]} ${params[7]} \
         > party-${party_id}-${machine_id}.log 2>&1 &
     pid=$!
   elif [[ $type == "checklist" ]]
