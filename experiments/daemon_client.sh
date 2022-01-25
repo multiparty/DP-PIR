@@ -1,5 +1,6 @@
 #!/bin/bash
 ORCHASTRATOR="$1"
+rm -f experiments/dppir/config*.json
 
 # Setup directory for storing config and table data.
 mkdir -p data
