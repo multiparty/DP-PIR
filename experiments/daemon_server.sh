@@ -1,4 +1,5 @@
 #!/bin/bash
+ID=$RANDOM
 ORCHASTRATOR="$1"
 
 # Setup directory for storing config and table data.
@@ -33,21 +34,18 @@ do
   if [[ $type == "dppir" ]]
   then
     # Read configurations.
-    rand=$RANDOM
-    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${rand}.json 2> /dev/null
+    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${ID}.json 2> /dev/null
     while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
     do
       sleep 2
-      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${rand}.json 2> /dev/null
+      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${ID}.json 2> /dev/null
       echo "config.."
     done
 
     ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \
-                                  ${params[4]} ${params[5]} ${params[6]} ${params[7]} ${rand} \
+                                  ${params[4]} ${params[5]} ${params[6]} ${params[7]} ${ID} \
         > party-${party_id}-${machine_id}.log 2>&1 &
     pid=$!
-
-    rm -f experiments/dppir/config${rand}.json
   elif [[ $type == "checklist" ]]
   then
     ./experiments/checklist/run_server.sh ${params[3]} ${params[4]} \
