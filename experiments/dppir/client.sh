@@ -1,5 +1,5 @@
 #!/bin/bash
-CONFIG=experiments/dppir/config.json
+CONFIG=experiments/dppir/config$6.json
 
 # Read args
 machine_id=$1

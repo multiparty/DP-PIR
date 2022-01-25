@@ -1,5 +1,5 @@
 #!/bin/bash
-CONFIG=experiments/dppir/config.json
+CONFIG=experiments/dppir/config$8.json
 
 # Read args
 party_id=$1
