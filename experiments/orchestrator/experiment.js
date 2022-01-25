@@ -126,13 +126,6 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
 
   // Generate table.
   const self = this;
-  /* this.table = await new Promise(function (resolve, reject) {
-    const tableScript = path.join(__dirname, '../../scripts/gen_table.py');
-    const tableCommand = tableScript + ' ' + self.tableSize;
-    exec(tableCommand, (err, stdout, stderr) => {
-      resolve(fs.readFileSync(path.join(__dirname, 'table.json'), 'utf8'));
-    });
-  }); */
 
   // Generate configuration file!
   this.config = await new Promise(function (resolve, reject) {

@@ -18,9 +18,9 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-CORES=1
-ORCHASTRATOR="http://18.216.137.68:8000"
-DAEMON="server"  # Or client
+CORES=8
+ORCHASTRATOR="http://3.80.35.222:8000"
+DAEMON="client"  # Or client
 
 if [[ ! -f "lock" ]]; then
   echo "AWS LOG: Installing dependencies..."
