@@ -137,7 +137,6 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
     exec(command, (err, stdout, stderr) => {
       if (this.config == null) {
         this.config = stdout;
-        console.log(this.config);
       }
       resolve(true);
     });

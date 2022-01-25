@@ -34,7 +34,7 @@ do
   then
     # Read configurations.
     curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
-    while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
+    while [[ $(cat experiments/dppir/config${WORKER_ID}.json) == "WAIT" ]]
     do
       sleep 2
       curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
