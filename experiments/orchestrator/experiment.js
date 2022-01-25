@@ -101,7 +101,6 @@ function DPPIRExperiment(name, mode, clientsNum, serversNum) {
   this.currentPartyMachine = 0;
   this.currentClientMachine = 0;
   this.currentClientParallel = 0;
-  // this.table = null;
   this.config = null;
 }
 DPPIRExperiment.prototype = Object.create(AbstractExperiment.prototype);
@@ -120,7 +119,7 @@ DPPIRExperiment.prototype.setClientParams = function (clients, queries) {
   this.queries = queries;
 };
 DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
-  if (this.table != null || this.config != null) {
+  if (this.config != null) {
     return;
   }
 
@@ -128,18 +127,15 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
   const self = this;
 
   // Generate configuration file!
-  return await new Promise(function (resolve, reject) {
-    const ipList = self.servers.map(s => s.ip);  
-    const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
-    const command = scriptPath + ' --parties=' + self.parties
-                               + ' --parallelism=' + self.parallelism
-                               + ' ' + ipList.join(' ');
-    exec(command, (err, stdout, stderr) => {
-      if (this.config == null) {
-        this.config = stdout;
-      }
-      resolve(true);
-    });
+  const ipList = self.servers.map(s => s.ip);
+  const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
+  const command = scriptPath + ' --parties=' + self.parties
+                             + ' --parallelism=' + self.parallelism
+                             + ' ' + ipList.join(' ');
+  exec(command, (err, stdout, stderr) => {
+    if (this.config == null) {
+      this.config = stdout;
+    }
   });
 };
 // Override.

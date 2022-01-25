@@ -57,11 +57,13 @@ app.get('/table/:id', (req, res) => {
 app.get('/config/:id', async function (req, res) {
   const id = parseInt(req.params.id);
   const experiment = orchestrator.getWorkerById(id).experiment;
-  if (experiment.serversNum == experiment.servers.length) {
-    await experiment.generateTableAndConfigurations();
-    res.send(experiment.config);
-  } else {
+  if (experiment.serversNum != experiment.servers.length) {
     res.send("WAIT");
+  } else if (experiment.config == null) {
+    experiment.generateTableAndConfigurations();
+    res.send("WAIT");
+  } else {
+    res.send(experiment.config);
   }
 });
 
