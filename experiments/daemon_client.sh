@@ -1,5 +1,4 @@
 #!/bin/bash
-ID=$RANDOM
 ORCHASTRATOR="$1"
 
 # Setup directory for storing config and table data.
@@ -34,16 +33,16 @@ do
   if [[ $type == "dppir" ]]
   then
     # Read configurations.
-    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${ID}.json 2> /dev/null
+    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
     while [[ $(cat experiments/dppir/config.json) == "WAIT" ]]
     do
       sleep 2
-      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${ID}.json 2> /dev/null
+      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
       echo "config.."
     done
 
     ./experiments/dppir/client.sh ${machine_id} ${client_id} \
-                                  ${params[3]} ${params[4]} ${params[5]} ${ID}  \
+                                  ${params[3]} ${params[4]} ${params[5]} ${WORKER_ID}  \
         > client-${machine_id}-${client_id}.log 2>&1 &
     pid=$!
   elif [[ $type == "checklist" ]]

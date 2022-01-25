@@ -128,14 +128,18 @@ DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
   const self = this;
 
   // Generate configuration file!
-  this.config = await new Promise(function (resolve, reject) {
+  return await new Promise(function (resolve, reject) {
     const ipList = self.servers.map(s => s.ip);  
     const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
     const command = scriptPath + ' --parties=' + self.parties
                                + ' --parallelism=' + self.parallelism
                                + ' ' + ipList.join(' ');
     exec(command, (err, stdout, stderr) => {
-      resolve(stdout);
+      if (this.config == null) {
+        this.config = stdout;
+        console.log(this.config);
+      }
+      resolve(true);
     });
   });
 };
