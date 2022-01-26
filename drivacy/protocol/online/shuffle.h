@@ -116,7 +116,8 @@ class Shuffler {
   uint32_t machine_id_;
   uint32_t parallelism_;
   // Batch size configurations.
-  std::unordered_map<uint32_t, uint32_t> size_;
+  uint32_t init_counter_;
+  std::vector<uint32_t> size_;
   uint32_t batch_size_;
   uint32_t total_size_;
   uint32_t shuffled_query_count_;
@@ -149,21 +150,16 @@ class Shuffler {
   // query_order_[m][i] = the relative order of query q among all queries
   //                      sent from this machine to machine m, where q is
   //                      the i-th query sent from this machine to m.
-  std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>
-      query_order_;
+  std::vector<std::pair<size_t, std::vector<uint32_t>>> query_order_;
   // query_indices_[m][i] = index in shuffled_queries_ of the ith query received
   //                        from machine m (phase 2).
-  std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>
-      query_indices_;
+  std::vector<std::pair<size_t, std::vector<uint32_t>>> query_indices_;
   // response_indices_[m][i] = index in deshuffled_responses_ of the ith
   //                           response received from machine m (phase 2).
-  std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>
-      response_indices_;
+  std::vector<std::pair<size_t, std::vector<uint32_t>>> response_indices_;
   // query_states_[m][i] = the query state associated with the ith response to
   //                       be received from machine m (phase 2).
-  std::unordered_map<uint32_t,
-                     std::pair<size_t, std::vector<types::QueryState>>>
-      query_states_;
+  std::vector<std::pair<size_t, std::vector<types::QueryState>>> query_states_;
 };
 
 }  // namespace online

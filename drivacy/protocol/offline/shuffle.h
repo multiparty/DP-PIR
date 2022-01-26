@@ -92,7 +92,8 @@ class Shuffler {
   uint32_t parallelism_;
   uint32_t message_size_;
   // Batch size configurations.
-  std::unordered_map<uint32_t, uint32_t> size_;
+  uint32_t init_counter_;
+  std::vector<uint32_t> size_;
   uint32_t batch_size_;
   uint32_t total_size_;
   uint32_t shuffled_message_count_;
@@ -111,8 +112,7 @@ class Shuffler {
   std::vector<uint32_t> message_machine_ids_;
   // message_indices_[m][i] = index in shuffled_messages_ of the ith message
   //                          received from machine m (phase 2).
-  std::unordered_map<uint32_t, std::pair<size_t, std::vector<uint32_t>>>
-      message_indices_;
+  std::vector<std::pair<size_t, std::vector<uint32_t>>> message_indices_;
 };
 
 }  // namespace offline

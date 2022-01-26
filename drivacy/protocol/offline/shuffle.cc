@@ -22,7 +22,9 @@ namespace offline {
 Shuffler::Shuffler(uint32_t party_id, uint32_t machine_id, uint32_t party_count,
                    uint32_t parallelism)
     : party_id_(party_id), machine_id_(machine_id), parallelism_(parallelism) {
+  this->init_counter_ = 0;
   this->total_size_ = 0;
+  this->size_.resize(parallelism + 1, 0);
   // Message sizes.
   this->message_size_ =
       primitives::crypto::OnionCipherSize(party_id + 1, party_count);
@@ -43,16 +45,19 @@ Shuffler::~Shuffler() {
 bool Shuffler::Initialize(uint32_t machine_id, uint32_t given_size) {
   // Determine if we are initializing a fresh new batch, or
   // providing remaining sizes for a batch being initialized.
-  if (this->size_.size() == this->parallelism_) {
+  if (this->init_counter_ == this->parallelism_) {
     this->size_.clear();
+    this->size_.resize(this->parallelism_ + 1, 0);
+    this->init_counter_ = 0;
     this->total_size_ = 0;
   }
 
   // Store size information.
-  assert(this->size_.count(machine_id) == 0);
+  assert(this->size_.at(machine_id) == 0);
   this->total_size_ += given_size;
-  this->size_.insert({machine_id, given_size});
-  if (this->size_.size() < this->parallelism_) {
+  this->init_counter_++;
+  this->size_.at(machine_id) = given_size;
+  if (this->init_counter_ < this->parallelism_) {
     return false;
   }
 
@@ -78,6 +83,7 @@ bool Shuffler::Initialize(uint32_t machine_id, uint32_t given_size) {
   // clear maps.
   this->message_machine_ids_index_ = 0;
   this->message_indices_.clear();
+  this->message_indices_.resize(this->parallelism_ + 1);
   for (uint32_t m = 1; m <= this->parallelism_; m++) {
     this->message_indices_[m].first = 0;
   }

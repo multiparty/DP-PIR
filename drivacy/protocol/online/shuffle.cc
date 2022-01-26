@@ -21,6 +21,8 @@ namespace online {
 Shuffler::Shuffler(uint32_t party_id, uint32_t machine_id, uint32_t party_count,
                    uint32_t parallelism)
     : party_id_(party_id), machine_id_(machine_id), parallelism_(parallelism) {
+  this->size_.resize(parallelism + 1, 0);
+  this->init_counter_ = 0;
   this->total_size_ = 0;
   // Seed RNG.
   this->generator_ = primitives::util::SeedGenerator(party_id);
@@ -30,16 +32,19 @@ Shuffler::Shuffler(uint32_t party_id, uint32_t machine_id, uint32_t party_count,
 bool Shuffler::Initialize(uint32_t machine_id, uint32_t given_size) {
   // Determine if we are initializing a fresh new batch, or
   // providing remaining sizes for a batch being initialized.
-  if (this->size_.size() == this->parallelism_) {
+  if (this->init_counter_ == this->parallelism_) {
     this->size_.clear();
+    this->size_.resize(this->parallelism_ + 1, 0);
+    this->init_counter_ = 0;
     this->total_size_ = 0;
   }
 
   // Store size information.
-  assert(this->size_.count(machine_id) == 0);
+  assert(this->size_.at(machine_id) == 0);
   this->total_size_ += given_size;
-  this->size_.insert({machine_id, given_size});
-  if (this->size_.size() < this->parallelism_) {
+  this->size_.at(machine_id) = given_size;
+  this->init_counter_++;
+  if (this->init_counter_ < this->parallelism_) {
     return false;
   }
 
@@ -72,8 +77,13 @@ bool Shuffler::Initialize(uint32_t machine_id, uint32_t given_size) {
 
   // clear maps.
   this->query_order_.clear();
+  this->query_order_.resize(this->parallelism_ + 1);
   this->query_indices_.clear();
+  this->query_indices_.resize(this->parallelism_ + 1);
   this->response_indices_.clear();
+  this->response_indices_.resize(this->parallelism_ + 1);
+  this->query_states_.clear();
+  this->query_states_.resize(this->parallelism_ + 1);
 
   // Reinitialize maps with pairs.
   for (uint32_t m = 1; m <= this->parallelism_; m++) {
@@ -92,13 +102,13 @@ void Shuffler::PreShuffle() {
       std::ceil((1.0 * this->total_size_) / this->parallelism_));
 
   // Knuth shuffling.
-  std::unordered_map<uint32_t, uint32_t> shuffling_order;
+  std::vector<int32_t> shuffling_order(this->total_size_, -1);
   std::vector<std::pair<uint32_t, uint32_t>> received(this->batch_size_);
   std::vector<std::pair<uint32_t, uint32_t>> sent(
       this->size_[this->machine_id_]);
   for (uint32_t i = 0; i < this->total_size_; i++) {
     uint32_t true_i = i;
-    if (shuffling_order.count(i) == 1) {
+    if (shuffling_order.at(i) > -1) {
       true_i = shuffling_order.at(i);
     }
     // Query at global index j goes to global index i after shuffling.
@@ -109,7 +119,7 @@ void Shuffler::PreShuffle() {
 
     // Which query is really at index j, might have been swapped earlier.
     uint32_t true_j = j;
-    if (shuffling_order.count(j) == 1) {
+    if (shuffling_order.at(j) > -1) {
       true_j = shuffling_order.at(j);
     }
 
@@ -123,7 +133,7 @@ void Shuffler::PreShuffle() {
 
     // Perform swap!
     shuffling_order[j] = true_i;
-    shuffling_order.erase(i);
+    shuffling_order[i] = -1;
 
     // Case 1: i is in this machine's bucket.
     //         this machine will receive j from its owner.
