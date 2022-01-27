@@ -36,7 +36,8 @@ void HeadParty::Continue() {
   // After all queries are handled, broadcast ready.
   this->intra_party_socket_.BroadcastQueriesReady();
   this->intra_party_socket_.CollectQueriesReady();
-  // Start timing here now that all parallel parties have received their final batch.
+  // Start timing here now that all parallel parties have received their final
+  // batch.
   this->OnStart();
   // All queries are ready, we can move to the next party now!
   this->SendQueries();

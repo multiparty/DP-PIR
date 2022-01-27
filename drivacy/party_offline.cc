@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Execute mock protocol.
-  absl::Status output = Setup(party_id, machine_id, table, config_path,
-                              span, cutoff, batch_size);
+  absl::Status output =
+      Setup(party_id, machine_id, table, config_path, span, cutoff, batch_size);
   if (!output.ok()) {
     std::cout << output << std::endl;
     return 1;
