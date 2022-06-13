@@ -1,0 +1,32 @@
+{
+  "experiment-name": "figure3",
+  "type": "simple-plot",
+  "axis": {
+    "x": "queries",
+    "y": [
+      ["DP-PIR", "Offline"],
+      ["DP-PIR", "Online"]
+    ]
+  },
+  "tableSize": 100000,
+  "queries": "x",
+  "x": [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000],
+  "interpolate": {
+    "DP-PIR-Online": [1000000000],
+    "DP-PIR-Offline": [100000000, 1000000000]
+  },
+  "labels": {
+    "x": "Queries",
+    "y": "Completion Time (sec)",
+    "graphs": 1,
+    "title": "Completion time for varying number of queries against a 100K database (logscale)"
+  },
+  "ranges": {
+    "x": [1, 500000000],
+    "y": [1, 500000]
+  },
+  "yscale": "log",
+  "legend": "upper left",
+  "margins": [0.13, 0.95, 0.18, 0.99],
+  "figsize": [7.0, 3.2]
+}

@@ -29,7 +29,7 @@ function formatIP(ipString) {
 
 // Create app.
 const app = express();
-app.use(bodyParser.text({ inflate: true, limit: '5mb', type: 'text/plain' }));
+app.use(bodyParser.text({ inflate: true, limit: '50mb', type: 'text/plain' }));
 
 // Create an instance of the orchestrator.
 const orchestrator = new Orchestrator();
@@ -61,20 +61,34 @@ app.get('/config/:id', async function (req, res) {
     res.send("WAIT");
   } else if (experiment.config == null) {
     experiment.generateTableAndConfigurations();
+    res.send(experiment.config);
+  } else if (experiment.config == "PENDING") {
     res.send("WAIT");
   } else {
     res.send(experiment.config);
   }
 });
 
-// Returns 1 if the worker's job should be killed, 0 otherwise.
+// Returns 1 if the worker's job should be killed, 2 if we need its log, and 0
+// otherwise.
 app.get('/shouldkill/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  if (orchestrator.getWorkerById(id).shouldKill()) {
+  const worker = orchestrator.getWorkerById(id);
+  if (worker.shouldLog()) {
+    res.send("2\n");
+  } else if (worker.shouldKill()) {
     res.send("1\n");
   } else {
     res.send("0\n");
   }
+});
+
+// Shows the current log of the worker, returns nothing.
+app.post('/showlog/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const log = req.body;
+  orchestrator.getWorkerById(id).showLog(log);
+  res.send("");
 });
 
 // Ping when ready to receive a job.

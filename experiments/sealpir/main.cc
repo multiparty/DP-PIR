@@ -17,8 +17,8 @@
 
 // Default SealPIR paramters.
 #define ITEM_SIZE 8  // in bytes.
-#define N 2048       // poly degree.
-#define LOGT 12      // bits of plaintext coefficient.
+#define N 4096       // poly degree.
+#define LOGT 20      // bits of plaintext coefficient.
 #define D 2          // dimension of database (2 columns).
 
 // Benchmarking macors
@@ -74,28 +74,25 @@ void PreprocessTable(PIRServer *server, uint64_t table_size,
 
 // PIR Protocol stages.
 PirQuery MakeQuery(PIRClient *client, uint64_t row) {
-  return client->generate_query(client->get_fv_index(row, ITEM_SIZE));
+  return client->generate_query(client->get_fv_index(row));
 }
 PirReply HandleQuery(PIRServer *server, PirQuery *query) {
   return server->generate_reply(*query, 0);
 }
-std::unique_ptr<uint8_t[]> MakeOutput(PIRClient *client, PirReply *reply,
+std::vector<uint8_t> MakeOutput(PIRClient *client, PirReply *reply,
                                       uint64_t row) {
-  seal::Plaintext result = client->decode_reply(*reply);
-  std::unique_ptr<uint8_t[]> out = std::make_unique<uint8_t[]>((N * LOGT) / 8);
-  coeffs_to_bytes(LOGT, result, out.get(), (N * LOGT) / 8);
-  return out;
+  uint64_t offset = client->get_fv_offset(row);
+  std::vector<uint8_t> result = client->decode_reply(*reply, offset);
+  assert(result.size() == ITEM_SIZE);
+  return result;
 }
 
 // Validate that the output is correct.
-bool ValidateCorrectness(PIRClient *client, uint8_t *table, uint8_t *elems,
-                         uint64_t row) {
-  uint64_t offset = client->get_fv_offset(row, ITEM_SIZE);
-
-  uint8_t *output = elems + (offset * ITEM_SIZE);
+bool ValidateCorrectness(PIRClient *client, uint8_t *table,
+                         const std::vector<uint8_t> &output, uint64_t row) {
   uint8_t *expected = table + (row * ITEM_SIZE);
   for (uint32_t i = 0; i < ITEM_SIZE; i++) {
-    if (output[i] != expected[i]) {
+    if (output.at(i) != expected[i]) {
       std::cout << "Main: PIR output is wrong!" << std::endl;
       return false;
     }
@@ -134,27 +131,28 @@ int main(int argc, char *argv[]) {
 
   // Configure parameters.
   cout << "Main: Generating all parameters" << endl;
-  seal::EncryptionParameters params{seal::scheme_type::BFV};
+  seal::EncryptionParameters enc_params{seal::scheme_type::bfv};
   PirParams pir_params;
-  gen_params(table_size, ITEM_SIZE, N, LOGT, D, params, pir_params);
+  // Encryption parameters.
+  gen_encryption_params(N, LOGT, enc_params);
+  verify_encryption_params(enc_params);
+  // PIR parameters.
+  gen_pir_params(table_size, ITEM_SIZE, D, enc_params, pir_params, true, true, true);
 
   // Generate table.
-  std::cout << std::endl;
   std::cout << "Main: Generate database" << std::endl;
   std::unique_ptr<uint8_t[]> db = CreateTable(table_size);
 
   // Initialize PIR Server
-  std::cout << std::endl;
   std::cout << "Main: Initializing server and client" << std::endl;
-  PIRServer server(params, pir_params);
+  PIRServer server(enc_params, pir_params);
 
   // Initialize PIR client....
-  PIRClient client(params, pir_params);
+  PIRClient client(enc_params, pir_params);
   seal::GaloisKeys galois_keys = client.generate_galois_keys();
   server.set_galois_key(0, galois_keys);
 
   // Preprocess database on server side.
-  std::cout << std::endl;
   std::cout << "Main: Preprocess database on server side" << std::endl;
   BENCHMARK(PreprocessTable(&server, table_size, Copy(db.get(), table_size)),
             preprocessing_time);
@@ -162,7 +160,7 @@ int main(int argc, char *argv[]) {
   // Make queries.
   std::random_device rd;
   for (uint64_t i = 0; i < query_count; i++) {
-    if (i % 100 == 0) {
+    if (i % 500 == 0) {
       std::cout << "Main: Query " << i << std::endl;
     }
 
@@ -172,9 +170,8 @@ int main(int argc, char *argv[]) {
     BENCHMARK(PirQuery query = MakeQuery(&client, row), query_time);
     BENCHMARK(PirReply reply = HandleQuery(&server, &query), server_time);
     BENCHMARK(auto output = MakeOutput(&client, &reply, row), response_time);
-
-    // if (!ValidateCorrectness(&client, db.get(), output.get(), row)) {
-    //   return 1;
+    // if (!ValidateCorrectness(&client, db.get(), output, row)) {
+       // return 1;
     // }
   }
   std::cout << "Main: Query " << query_count << std::endl;

@@ -1,0 +1,25 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+DEBUG: Rule 'libsodium' indicated that a canonical reproducible form can be obtained by modifying arguments sha256 = "7728976ead51b0de60bede2421cd2a455c2bff3f1bc0320a1d61e240e693bce9"
+DEBUG: Repository libsodium instantiated at:
+  /DP-PIR/WORKSPACE.bazel:35:13: in <toplevel>
+Repository rule http_archive defined at:
+  /root/.cache/bazel/_bazel_root/fef2038787bb3916cfc29dd25c1fde81/external/bazel_tools/tools/build_defs/repo/http.bzl:336:31: in <toplevel>
+INFO: Analyzed target //DPPIR:main (1 packages loaded, 4 targets configured).
+INFO: Found 1 target...
+[0 / 2] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.436s, Critical Path: 0.02s
+INFO: 3 processes: 3 internal.
+INFO: Build completed successfully, 3 total actions
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/client-0.txt' '--role=client' '--stage=all' '--server_id=0' '--queries=1'
+INFO: Build completed successfully, 3 total actions
+Connecting to server...
+Server at 54.84.65.104:3000
+Connected to the server!
+Offline Queries: 1
+Queries: 1
+Responses: 1
+Done!

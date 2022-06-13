@@ -10,6 +10,7 @@ function Worker(ip, workerType) {
   Worker.WORKERS.push(this);
   Worker.MAP[this.ip] = this;
   this.ready();
+  this.logResolve = null;
 }
 
 // Static members.
@@ -56,6 +57,19 @@ Worker.prototype.short = function () {
   return "Worker " + this.id + ", worker type: " + this.workerType
       + ", status: " + Status.toString(this.status)
       + ", last ping: " + this.lastPing() + ", ip: " + this.ip;
+};
+Worker.prototype.askForLog = function () {
+  const self = this;
+  return new Promise(function (resolve) { self.logResolve = resolve; });
+};
+Worker.prototype.showLog = function (log) {
+  console.log(log);
+  const tmp = this.logResolve;
+  this.logResolve = null;
+  tmp();
+};
+Worker.prototype.shouldLog = function () {
+  return this.logResolve != null;
 };
 
 module.exports = Worker;

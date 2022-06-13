@@ -1,0 +1,28 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "backend",
+    srcs = [
+        "backend_handlers.cc",
+        "backend_initialization.cc",
+        "backend_offline.cc",
+        "backend_online.cc",
+    ],
+    hdrs = [
+        "backend.h",
+        "//DPPIR/protocol/parallel_party:parallel_party_util.inc",
+    ],
+    deps = [
+        "//DPPIR/config:config",
+        "//DPPIR/onion:onion",
+        "//DPPIR/sharing:additive",
+        "//DPPIR/sharing:incremental",
+        "//DPPIR/sockets:server_socket",
+        "//DPPIR/sockets:parallel_socket",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:database",
+        "//DPPIR/types:state",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)

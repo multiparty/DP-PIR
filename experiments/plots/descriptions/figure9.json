@@ -1,0 +1,24 @@
+{
+  "experiment-name": "figure9",
+  "type": "ratio-plot",
+  "baseline": ["SealPIR", "SealPIR"],
+  "axis": {
+    "x": "tableSize",
+    "y": [ "1x", "2x", "5x", "10x" ]
+  },
+  "x": [1000, 10000, 100000],
+  "labels": {
+    "x": "Database size",
+    "y": "Queries/Database size",
+    "title": "The ratios of queries/database (y-axis) after which DP-PIR outperforms SealPIR by the indicated x factor for different database sizes (x-axis, logscale)"
+  },
+  "ranges": {
+    "x": [500, 200000],
+    "y": [0, 0.041]
+  },
+  "yscale": "linear",
+  "xscale": "log",
+  "legend": "upper right",
+  "margins": [0.12, 0.95, 0.15, 0.99],
+  "figsize": [7.0, 3.8]
+}

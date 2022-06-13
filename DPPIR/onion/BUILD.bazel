@@ -1,0 +1,30 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+# Secret Sharing Schemes we use in the protocol.
+cc_library(
+    name = "onion",
+    srcs = [
+        "onion.cc",
+    ],
+    hdrs = [
+        "onion.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//DPPIR/types:types",
+        "@libsodium//:libsodium",
+    ],
+)
+
+cc_test(
+    name = "onion_test",
+    srcs = [
+        "onion_test.cc",
+    ],
+    deps = [
+        ":onion",
+        "//DPPIR/sharing:additive",
+        "//DPPIR/sharing:incremental",
+        "@libsodium//:libsodium",
+    ],
+)

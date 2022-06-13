@@ -1,0 +1,28 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //DPPIR:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 2] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.152s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/party-0-0.txt' '--role=party' '--stage=online' '--party_id=0' '--server_id=0'
+INFO: Build completed successfully, 1 total action
+Noise cutoff: 276.31
+Creating server and accepting connections...
+On port 3000
+Client connected!
+Connecting to server...
+Server at 54.84.65.104:3001
+Connected to the server!
+Input: 100000; Noise: 2760000; Shuffled: 2860000
+Offline (simulated) time: 326ms
+Listening for queries...
+Sending queries...
+Listening for responses...
+Online time: 308ms
+Sending responses...
+Done!

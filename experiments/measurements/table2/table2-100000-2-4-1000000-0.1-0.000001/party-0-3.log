@@ -1,0 +1,84 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //DPPIR:main (1 packages loaded, 11 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.355s, Critical Path: 0.02s
+INFO: 3 processes: 3 internal.
+INFO: Build completed successfully, 3 total actions
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/party-0-3.txt' '--role=party' '--stage=all' '--party_id=0' '--server_id=3'
+INFO: Build completed successfully, 3 total actions
+Noise cutoff: 276.31
+Creating server and accepting connections...
+On port 3003
+Client connected!
+Connecting to server...
+Server at 34.234.77.235:3007
+Connected to the server!
+Initializing parallel connections...
+Creating parallel server and accepting connections...
+On port 4003
+Parallel clients connected...
+Input: 250000; Noise: 6900000; Shuffled: 7150000
+Creating secrets and ciphers for noise queries...
+Progress 750000 / 6900000
+Progress 1500000 / 6900000
+Progress 2250000 / 6900000
+Progress 3000000 / 6900000
+Progress 3750000 / 6900000
+Progress 4500000 / 6900000
+Progress 5250000 / 6900000
+Progress 6000000 / 6900000
+Progress 6750000 / 6900000
+Took 805465ms
+Listening for offline ciphers...
+Progress 0
+Decrypting offline ciphers...
+Took 14915ms
+Shuffling ciphers with siblings...
+Progress 749999 / 7150000
+Progress 1499999 / 7150000
+Progress 2249999 / 7150000
+Progress 2999999 / 7150000
+Progress 3749999 / 7150000
+Progress 4499999 / 7150000
+Progress 5249999 / 7150000
+Progress 5999999 / 7150000
+Progress 6749999 / 7150000
+Waiting for siblings...
+Sending offline ciphers...
+Progress 750000/7150000
+Progress 1500000/7150000
+Progress 2250000/7150000
+Progress 3000000/7150000
+Progress 3750000/7150000
+Progress 4500000/7150000
+Progress 5250000/7150000
+Progress 6000000/7150000
+Progress 6750000/7150000
+Broadcasting secrets...
+Waiting for next party...
+Waiting for siblings...
+Offline time: 1296661ms
+Listening for queries...
+Shuffling queries with siblings...
+Progress 749999 / 7150000
+Progress 1499999 / 7150000
+Progress 2249999 / 7150000
+Progress 2999999 / 7150000
+Progress 3749999 / 7150000
+Progress 4499999 / 7150000
+Progress 5249999 / 7150000
+Progress 5999999 / 7150000
+Progress 6749999 / 7150000
+Waiting for siblings...
+Sending queries...
+Listening for responses...
+Deshuffling responses with siblings...
+Waiting for siblings...
+Online time: 3959ms
+Sending responses...
+Done!

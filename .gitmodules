@@ -1,6 +1,0 @@
-[submodule "third_party/rapidjson"]
-	path = third_party/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
-[submodule "third_party/easywsclient"]
-	path = third_party/easywsclient
-	url = https://github.com/dhbaird/easywsclient.git

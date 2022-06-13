@@ -33,7 +33,8 @@ const WorkerType = {
 
 const DPPIRMode = {
   ONLINE: 'online',
-  OFFLINE: 'offline'
+  OFFLINE: 'offline',
+  ALL: 'all'
 };
 
 module.exports = {

@@ -3,4 +3,4 @@ try-import user.bazelrc
 build --cxxopt="-std=c++17"
 build --host_cxxopt="-std=c++17"
 build:opt --copt="-O3"
-build:opt --host_copt="-"O3"
+build:opt --host_copt="-O3"

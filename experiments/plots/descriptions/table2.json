@@ -1,0 +1,16 @@
+{
+  "experiment-name": "table2",
+  "type": "table",
+  "table": {
+    "rows-attr": "parallelism",
+    "rows": [1, 2, 4, 8],
+    "cols-attr": "mode",
+    "cols": ["Offline", "Online"]
+  },
+  "tableSize": 100000,
+  "queries": 1000000,
+  "labels": {
+    "title": "Horizontal scaling with 1M queries and a 100K DB",
+    "headers": ["Machines / Party", "Server time (seconds)"]
+  }
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "name_": "figure2-1000000-1000",
+    "experimentType": "checklist",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "pirtype": "Punc",
+    "queries": 1000,
+    "tableSize": 1000000
+  },
+  {
+    "name_": "figure2-2500000-1000",
+    "experimentType": "checklist",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "pirtype": "Punc",
+    "queries": 1000,
+    "tableSize": 2500000
+  },
+  {
+    "name_": "figure2-5000000-1000",
+    "experimentType": "checklist",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "pirtype": "Punc",
+    "queries": 1000,
+    "tableSize": 5000000
+  },
+  {
+    "name_": "figure2-1000000-2-1-1-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 1,
+    "tableSize": 1000000
+  },
+  {
+    "name_": "figure2-1000000-2-1-10000-0-0",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0,
+    "delta": 0,
+    "queries": 10000,
+    "tableSize": 1000000
+  }
+]

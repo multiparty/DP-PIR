@@ -1,0 +1,21 @@
+Running checklist client with 44.206.234.117:10006 44.202.33.175:10007 q1000 Punc
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //:main up-to-date:
+  bazel-bin/main_/main
+INFO: Elapsed time: 0.277s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/main_/main '-rowLen=8' '-tls=0' '-serverAddr=44.206.234.117:10006' '-serverAddr2=44.202.33.175:10007' '-pirType=Punc' q1000
+INFO: Build completed successfully, 1 total action
+Configured to make 1000 queries
+Obtaining hint (this may take a while)...[OK]
+Got 1000000 keys from server
+0
+1.557797015s
+Server 1 time: 35.95257ms and bytes: 202587
+Server 2 time: 36.611151ms and bytes: 201542

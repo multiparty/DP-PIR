@@ -113,6 +113,18 @@ Orchestrator.prototype.assignExperiment = function (worker) {
     return experiment;
   }
 };
+Orchestrator.prototype.experimentsToJSON = function () {
+  let arr = [];
+  for (const experiment of this.experiments) {
+    arr.push(experiment.toJSON());
+  }
+  return arr;
+};
+Orchestrator.prototype.clearExperiments = function () {
+  this.experiments = [];
+  this.clientExperimentsQueue = [];
+  this.serverExperimentsQueue = [];
+};
 
 
 module.exports = Orchestrator;

@@ -1,0 +1,80 @@
+Running checklist client with 34.201.98.136:10000 3.95.250.123:10008 q100000 Punc
+Loading: 
+Loading: 0 packages loaded
+DEBUG: Rule 'checklist' indicated that a canonical reproducible form can be obtained by modifying arguments commit = "52bba7f833833fe13b4fd3f873dc742505c47294", shallow_since = "1643059467 -0500" and dropping ["branch"]
+DEBUG: Repository checklist instantiated at:
+  /DP-PIR/experiments/checklist/WORKSPACE.bazel:7:15: in <toplevel>
+Repository rule git_repository defined at:
+  /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/bazel_tools/tools/build_defs/repo/git.bzl:199:33: in <toplevel>
+Analyzing: target //:main (0 packages loaded, 0 targets configured)
+DEBUG: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/bazel_gazelle/internal/go_repository.bzl:189:18: org_golang_x_tools: gazelle: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/cmd/fiximports/testdata/src/old.com/bad/bad.go: error reading go file: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/cmd/fiximports/testdata/src/old.com/bad/bad.go:2:43: expected 'package', found 'EOF'
+gazelle: found packages imports (imports.go) and server (issue29198.go) in /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/go/internal/gccgoimporter/testdata
+gazelle: found packages exports (exports.go) and p (issue15920.go) in /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/go/internal/gcimporter/testdata
+gazelle: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/go/loader/testdata/badpkgdecl.go: error reading go file: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_x_tools/go/loader/testdata/badpkgdecl.go:1:34: expected 'package', found 'EOF'
+gazelle: finding module path for import domain.name/importdecl: go get: unrecognized import path "domain.name/importdecl": https fetch: Get "https://domain.name/importdecl?go-get=1": dial tcp: lookup domain.name: No address associated with hostname
+gazelle: finding module path for import old.com/one: go get: unrecognized import path "old.com/one": https fetch: Get "http://www.old.com/one?go-get=1": redirected from secure URL https://old.com/one?go-get=1 to insecure URL http://www.old.com/one?go-get=1
+gazelle: finding module path for import titanic.biz/bar: go get: unrecognized import path "titanic.biz/bar": reading https://titanic.biz/bar?go-get=1: 403 Forbidden
+gazelle: finding module path for import titanic.biz/foo: go get: unrecognized import path "titanic.biz/foo": reading https://titanic.biz/foo?go-get=1: 403 Forbidden
+gazelle: finding module path for import fruit.io/pear: go get: unrecognized import path "fruit.io/pear": https fetch: Get "https://fruit.io/pear?go-get=1": dial tcp: lookup fruit.io: Temporary failure in name resolution
+gazelle: finding module path for import fruit.io/banana: go get: unrecognized import path "fruit.io/banana": https fetch: Get "https://fruit.io/banana?go-get=1": dial tcp: lookup fruit.io: Temporary failure in name resolution
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import nosuchpkg: go get: malformed module path "nosuchpkg": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import nosuchpkg: go get: malformed module path "nosuchpkg": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import referrers: go get: malformed module path "referrers": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import lib: go get: malformed module path "lib": missing dot in first path element
+gazelle: finding module path for import a: go get: malformed module path "a": missing dot in first path element
+gazelle: finding module path for import b: go get: malformed module path "b": missing dot in first path element
+gazelle: finding module path for import b: go get: malformed module path "b": missing dot in first path element
+gazelle: finding module path for import a: go get: malformed module path "a": missing dot in first path element
+gazelle: finding module path for import a: go get: malformed module path "a": missing dot in first path element
+gazelle: finding module path for import a: go get: malformed module path "a": missing dot in first path element
+gazelle: finding module path for import b: go get: malformed module path "b": missing dot in first path element
+gazelle: finding module path for import nosuchpkg: go get: malformed module path "nosuchpkg": missing dot in first path element
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular/double/one: go: downloading golang.org/x/tools v0.1.10
+go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular/double/one
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular/double/b: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular/double/b
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular/triple/b: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular/triple/b
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular/triple/c: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular/triple/c
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular/triple/a: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular/triple/a
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/circular: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/circular
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/types: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/types
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/foo: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/foo
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/godef/a: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/godef/a
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/types: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/types
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/implementation/other: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/implementation/other
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/foo: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/foo
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/foo: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/foo
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/foo: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/foo
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/references: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/references
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/rename/crosspkg: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/rename/crosspkg
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/baz: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/baz
+gazelle: finding module path for import golang.org/x/tools/internal/lsp/signature: go get: module golang.org/x/tools@upgrade found (v0.1.10), but does not contain package golang.org/x/tools/internal/lsp/signature
+DEBUG: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/bazel_gazelle/internal/go_repository.bzl:189:18: org_golang_google_protobuf: gazelle: /root/.cache/bazel/_bazel_root/50d13b58632f3e72f082c4f6a134f626/external/org_golang_google_protobuf/cmd/protoc-gen-go/testdata/imports/test_b_1: directory contains multiple proto packages. Gazelle can only generate a proto_library for one package.
+INFO: Analyzed target //:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //:main up-to-date:
+  bazel-bin/main_/main
+INFO: Elapsed time: 0.261s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/main_/main '-rowLen=8' '-tls=0' '-serverAddr=34.201.98.136:10000' '-serverAddr2=3.95.250.123:10008' '-pirType=Punc' q100000
+INFO: Build completed successfully, 1 total action
+Configured to make 100000 queries
+Obtaining hint (this may take a while)...[OK]
+Got 2500000 keys from server
+0
+50000
+5m6.393112235s
+Server 1 time: 5.670492607s and bytes: 21877607
+Server 2 time: 5.696595208s and bytes: 21861991

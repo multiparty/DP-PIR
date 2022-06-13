@@ -10,9 +10,15 @@ WORKER_ID=$( { curl "$ORCHASTRATOR/giveip/server" 2> /dev/null; } )
 
 echo "I am a server with worker_id ${WORKER_ID}"
 
+# Set the socket buffer size
+sudo sysctl -w net.core.rmem_max=123289600
+sudo sysctl -w net.core.wmem_max=123289600
+
 # Loop forever..
 while true
 do
+  echo "Waiting for new job!"
+
   # Try to sign up to the next computation.
   response=$( { curl "$ORCHASTRATOR/ping/${WORKER_ID}" 2> /dev/null; } )
   if [ "$response" = "WAIT" ]
@@ -25,34 +31,49 @@ do
   echo "Received job ${response}!"
   params=($response)
   type=${params[0]}
-  party_id=${params[1]}
-  machine_id=${params[2]}
+  outfile=""
   pid=""
 
   # Run the experiment according to $type in the background,
   # store the process ID in pid.
   if [[ $type == "dppir" ]]
   then
+    # Read rest of parameters.
+    party_id=${params[1]}
+    server_id=${params[2]}
+    online=${params[3]}
+
     # Read configurations.
-    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
-    while [[ $(cat experiments/dppir/config${WORKER_ID}.json) == "WAIT" ]]
+    echo "Reading config ..."
+    config="config/party-${party_id}-${server_id}.txt"
+    curl "$ORCHASTRATOR/config/${WORKER_ID}" > $config 2> /dev/null
+    while [[ $(cat ${config} 2> /dev/null) == "WAIT" ]]
     do
       sleep 2
-      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
-      echo "config.."
+      echo "retry config..."
+      curl "$ORCHASTRATOR/config/${WORKER_ID}" > $config 2> /dev/null
     done
 
-    ./experiments/dppir/server.sh ${party_id} ${machine_id} ${params[3]} \
-                                  ${params[4]} ${params[5]} ${params[6]} ${params[7]} "${WORKER_ID}" \
-        > party-${party_id}-${machine_id}.log 2>&1 &
+    # Run binary.
+    outfile="DPPIR-party-${party_id}-${server_id}.log"
+    bazel run --config=opt //DPPIR:main -- \
+        --config=$config --role=party --stage=$online \
+        --party_id=$party_id --server_id=$server_id > $outfile 2>&1 &
     pid=$!
   elif [[ $type == "checklist" ]]
   then
-    ./experiments/checklist/run_server.sh ${params[3]} ${params[4]} \
-        > party-${party_id}-${machine_id}.log 2>&1 &
+    # Read rest of parameters.
+    server=${params[1]}
+    table_size=${params[2]}
+    port=${params[3]}
+    pirtype=${params[4]}
+    outfile="checklist-server-${server}.log"
+    # Run binary.
+    ./experiments/checklist/run_server.sh $table_size $port $pirtype > $outfile 2>&1 &
     pid=$!
   else
-    echo "Invalid type ${type}" > party-${party_id}-${machine_id}.log
+    outfile="invalid-error.log"
+    echo "Invalid type ${type}" > $outfile
     sleep 5 &
     pid=$!
   fi
@@ -61,13 +82,19 @@ do
   while [[ -e /proc/$pid ]]
   do
     echo "Job running..."
-    if [ "$( { curl "$ORCHASTRATOR/shouldkill/${WORKER_ID}" 2> /dev/null; } )" -eq 1 ]
+    action=$( { curl "$ORCHASTRATOR/shouldkill/${WORKER_ID}" 2> /dev/null; } )
+    if [[ "$action" == "2" ]]
+    then
+      echo "Log requested..."
+      curl -H 'Content-Type: text/plain' -X POST --data-binary @${outfile} "$ORCHASTRATOR/showlog/${WORKER_ID}"
+    elif [[ "$action" == "1" ]]
     then
       echo "Kill"
       kill -9 $pid
-      ./experiments/checklist/stop_servers.sh 2>/dev/null
-      ./experiments/checklist/stop_servers.sh 2>/dev/null
-      echo "Killed by Orchastrator!" >> party-${party_id}-${machine_id}.log
+      kill $(ps aux | grep "DPPIR/main" | awk '{print $2}') 2>/dev/null
+      kill $(ps aux | grep "DPPIR/main" | awk '{print $2}') 2>/dev/null
+      ./experiments/checklist/stop.sh 2>/dev/null
+      echo "Killed by Orchastrator!" >> $outfile
       break
     fi
     sleep 15
@@ -75,9 +102,5 @@ do
 
   # Done, send log file to orchastrator which includes the time taken.
   echo "Uploading result to orchastrator..."
-  curl -H 'Content-Type: text/plain' -X POST \
-       --data-binary @party-${party_id}-${machine_id}.log \
-       "$ORCHASTRATOR/done/${WORKER_ID}"
-
-    echo "Waiting for new job!"
+  curl -H 'Content-Type: text/plain' -X POST --data-binary @${outfile} "$ORCHASTRATOR/done/${WORKER_ID}"
 done

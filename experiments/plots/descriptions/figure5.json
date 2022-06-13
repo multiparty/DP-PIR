@@ -1,0 +1,35 @@
+{
+  "experiment-name": "figure5",
+  "type": "split-plot",
+  "axis": {
+    "x": "parties",
+    "y": [
+      ["DP-PIR", "Offline"],
+      ["DP-PIR", "Online"]
+    ]
+  },
+  "tableSize": "10000",
+  "queries": "100000",
+  "x": [2, 3, 4, 5],
+  "interpolate": {
+    "DP-PIR-Online": [],
+    "DP-PIR-Offline": []
+  },
+  "labels": {
+    "x": "Number of Parties",
+    "y": "Completion Time (sec)",
+    "graphs": 1,
+    "title": "Completion time for varying number of parties with 100K queries against a 10K database"
+  },
+  "ranges": {
+    "x": [1.5, 5.5],
+    "y": [-10, 3300]
+  },
+  "split": [40, 400],
+  "top": "Offline",
+  "bot": "Online",
+  "yscale": "linear",
+  "xscale": "linear",
+  "margins": [0.13, 0.95, 0.18, 0.99],
+  "figsize": [7.0, 3.2]
+}

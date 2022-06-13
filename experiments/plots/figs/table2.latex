@@ -1,0 +1,8 @@
+\begin{tabular}{c|c|c}
+\multirow{2}{*}{\textbf{Machines / Party}} & \multicolumn{2}{c}{\textbf{Server time (seconds)}} \\
+&   \textbf{\quad Offline\quad}   & \textbf{Online} \\ \hline
+1 & 5010.853 & 10.955 \\
+2 & 2560.996 & 8.258 \\
+4 & 1296.661 & 3.959 \\
+8 & 664.165 & 2.201
+\end{tabular}%

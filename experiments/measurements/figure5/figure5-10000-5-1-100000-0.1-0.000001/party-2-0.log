@@ -1,0 +1,63 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //DPPIR:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 2] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.168s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/party-2-0.txt' '--role=party' '--stage=all' '--party_id=2' '--server_id=0'
+INFO: Build completed successfully, 1 total action
+Noise cutoff: 276.31
+Creating server and accepting connections...
+On port 3002
+Client connected!
+Connecting to server...
+Server at 3.82.229.162:3003
+Connected to the server!
+Input: 5620000; Noise: 2760000; Shuffled: 8380000
+Creating secrets and ciphers for noise queries...
+Progress 750000/2760000
+Progress 1500000/2760000
+Progress 2250000/2760000
+Took 645710ms
+Listening for offline ciphers...
+Progress 5250000
+Progress 4500000
+Progress 3750000
+Progress 3000000
+Progress 2250000
+Progress 1500000
+Progress 750000
+Progress 0
+Decrypting offline ciphers...
+Progress 750000/5620000
+Progress 1500000/5620000
+Progress 2250000/5620000
+Progress 3000000/5620000
+Progress 3750000/5620000
+Progress 4500000/5620000
+Progress 5250000/5620000
+Took 337862ms
+Sending offline ciphers...
+Progress 750000/8380000
+Progress 1500000/8380000
+Progress 2250000/8380000
+Progress 3000000/8380000
+Progress 3750000/8380000
+Progress 4500000/8380000
+Progress 5250000/8380000
+Progress 6000000/8380000
+Progress 6750000/8380000
+Progress 7500000/8380000
+Progress 8250000/8380000
+Offline time: 2163337ms
+Listening for queries...
+Sending queries...
+Listening for responses...
+Online time: 11173ms
+Sending responses...
+Done!

@@ -10,9 +10,15 @@ WORKER_ID=$( { curl "$ORCHASTRATOR/giveip/client" 2> /dev/null; } )
 
 echo "I am a client with worker_id ${WORKER_ID}"
 
+# Set the socket buffer size
+sudo sysctl -w net.core.rmem_max=123289600
+sudo sysctl -w net.core.wmem_max=123289600
+
 # Loop forever..
 while true
 do
+  echo "Waiting for new job!"
+
   # Try to sign up to the next computation.
   response=$( { curl "$ORCHASTRATOR/ping/${WORKER_ID}" 2> /dev/null; } )
   if [ "$response" = "WAIT" ]
@@ -25,42 +31,61 @@ do
   echo "Received job ${response}!"
   params=($response)
   type=${params[0]}
-  machine_id=${params[1]}
-  client_id=${params[2]}
+  outfile=""
   pid=""
 
   # Run the experiment according to $type in the background,
   # store the process ID in pid.
   if [[ $type == "dppir" ]]
   then
+    # Read rest of parameters.
+    server_id=${params[1]}
+    queries=${params[2]}
+    online=${params[3]}
+
     # Read configurations.
-    curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
-    while [[ $(cat experiments/dppir/config${WORKER_ID}.json) == "WAIT" ]]
+    echo "Reading config ..."
+    config="config/client-${server_id}.txt"
+    curl "$ORCHASTRATOR/config/${WORKER_ID}" > $config 2> /dev/null
+    while [[ $(cat ${config} 2> /dev/null) == "WAIT" ]]
     do
       sleep 2
-      curl "$ORCHASTRATOR/config/${WORKER_ID}" > experiments/dppir/config${WORKER_ID}.json 2> /dev/null
-      echo "config.."
+      echo "retry config..."
+      curl "$ORCHASTRATOR/config/${WORKER_ID}" > $config 2> /dev/null
     done
 
-    ./experiments/dppir/client.sh ${machine_id} ${client_id} \
-                                  ${params[3]} ${params[4]} ${params[5]} ${WORKER_ID}  \
-        > client-${machine_id}-${client_id}.log 2>&1 &
+    # Run binaries.
+    outfile="DPPIR-client-${server_id}.log"
+    echo "Running client for ${server_id}"
+    bazel run --config=opt //DPPIR:main -- \
+        --config=$config --role=client --stage=$online \
+        --server_id=$server_id --queries=$queries > $outfile 2>&1 &
     pid=$!
   elif [[ $type == "checklist" ]]
   then
-    sleep 5  # wait to ensure that servers have had a chance to boot.
-    ./experiments/checklist/run_client.sh ${params[3]} ${params[4]} ${params[5]} \
-        > client-${machine_id}-${client_id}.log 2>&1 &
+    # Read rest of parameters.
+    server1=${params[1]}
+    server2=${params[2]}
+    queries=${params[3]}
+    pirtype=${params[4]}
+    outfile="checklist-client.log"
+
+    sleep 15  # wait to ensure that servers have had a chance to boot.
+    ./experiments/checklist/run_client.sh $server1 $server2 $queries $pirtype > $outfile 2>&1 &
     pid=$!
 
   elif [[ $type == "sealpir" ]]
   then
-    bazel-3.4.1 run //experiments/sealpir:sealpir --config=opt -- \
-        --table=${params[3]} --queries=${params[4]} \
-        > client-${machine_id}-${client_id}.log 2>&1 &
+    # Read rest of parameters.
+    table_size=${params[1]}
+    queries=${params[2]}
+    outfile="sealpir.log"
+
+    ./experiments/sealpir/run.sh $table_size $queries > $outfile 2>&1 &
     pid=$!
   else
-    echo "Invalid type ${type}" > client-${machine_id}-${client_id}.log
+    outfile="invalid-error.log"
+    echo "Invalid type ${type}" > $outfile
     sleep 5 &
     pid=$!
   fi
@@ -69,13 +94,20 @@ do
   while [[ -e /proc/$pid ]]
   do
     echo "Job running..."
-    if [ "$( { curl "$ORCHASTRATOR/shouldkill/${WORKER_ID}" 2> /dev/null; } )" -eq 1 ]
+    action=$( { curl "$ORCHASTRATOR/shouldkill/${WORKER_ID}" 2> /dev/null; } )
+    if [[ "$action" == "2" ]]
+    then
+      echo "Log requested..."
+      curl -H 'Content-Type: text/plain' -X POST --data-binary @${outfile} "$ORCHASTRATOR/showlog/${WORKER_ID}"
+    elif [[ "$action" == "1" ]]
     then
       echo "Kill"
       kill -9 $pid
-      ./experiments/checklist/stop_servers.sh 2>/dev/null
-      ./experiments/checklist/stop_servers.sh 2>/dev/null
-      echo "Killed by Orchastrator!" >> client-${machine_id}-${client_id}.log
+      kill $(ps aux | grep "DPPIR/main" | awk '{print $2}') 2>/dev/null
+      kill $(ps aux | grep "DPPIR/main" | awk '{print $2}') 2>/dev/null
+      ./experiments/checklist/stop.sh 2>/dev/null
+      ./experiments/sealpir/stop.sh 2>/dev/null
+      echo "Killed by Orchastrator!" >> $outfile
       break
     fi
     sleep 15
@@ -83,9 +115,5 @@ do
 
   # Done, send log file to orchastrator which includes the time taken.
   echo "Uploading result to orchastrator..."
-  curl -H 'Content-Type: text/plain' -X POST \
-       --data-binary @client-${machine_id}-${client_id}.log \
-       "$ORCHASTRATOR/done/${WORKER_ID}"
-
-  echo "Waiting for new job!"
+  curl -H 'Content-Type: text/plain' -X POST --data-binary @$outfile "$ORCHASTRATOR/done/${WORKER_ID}"
 done

@@ -1,0 +1,25 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+    name = "noise",
+    srcs = [
+        "noise.cc",
+    ],
+    hdrs = [
+        "noise.h",
+    ],
+    deps = [
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_test(
+    name = "noise_test",
+    srcs = [
+        ":noise_test.cc",
+    ],
+    deps = [
+        ":noise",
+    ],
+)

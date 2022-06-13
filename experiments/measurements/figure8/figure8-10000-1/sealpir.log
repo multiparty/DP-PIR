@@ -1,0 +1,31 @@
+Starting local Bazel server and connecting to it...
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //:sealpir (1 packages loaded, 0 targets configured)
+Analyzing: target //:sealpir (28 packages loaded, 68 targets configured)
+Analyzing: target //:sealpir (47 packages loaded, 968 targets configured)
+INFO: Analyzed target //:sealpir (47 packages loaded, 8082 targets configured).
+
+INFO: Found 1 target...
+[0 / 5] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+[32 / 106] checking cached actions
+Target //:sealpir up-to-date:
+  bazel-bin/sealpir
+INFO: Elapsed time: 9.067s, Critical Path: 0.18s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/sealpir '--table=10000' '--queries=1'
+INFO: Build completed successfully, 1 total action
+Main: Generating all parameters
+Main: Generate database
+Main: Initializing server and client
+Main: Preprocess database on server side
+Main: Query 0
+Main: Query 1
+
+Time taken: 
+Preprocessing: 4ms
+Query time: 2ms
+Server time: 17ms
+Response handling: 2ms
+Done!

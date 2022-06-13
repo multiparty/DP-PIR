@@ -1,0 +1,35 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "parallel_party",
+    srcs = [
+        "parallel_party_handlers.cc",
+        "parallel_party_initialization.cc",
+        "parallel_party_offline.cc",
+        "parallel_party_online.cc",
+        "parallel_party_shuffle.cc",
+    ],
+    hdrs = [
+        "parallel_party.h",
+        "parallel_party_util.inc",
+    ],
+    deps = [
+        "//DPPIR/config:config",
+        "//DPPIR/noise:noise",
+        "//DPPIR/onion:onion",
+        "//DPPIR/sharing:additive",
+        "//DPPIR/sharing:incremental",
+        "//DPPIR/shuffle:local_shuffle",
+        "//DPPIR/shuffle:parallel_shuffle",
+        "//DPPIR/sockets:client_socket",
+        "//DPPIR/sockets:server_socket",
+        "//DPPIR/sockets:parallel_socket",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:database",
+        "//DPPIR/types:state",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+exports_files(["parallel_party_util.inc"])

@@ -1,0 +1,38 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
+cc_library(
+    name = "config",
+    srcs = [
+        "config.cc",
+    ],
+    hdrs = [
+        "config.h",
+    ],
+    deps = [
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_binary(
+    name = "gen_config",
+    srcs = [
+        "gen_config.cc",
+    ],
+    deps = [
+        ":config",
+        "//DPPIR/onion:onion",
+    ],
+)
+
+# Test.
+cc_test(
+    name = "config_test",
+    srcs = [
+        "config_test.cc",
+    ],
+    deps = [
+        ":config",
+        "//DPPIR/onion:onion",
+    ],
+)

@@ -1,0 +1,21 @@
+Running checklist client with 3.82.229.162:10003 44.206.240.15:10007 q1000 DPF
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //:main up-to-date:
+  bazel-bin/main_/main
+INFO: Elapsed time: 0.304s, Critical Path: 0.01s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/main_/main '-rowLen=8' '-tls=0' '-serverAddr=3.82.229.162:10003' '-serverAddr2=44.206.240.15:10007' '-pirType=DPF' q1000
+INFO: Build completed successfully, 1 total action
+Configured to make 1000 queries
+Obtaining hint (this may take a while)...[OK]
+Got 100000 keys from server
+0
+2.662118056s
+Server 1 time: 1.707079814s and bytes: 243000
+Server 2 time: 1.702119409s and bytes: 243000

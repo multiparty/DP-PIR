@@ -1,0 +1,29 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "party",
+    srcs = [
+        "party_handlers.cc",
+        "party_initialization.cc",
+        "party_offline.cc",
+        "party_online.cc",
+    ],
+    hdrs = [
+        "party.h",
+    ],
+    deps = [
+        "//DPPIR/config:config",
+        "//DPPIR/noise:noise",
+        "//DPPIR/onion:onion",
+        "//DPPIR/sharing:additive",
+        "//DPPIR/sharing:incremental",
+        "//DPPIR/shuffle:local_shuffle",
+        "//DPPIR/sockets:client_socket",
+        "//DPPIR/sockets:server_socket",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:database",
+        "//DPPIR/types:state",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)

@@ -1,0 +1,54 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+cc_library(
+    name = "util",
+    hdrs = [
+        "util.h",
+    ],
+    srcs = [
+        "util.cc",
+    ],
+    visibility = ["//:__subpackages__"],
+)  
+
+cc_library(
+    name = "local_shuffle",
+    srcs = [
+        "local_shuffle.cc",
+    ],
+    hdrs = [
+        "local_shuffle.h",
+    ],
+    deps = [
+        ":util",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "parallel_shuffle",
+    srcs = [
+        "parallel_shuffle.cc",
+    ],
+    hdrs = [
+        "parallel_shuffle.h",
+    ],
+    deps = [
+        ":util",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_test(
+    name = "shuffle_test",
+    srcs = [
+        "shuffle_test.cc",
+    ],
+    deps = [
+        ":local_shuffle",
+        ":parallel_shuffle",
+        "//DPPIR/types:types",
+    ],
+)

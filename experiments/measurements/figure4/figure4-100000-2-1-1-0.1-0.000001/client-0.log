@@ -1,0 +1,20 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //DPPIR:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.332s, Critical Path: 0.02s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/client-0.txt' '--role=client' '--stage=all' '--server_id=0' '--queries=1'
+INFO: Build completed successfully, 1 total action
+Connecting to server...
+Server at 3.82.147.138:3000
+Connected to the server!
+Offline Queries: 1
+Queries: 1
+Responses: 1
+Done!

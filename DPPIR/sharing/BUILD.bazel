@@ -1,0 +1,53 @@
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+# Secret Sharing Schemes we use in the protocol.
+cc_library(
+    name = "additive",
+    srcs = [
+        "additive.cc",
+    ],
+    hdrs = [
+        "additive.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//DPPIR/types:types",
+        "@libsodium//:libsodium",
+    ],
+)
+
+cc_library(
+    name = "incremental",
+    srcs = [
+        "incremental.cc",
+    ],
+    hdrs = [
+        "incremental.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//DPPIR/types:types",
+        "@libsodium//:libsodium",
+    ],
+)
+
+# Tests
+cc_test(
+    name = "additive_test",
+    srcs = [
+        "additive_test.cc",
+    ],
+    deps = [
+        ":additive",
+        "@libsodium//:libsodium",
+    ],
+)
+cc_test(
+    name = "incremental_test",
+    srcs = [
+        "incremental_test.cc",
+    ],
+    deps = [
+        ":incremental",
+    ],
+)

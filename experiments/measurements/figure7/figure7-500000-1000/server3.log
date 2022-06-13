@@ -1,0 +1,16 @@
+Running checklist server on port 10003 for 500000 rows with pirtype=DPF
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target @checklist//cmd/rpc_server:rpc_server (0 packages loaded, 0 targets configured)
+INFO: Analyzed target @checklist//cmd/rpc_server:rpc_server (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target @checklist//cmd/rpc_server:rpc_server up-to-date:
+  bazel-bin/external/checklist/cmd/rpc_server/rpc_server_/rpc_server
+INFO: Elapsed time: 0.302s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/external/checklist/cmd/rpc_server/rpc_server_/rpc_server '-numRows=500000' '-rowLen=8' '-tls=0' '-p=10003' '-pirType=DPF'
+INFO: Build completed successfully, 1 total action
+2022/06/12 14:59:36 Serving RPC server over TCP on [::]:10003
+Shutting downKilled by Orchastrator!

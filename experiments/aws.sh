@@ -18,24 +18,32 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="userdata.txt"
 
 #!/bin/bash
-CORES=8
-ORCHASTRATOR="http://3.80.35.222:8000"
-DAEMON="client"  # Or client
+CORES=1
+ORCHASTRATOR="http://44.204.206.222:8000"
+DAEMON="server"  # Or client
 
 if [[ ! -f "lock" ]]; then
   echo "AWS LOG: Installing dependencies..."
 
-  # Install g++
+  # Dependencies/tools.
   apt-get clean
   apt-get update
-  apt-get install -y build-essential software-properties-common curl
-  apt-get install -y gcc-9 g++-9
-  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9
-  update-alternatives --set gcc "/usr/bin/gcc-9"
-  apt-get install -y nodejs npm
-  apt-get install -y valgrind
+  apt-get install -y curl apt-transport-https gnupg
 
-  # Install go
+  # g++-11
+  add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  apt-get install -y gcc-11 g++-11
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 90 \
+                         --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 \
+                         --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-11 \
+                         --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11 \
+                         --slave /usr/bin/g++ g++ /usr/bin/g++-11
+  update-alternatives --set gcc /usr/bin/gcc-11
+
+  # nodejs (for orchestrator only)
+  apt-get install -y nodejs npm
+
+  # Install go (for checklist)
   echo "AWS LOG: Installing go..."
   wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
   rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.4.linux-amd64.tar.gz
@@ -44,12 +52,16 @@ if [[ ! -f "lock" ]]; then
   echo "export PATH=\$PATH:/usr/local/go/bin" >> /home/ubuntu/.bashrc
   export PATH="$PATH:/usr/local/go/bin"
 
-  # Install bazel-3.4.1
+  # Install bazel-4.2.1
   echo "AWS LOG: Installing bazel..."
-  echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-  curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
-  apt-get update && apt-get install -y bazel-3.4.1
-  
+  curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg
+  mv bazel-archive-keyring.gpg /usr/share/keyrings
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
+  #echo "deb [arch=amd64 trusted=yes] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
+  apt-get update && apt-get install -y bazel-4.2.1
+  update-alternatives --install /usr/bin/bazel bazel /usr/bin/bazel-4.2.1 60
+  update-alternatives --set bazel "/usr/bin/bazel-4.2.1"
+
   # lock to avoid installing dependencies again.
   touch lock
 fi
@@ -57,22 +69,20 @@ fi
 if [[ ! -d "DP-PIR" ]]; then
   echo "AWS LOG: Cloning repo..."
   # Install our repo and build it
-  git clone https://github.com/multiparty/DP-PIR.git
+  git clone https://github.com/multiparty/DP-PIR DP-PIR
   cd DP-PIR
-  git submodule init
-  git submodule update
 else
   echo "AWS LOG: Updating repo..."
   cd DP-PIR
-  git pull origin master
-  git submodule update
+  git pull origin main
 fi
 
 echo "AWS LOG: compiling main..."
-bazel-3.4.1 build //drivacy/... --config=opt
+bazel build ... --config=opt
 
 echo "AWS LOG: compiling experiments..."
-bazel-3.4.1 build //experiments/... --config=opt
+cd experiments/checklist && bazel build ... -c opt && cd -
+cd experiments/sealpir && bazel build ... --config=opt && cd -
 
 # Run the daemon(s)
 pids=()

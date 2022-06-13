@@ -1,0 +1,32 @@
+{
+  "experiment-name": "figure8",
+  "type": "simple-plot",
+  "axis": {
+    "x": "queries",
+    "y": [
+      ["SealPIR", "SealPIR"],
+      ["DP-PIR", "Online"]
+    ]
+  },
+  "tableSize": 10000,
+  "queries": "x",
+  "x": [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000],
+  "interpolate": {
+    "DP-PIR-Online": [1000000000],
+    "SealPIR-SealPIR": [100000, 1000000, 10000000, 100000000, 1000000000]
+  },
+  "labels": {
+    "x": "Queries",
+    "y": "Completion Time (sec)",
+    "graphs": 0,
+    "title": "Completion time of SealPIR and DP-PIR when run on various number of queries and a database with 2.5M elements"
+  },
+  "ranges": {
+    "x": [1, 500000000],
+    "y": [0.011, 500000]
+  },
+  "yscale": "log",
+  "legend": "upper left",
+  "margins": [0.13, 0.95, 0.18, 0.99],
+  "figsize": [7.0, 3.2]
+}

@@ -1,0 +1,32 @@
+{
+  "experiment-name": "figure4",
+  "type": "simple-plot",
+  "axis": {
+    "x": "tableSize",
+    "y": [
+      ["DP-PIR", "Offline"],
+      ["DP-PIR", "Online"]
+    ]
+  },
+  "tableSize": "x",
+  "queries": "1",
+  "x": [100, 1000, 10000, 100000, 1000000, 10000000],
+  "interpolate": {
+    "DP-PIR-Online": [10000000],
+    "DP-PIR-Offline": [1000000, 10000000]
+  },
+  "labels": {
+    "x": "Database Size",
+    "y": "Completion Time (sec)",
+    "graphs": 1,
+    "title": "Completion time for a batch consisting only of noise queries against varying database sizes (logscale)"
+  },
+  "ranges": {
+    "x": [100, 3000000],
+    "y": [0.002, 30000]
+  },
+  "yscale": "log",
+  "legend": "upper left",
+  "margins": [0.13, 0.95, 0.18, 0.99],
+  "figsize": [7.0, 3.2]
+}

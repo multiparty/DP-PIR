@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -90,6 +90,14 @@ AbstractExperiment.prototype.resultDirectory = function () {
 AbstractExperiment.prototype.readyForClients = function () {
   return true;
 };
+AbstractExperiment.prototype.toJSON = function () {
+  return {
+    name_: this.name_,
+    experimentType: this.experimentType,
+    clientsNum: this.clientsNum,
+    serversNum: this.serversNum
+  };
+};
 
 // DPPIR experiment.
 function DPPIRExperiment(name, mode, clientsNum, serversNum) {
@@ -99,62 +107,56 @@ function DPPIRExperiment(name, mode, clientsNum, serversNum) {
   this.serversMap = {};
   this.currentParty = 0;
   this.currentPartyMachine = 0;
-  this.currentClientMachine = 0;
-  this.currentClientParallel = 0;
+  this.currentClient = 0;
   this.config = null;
 }
 DPPIRExperiment.prototype = Object.create(AbstractExperiment.prototype);
 DPPIRExperiment.prototype.setTableSize = function (tableSize) {
   this.tableSize = tableSize;
 };
-DPPIRExperiment.prototype.setServerParams = function (parties, parallelism, batchSize, span, cutoff) {
+DPPIRExperiment.prototype.setServerParams = function (parties, parallelism, epsilon, delta) {
   this.parties = parties;
   this.parallelism = parallelism;
-  this.batchSize = batchSize;
-  this.span = span;
-  this.cutoff = cutoff;
+  this.epsilon = epsilon;
+  this.delta = delta;
 };
-DPPIRExperiment.prototype.setClientParams = function (clients, queries) {
-  this.clientsParallel = clients;
+DPPIRExperiment.prototype.setClientParams = function (queries) {
   this.queries = queries;
 };
-DPPIRExperiment.prototype.generateTableAndConfigurations = async function () {
+DPPIRExperiment.prototype.generateTableAndConfigurations = function () {
   if (this.config != null) {
     return;
   }
 
-  // Generate table.
-  const self = this;
-
   // Generate configuration file!
-  const ipList = self.servers.map(s => s.ip);
-  const scriptPath = path.join(__dirname, '../../bazel-bin/drivacy/config');
-  const command = scriptPath + ' --parties=' + self.parties
-                             + ' --parallelism=' + self.parallelism
-                             + ' ' + ipList.join(' ');
-  exec(command, (err, stdout, stderr) => {
-    if (this.config == null) {
-      this.config = stdout;
-    }
-  });
+  const configfile = "/tmp/config.txt";
+  let command = "bazel run --config=opt //DPPIR/config:gen_config -- "
+                  + configfile + " "
+                  + this.tableSize + " "
+                  + this.epsilon + " "
+                  + this.delta + " "
+                  + this.parties + " "
+                  + this.parallelism;
+  for (const s of this.servers) {
+    command += " " + s.ip;
+  }
+
+  // Run the command.
+  const result = spawnSync(command, {shell: true});
+  if (result.status != 0 || result.error != undefined) {
+    console.log("Could not create configuration for with :gen_config");
+    return;
+  }
+  this.config = fs.readFileSync(configfile);
 };
 // Override.
 DPPIRExperiment.prototype.assignWorker = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
-    this.clientsMap[worker.id] = {
-      machine_id: this.currentClientMachine + 1,
-      client_id: this.currentClientParallel + 1
-    };
-
-    this.currentClientParallel++;
-    if (this.currentClientParallel == this.clientsParallel) {
-      this.currentClientParallel = 0;
-      this.currentClientMachine++;
-    }
+    this.clientsMap[worker.id] = this.currentClient++;
   } else if (worker.workerType == WorkerType.SERVER) {
     this.serversMap[worker.id] = {
-      party_id: this.currentParty + 1,
-      machine_id: this.currentPartyMachine + 1
+      party_id: this.currentParty,
+      machine_id: this.currentPartyMachine
     };
 
     this.currentPartyMachine++;
@@ -168,8 +170,7 @@ DPPIRExperiment.prototype.assignWorker = function (worker) {
 DPPIRExperiment.prototype.resultFile = function (worker) {
   let filename = "";
   if (worker.workerType == WorkerType.CLIENT) {
-    filename = "client-" + this.clientsMap[worker.id].machine_id + '-'
-               + this.clientsMap[worker.id].client_id;
+    filename = "client-" + this.clientsMap[worker.id];
   }
   if (worker.workerType == WorkerType.SERVER) {
     filename = "party-" + this.serversMap[worker.id].party_id + '-'
@@ -183,8 +184,7 @@ DPPIRExperiment.prototype.info = function () {
   str += "\tclients:\n";
   for (const worker of this.clients) {
     str += "\t\tworker " + worker.id + " -> "
-           + this.clientsMap[worker.id].machine_id + '-'
-           + this.clientsMap[worker.id].client_id + '\n';
+           + this.clientsMap[worker.id] + '\n';
   }
   str += "\tservers:\n";
   for (const worker of this.servers) {
@@ -195,30 +195,48 @@ DPPIRExperiment.prototype.info = function () {
   str += '\tmode: ' + this.mode + '\n';
   str += '\tparties: ' + this.parties + '\n';
   str += '\tparallelism: ' + this.parallelism + '\n';
-  str += '\tbatchSize: ' + this.batchSize + '\n';
-  str += '\tspan: ' + this.span + '\n';
-  str += '\tcutoff: ' + this.cutoff + '\n';
-  str += '\tclients: ' + this.clientsParallel + '\n';
+  str += '\tepsilon: ' + this.epsilon + '\n';
+  str += '\tdelta: ' + this.delta + '\n';
   str += '\tqueries: ' + this.queries + '\n';
   str += '\ttableSize: ' + this.tableSize + '\n';
   return str;
 };
 DPPIRExperiment.prototype.serialize = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
-    const info = this.clientsMap[worker.id];
-    return [this.experimentType, info.machine_id, info.client_id, this.queries, this.mode, this.tableSize].join(' ');
+    const client_id = this.clientsMap[worker.id];
+    return [this.experimentType, client_id, this.queries, this.mode].join(' ');
   }
   if (worker.workerType == WorkerType.SERVER) {
     const info = this.serversMap[worker.id];
-    return [this.experimentType, info.party_id, info.machine_id, this.batchSize, this.span, this.cutoff, this.mode, this.tableSize].join(' ');
+    return [this.experimentType, info.party_id, info.machine_id, this.mode].join(' ');
   }
+};
+DPPIRExperiment.prototype.toJSON = function () {
+  let obj = AbstractExperiment.prototype.toJSON.call(this);
+  return Object.assign(obj, {
+    mode: this.mode,
+    parties: this.parties,
+    parallelism: this.parallelism,
+    epsilon: this.epsilon,
+    delta: this.delta,
+    queries: this.queries,
+    tableSize: this.tableSize
+  });
+};
+DPPIRExperiment.fromJSON = function (obj) {
+  let expr = new DPPIRExperiment(obj.name_, obj.mode, obj.clientsNum, obj.serversNum);
+  expr.setTableSize(obj.tableSize);
+  expr.setServerParams(obj.parties, obj.parallelism, obj.epsilon, obj.delta);
+  expr.setClientParams(obj.queries);
+  return expr;
 };
 
 // Checklist experiment.
-function ChecklistExperiment(name, tableSize, queries) {
+function ChecklistExperiment(name, tableSize, queries, pirtype) {
   AbstractExperiment.call(this, name, ExperimentType.CHECKLIST, 1, 2);
   this.tableSize = tableSize;
   this.queries = queries;
+  this.pirtype = pirtype;
 }
 ChecklistExperiment.prototype = Object.create(AbstractExperiment.prototype);
 ChecklistExperiment.prototype.resultFile = function (worker) {
@@ -232,21 +250,33 @@ ChecklistExperiment.prototype.serialize = function (worker) {
   if (worker.workerType == WorkerType.CLIENT) {
     const ip1 = this.servers[0].ip + ':' + (10000 + this.servers[0].id);
     const ip2 = this.servers[1].ip + ':' + (10000 + this.servers[1].id);
-    return [this.experimentType, 1, 1, ip1, ip2, this.queries].join(' ');
+    return [this.experimentType, ip1, ip2, this.queries, this.pirtype].join(' ');
   }
   if (worker.workerType == WorkerType.SERVER) {
     const port = 10000 + worker.id;
-    return [this.experimentType, 1, worker.id, this.tableSize, port].join(' ');
+    return [this.experimentType, worker.id, this.tableSize, port, this.pirtype].join(' ');
   }
 };
 ChecklistExperiment.prototype.info = function () {
   let str = AbstractExperiment.prototype.info.call(this);
   str += '\ttableSize: ' + this.tableSize + '\n';
   str += '\tqueries: ' + this.queries + '\n';
+  str += '\tpirtype: ' + this.pirtype + '\n';
   return str;
 };
 ChecklistExperiment.prototype.readyForClients = function () {
   return this.servers.length == this.serversNum;
+};
+ChecklistExperiment.prototype.toJSON = function () {
+  let obj = AbstractExperiment.prototype.toJSON.call(this);
+  return Object.assign(obj, {
+    pirtype: this.pirtype,
+    queries: this.queries,
+    tableSize: this.tableSize
+  });
+};
+ChecklistExperiment.fromJSON = function (obj) {
+  return new ChecklistExperiment(obj.name_, obj.tableSize, obj.queries, obj.pirtype);
 };
 
 // SealPIR experiment.
@@ -260,13 +290,23 @@ SealPIRExperiment.prototype.resultFile = function (worker) {
   return this.resultDirectory() + '/' + 'sealpir.log';
 };
 SealPIRExperiment.prototype.serialize = function (worker) {
-  return [this.experimentType, 1, 1, this.tableSize, this.queries].join(' ');
+  return [this.experimentType, this.tableSize, this.queries].join(' ');
 };
 SealPIRExperiment.prototype.info = function () {
   let str = AbstractExperiment.prototype.info.call(this);
   str += '\ttableSize: ' + this.tableSize + '\n';
   str += '\tqueries: ' + this.queries + '\n';
   return str;
+};
+SealPIRExperiment.prototype.toJSON = function () {
+  let obj = AbstractExperiment.prototype.toJSON.call(this);
+  return Object.assign(obj, {
+    queries: this.queries,
+    tableSize: this.tableSize
+  });
+};
+SealPIRExperiment.fromJSON = function (obj) {
+  return new SealPIRExperiment(obj.name_, obj.tableSize, obj.queries);
 };
 
 // Export classes.

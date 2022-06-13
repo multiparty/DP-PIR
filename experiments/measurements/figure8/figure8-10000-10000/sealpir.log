@@ -1,0 +1,45 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //:sealpir (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //:sealpir (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 1] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //:sealpir up-to-date:
+  bazel-bin/sealpir
+INFO: Elapsed time: 0.467s, Critical Path: 0.01s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/sealpir '--table=10000' '--queries=10000'
+INFO: Build completed successfully, 1 total action
+Main: Generating all parameters
+Main: Generate database
+Main: Initializing server and client
+Main: Preprocess database on server side
+Main: Query 0
+Main: Query 500
+Main: Query 1000
+Main: Query 1500
+Main: Query 2000
+Main: Query 2500
+Main: Query 3000
+Main: Query 3500
+Main: Query 4000
+Main: Query 4500
+Main: Query 5000
+Main: Query 5500
+Main: Query 6000
+Main: Query 6500
+Main: Query 7000
+Main: Query 7500
+Main: Query 8000
+Main: Query 8500
+Main: Query 9000
+Main: Query 9500
+Main: Query 10000
+
+Time taken: 
+Preprocessing: 4ms
+Query time: 21581ms
+Server time: 163927ms
+Response handling: 24874ms
+Done!

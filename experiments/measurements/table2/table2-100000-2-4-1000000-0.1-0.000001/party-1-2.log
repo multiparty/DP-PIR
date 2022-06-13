@@ -1,0 +1,37 @@
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //DPPIR:main (0 packages loaded, 0 targets configured)
+INFO: Analyzed target //DPPIR:main (0 packages loaded, 0 targets configured).
+INFO: Found 1 target...
+[0 / 2] [Prepa] BazelWorkspaceStatusAction stable-status.txt
+Target //DPPIR:main up-to-date:
+  bazel-bin/DPPIR/main
+INFO: Elapsed time: 0.286s, Critical Path: 0.01s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Running command line: bazel-bin/DPPIR/main '--config=config/party-1-2.txt' '--role=party' '--stage=all' '--party_id=1' '--server_id=2'
+INFO: Build completed successfully, 1 total action
+Creating server and accepting connections...
+On port 3006
+Client connected!
+Initializing parallel connections...
+Creating parallel server and accepting connections...
+On port 4006
+Parallel clients connected...
+Connecting to parallel server 3
+Server at  34.234.77.235:4007
+Connected to parallel server 3
+Listening to 7150000 offline secrets...
+Broadcasting secrets...
+Progress 749999 / 7150000
+Progress 1499999 / 7150000
+Progress 2249999 / 7150000
+Progress 2999999 / 7150000
+Progress 3749999 / 7150000
+Progress 4499999 / 7150000
+Progress 5249999 / 7150000
+Progress 5999999 / 7150000
+Progress 6749999 / 7150000
+Listening to 7150000 queries...
+Handling responses...
+Done!

@@ -1,0 +1,26 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "client",
+    srcs = [
+        "client_handlers.cc",
+        "client_initialization.cc",
+        "client_offline.cc",
+        "client_online.cc",
+    ],
+    hdrs = [
+        "client.h",
+    ],
+    deps = [
+        "//DPPIR/config:config",
+        "//DPPIR/onion:onion",
+        "//DPPIR/sharing:additive",
+        "//DPPIR/sharing:incremental",
+        "//DPPIR/sockets:client_socket",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:database",
+        "//DPPIR/types:state",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)

@@ -1,0 +1,77 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "common",
+    hdrs = [
+        "common.h",
+        "consts.h",
+    ],
+    srcs = [
+        "common.cc",
+    ],
+    deps = [],
+)
+
+cc_library(
+    name = "client_socket",
+    hdrs = [
+        "client_socket.h",
+        "consts.h",
+    ],
+    srcs = [
+        "client_socket.cc",
+    ],
+    deps = [
+        ":common",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "server_socket",
+    hdrs = [
+        "server_socket.h",
+        "consts.h",
+    ],
+    srcs = [
+        "server_socket.cc",
+    ],
+    deps = [
+        ":common",
+        "//DPPIR/types:containers",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "parallel_socket",
+    hdrs = [
+        "parallel_socket.h",
+        "consts.h",
+    ],
+    srcs = [
+        "parallel_socket.cc",
+    ],
+    deps = [
+        ":common",
+        "//DPPIR/types:containers",
+        "//DPPIR/config:config",
+        "//DPPIR/types:types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_test(
+    name = "socket_test",
+    srcs = [
+        "socket_test.cc",
+    ],
+    deps = [
+        ":client_socket",
+        ":server_socket",
+    ],
+    linkopts = ["-pthread"],
+)

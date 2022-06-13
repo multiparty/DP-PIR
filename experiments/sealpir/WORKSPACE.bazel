@@ -1,0 +1,140 @@
+workspace(name = "Sealpir-Experiment")
+
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository", "new_git_repository")
+
+# Rules_cc
+http_archive(
+    name = "rules_cc",
+    sha256 = "35f2fb4ea0b3e61ad64a369de284e4fbbdcdba71836a5555abb5e194cf119509",
+    strip_prefix = "rules_cc-624b5d59dfb45672d4239422fa1e3de1822ee110",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_cc/archive/624b5d59dfb45672d4239422fa1e3de1822ee110.tar.gz",
+        "https://github.com/bazelbuild/rules_cc/archive/624b5d59dfb45672d4239422fa1e3de1822ee110.tar.gz",
+    ],
+)
+
+load("@rules_cc//cc:repositories.bzl", "rules_cc_dependencies")
+
+rules_cc_dependencies()
+
+# Abseil
+http_archive(
+    name = "com_google_absl",  # 2021-05-20T02:59:16Z
+    sha256 = "aeba534f7307e36fe084b452299e49b97420667a8d28102cf9a0daeed340b859",
+    strip_prefix = "abseil-cpp-7971fb358ae376e016d2d4fc9327aad95659b25e",
+    urls = ["https://github.com/abseil/abseil-cpp/archive/7971fb358ae376e016d2d4fc9327aad95659b25e.zip"],
+)
+
+# Foreign rules for seal and sealpir.
+http_archive(
+    name = "rules_foreign_cc",
+    sha256 = "6041f1374ff32ba711564374ad8e007aef77f71561a7ce784123b9b4b88614fc",
+    strip_prefix = "rules_foreign_cc-0.8.0",
+    url = "https://github.com/bazelbuild/rules_foreign_cc/archive/0.8.0.tar.gz",
+)
+
+load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
+rules_foreign_cc_dependencies()
+
+# Seal
+new_git_repository(
+    name = "Seal",
+    build_file_content = """
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
+
+filegroup(name = "all", srcs = glob(["**"]))
+
+cmake(
+    name = "seal",
+    lib_source = "//:all",
+    out_static_libs = ["libseal-4.0.a"],
+    generate_args = [
+      "-DSEAL_USE_MSGSL=OFF",
+      "-DSEAL_USE_ZLIB=OFF",
+      "-DSEAL_USE_ZSTD=OFF",
+    ],
+    out_include_dir = "include/SEAL-4.0",
+    visibility = ["//visibility:public"],
+)
+    """,
+    commit = "a0fc0b732f44fa5242593ab488c8b2b3076a5f76",
+    remote = "https://github.com/microsoft/SEAL.git",
+)
+
+# SealPIR.
+new_git_repository(
+    name = "SealPIR",
+    build_file_content = """
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
+
+genrule(
+    name = "no_cout_sources",
+    srcs = [
+        "src/pir.cpp",
+        "src/pir_client.cpp",
+        "src/pir_server.cpp",
+    ],
+    outs = [
+        "pir.cpp",
+        "pir_client.cpp",
+        "pir_server.cpp",
+    ],
+    cmd_bash = '''
+        cp $(location src/pir.cpp) $(location pir.cpp)
+        cp $(location src/pir_client.cpp) $(location pir_client.cpp)
+        cp $(location src/pir_server.cpp) $(location pir_server.cpp)
+        perl -0777 -i -pe 's|cout([^;]+);||igs' $(location pir.cpp)
+        perl -0777 -i -pe 's|cout([^;]+);||igs' $(location pir_client.cpp)
+        perl -0777 -i -pe 's|cout([^;]+);||igs' $(location pir_server.cpp)
+    ''',
+)
+
+genrule(
+    name = "no_directory_headers",
+    srcs = [
+        "src/pir.hpp",
+        "src/pir_client.hpp",
+        "src/pir_server.hpp",
+    ],
+    outs = [
+        "pir.hpp",
+        "pir_client.hpp",
+        "pir_server.hpp",
+    ],
+    cmd_bash = '''
+        cp $(location src/pir.hpp) $(location pir.hpp)
+        cp $(location src/pir_client.hpp) $(location pir_client.hpp)
+        cp $(location src/pir_server.hpp) $(location pir_server.hpp)
+    ''',
+)
+
+cc_library(
+    name = "sealpir",
+    srcs = [
+        ":no_cout_sources",
+    ],
+    hdrs = [
+        ":no_directory_headers",
+    ],
+    deps = [
+        "@Seal//:seal",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "main",
+    srcs = [
+        "src/main.cpp",
+    ],
+    deps = [
+        ":sealpir",
+    ],
+    visibility = ["//visibility:public"],
+) 
+""",
+    commit = "12f6c0ff34ed3e4da47072544efb0b44bb745e4b",
+    remote = "https://github.com/microsoft/SealPIR.git",
+)

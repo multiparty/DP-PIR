@@ -1,0 +1,56 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "types",
+    srcs = [
+        "types.cc",
+    ],
+    hdrs = [
+        "types.h",
+    ],
+    deps = [
+        "@libsodium//:libsodium",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "containers",
+    srcs = [],
+    hdrs = [
+        "containers.h",
+    ],
+    deps = [
+        ":types",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "database",
+    srcs = [
+        "database.cc",
+    ],
+    hdrs = [
+        "database.h",
+    ],
+    deps = [
+        ":types",
+        "@libsodium//:libsodium",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+cc_library(
+    name = "state",
+    srcs = [
+        "state.cc",
+    ],
+    hdrs = [
+        "state.h",
+    ],
+    deps = [
+        ":types",
+    ],
+    visibility = ["//:__subpackages__"],
+)

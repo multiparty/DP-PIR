@@ -1,0 +1,159 @@
+[
+  {
+    "name_": "figure8-10000-2-1-1-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 1,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-10-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 10,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-100-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 100,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-1000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 1000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-10000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 10000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-100000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 100000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-1000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 1000000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-10000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 10000000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-2-1-100000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "online",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 100000000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-1",
+    "experimentType": "sealpir",
+    "clientsNum": 1,
+    "serversNum": 0,
+    "queries": 1,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-10",
+    "experimentType": "sealpir",
+    "clientsNum": 1,
+    "serversNum": 0,
+    "queries": 10,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-100",
+    "experimentType": "sealpir",
+    "clientsNum": 1,
+    "serversNum": 0,
+    "queries": 100,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-1000",
+    "experimentType": "sealpir",
+    "clientsNum": 1,
+    "serversNum": 0,
+    "queries": 1000,
+    "tableSize": 10000
+  },
+  {
+    "name_": "figure8-10000-10000",
+    "experimentType": "sealpir",
+    "clientsNum": 1,
+    "serversNum": 0,
+    "queries": 10000,
+    "tableSize": 10000
+  }
+]

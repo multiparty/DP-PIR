@@ -76,6 +76,9 @@ func main() {
 			if inShutdown {
 				break
 			}
+			if i % 10000 == 0 {
+			  fmt.Printf("%d\n", i)
+			}
 			key := keys[rand.Intn(len(keys))]
 			start := time.Now()
 			_, err := client.Read(key)

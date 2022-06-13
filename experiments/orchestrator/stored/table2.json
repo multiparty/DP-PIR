@@ -1,0 +1,54 @@
+[
+  {
+    "name_": "table2-100000-2-1-1000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 1,
+    "serversNum": 2,
+    "mode": "all",
+    "parties": 2,
+    "parallelism": 1,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 1000000,
+    "tableSize": 100000
+  },
+  {
+    "name_": "table2-100000-2-2-1000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 2,
+    "serversNum": 4,
+    "mode": "all",
+    "parties": 2,
+    "parallelism": 2,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 500000,
+    "tableSize": 100000
+  },
+  {
+    "name_": "table2-100000-2-4-1000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 4,
+    "serversNum": 8,
+    "mode": "all",
+    "parties": 2,
+    "parallelism": 4,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 250000,
+    "tableSize": 100000
+  },
+  {
+    "name_": "table2-100000-2-8-1000000-0.1-0.000001",
+    "experimentType": "dppir",
+    "clientsNum": 8,
+    "serversNum": 16,
+    "mode": "all",
+    "parties": 2,
+    "parallelism": 8,
+    "epsilon": 0.1,
+    "delta": 0.000001,
+    "queries": 125000,
+    "tableSize": 100000
+  }
+]
