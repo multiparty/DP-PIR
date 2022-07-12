@@ -10,10 +10,6 @@ WORKER_ID=$( { curl "$ORCHASTRATOR/giveip/server" 2> /dev/null; } )
 
 echo "I am a server with worker_id ${WORKER_ID}"
 
-# Set the socket buffer size
-sudo sysctl -w net.core.rmem_max=123289600
-sudo sysctl -w net.core.wmem_max=123289600
-
 # Loop forever..
 while true
 do

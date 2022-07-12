@@ -26,7 +26,7 @@ RUN update-alternatives --set gcc /usr/bin/gcc-11
 RUN apt-get install -y nodejs npm
 
 # Install go (for checklist)
-RUN apt-get install wget
+RUN apt-get install -y wget
 RUN wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
 RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.4.linux-amd64.tar.gz
 RUN touch /root/.bashrc
@@ -38,13 +38,13 @@ RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-
 RUN mv bazel-archive-keyring.gpg /usr/share/keyrings
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
 #echo "deb [arch=amd64 trusted=yes] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
-RUN apt-get update && apt-get install -y bazel-4.2.1
+RUN apt-get update && apt-get install -y git bazel-4.2.1
 RUN update-alternatives --install /usr/bin/bazel bazel /usr/bin/bazel-4.2.1 60
 RUN update-alternatives --set bazel "/usr/bin/bazel-4.2.1"
 
 COPY . /DPPIR
 
 # Install plotting and orchestrator dependencies
-RUN apt-get install python3-pip
+RUN apt-get install -y python3-pip
 RUN cd /DPPIR/experiments/plots && pip3 install -r requirements.txt
 RUN cd /DPPIR/experiments/orchestrator && npm install

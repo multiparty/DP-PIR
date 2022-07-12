@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <cassert>
+#include <iostream>
 
 namespace DPPIR {
 namespace sockets {
@@ -43,8 +44,12 @@ int ConnectTo(const char* ip, int port) {
   socklen_t sz = sizeof(int);
   getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &v1, &sz);
   getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &v2, &sz);
-  assert(v1 == 2 * rcvbuf);
-  assert(v2 == 2 * sndbuf);
+  if (v1 < 2 * rcvbuf || v2 < 2 * sndbuf) {
+    std::cout << "Warning: TCP read/write buffers were not set to the "
+              << "desired size. You should still be able to run the code with "
+              << "correct output. However, the performance may be sub optimal."
+              << std::endl;
+  }
 
   // Filling server information.
   struct sockaddr_in servaddr;
@@ -79,8 +84,12 @@ void ListenOn(int port, int* out_socks, size_t count) {
   socklen_t sz = sizeof(int);
   getsockopt(srvfd, SOL_SOCKET, SO_RCVBUF, &v1, &sz);
   getsockopt(srvfd, SOL_SOCKET, SO_SNDBUF, &v2, &sz);
-  assert(v1 == 2 * rcvbuf);
-  assert(v2 == 2 * sndbuf);
+  if (v1 < 2 * rcvbuf || v2 < 2 * sndbuf) {
+    std::cout << "Warning: TCP read/write buffers were not set to the "
+              << "desired size. You should still be able to run the code with "
+              << "correct output. However, the performance may be sub optimal."
+              << std::endl;
+  }
 
   // Filling server information.
   struct sockaddr_in servaddr;
@@ -100,12 +109,6 @@ void ListenOn(int port, int* out_socks, size_t count) {
     int sockfd = accept(srvfd, NULL, NULL);
     MY_ASSERT(sockfd);
     MY_ASSERT(setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &y, sizeof(y)));
-
-    // Validate that socket buffers sizes were set correctly.
-    getsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, &v1, &sz);
-    getsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, &v2, &sz);
-    assert(v1 == 2 * rcvbuf);
-    assert(v2 == 2 * sndbuf);
 
     // Ok!
     out_socks[i] = sockfd;

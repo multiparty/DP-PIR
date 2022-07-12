@@ -66,6 +66,10 @@ if [[ ! -f "lock" ]]; then
   touch lock
 fi
 
+# Make sure TCP buffers have sufficient max size
+sysctl -w net.core.rmem_max=123289600 || echo "Warning: Could not use sysctl to change TCP buffer size"
+sysctl -w net.core.wmem_max=123289600 || echo "Warning: Could not use sysctl to change TCP buffer size"
+
 if [[ ! -d "DP-PIR" ]]; then
   echo "AWS LOG: Cloning repo..."
   # Install our repo and build it

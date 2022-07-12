@@ -5,6 +5,11 @@ echo "$ npm install"
 echo "$ node main"
 echo ""
 
+# Compile code
+echo "Building code in opt mode"
+bazel build --config=opt //DPPIR:main
+bazel build --config=opt //DPPIR/config:gen_config
+
 # Command line args
 servers=$1
 clients=$2

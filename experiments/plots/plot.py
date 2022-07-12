@@ -540,7 +540,7 @@ if __name__ == '__main__':
     if description['type'] == 'simple-plot':
       data = read_plot_data(name, description)
       simple_plot(pdf, description, data)
-    if description['type'] == 'ratio-plot':
+    elif description['type'] == 'ratio-plot':
       data = read_ratio_data(name, description)
       simple_plot(pdf, description, data)
     elif description['type'] == 'split-plot':

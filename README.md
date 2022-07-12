@@ -8,6 +8,26 @@ the experiments shown in the paper, including experiments with our two baselines
 [Checklist](https://github.com/dimakogan/checklist) (both Punc and DPF), and
 [SealPIR](https://github.com/microsoft/SealPIR).
 
+## Installation
+
+Our code uses TCP sockets. For performance reasons, our code tries to set the TCP
+read and write buffers to a large size that exceeds the default allowed size.
+
+If running the code on AWS using our script (see below), our scripts will take care
+of this step for you.
+
+If you are running the code on a local machine, you will need to change this allowed
+size your *host* machine. Regardless of whether you are using the machine directly or
+via our Docker container. On Ubuntu, this can be done using:
+```
+sudo sysctl -w net.core.rmem_max=123289600
+sudo sysctl -w net.core.wmem_max=123289600
+```
+
+If you skip this step or decide not change the allowed TCP buffer size. Our code will
+still work correctly, but may exhibit relatively worse performance. Our code will display
+a warning if it encounters any issue setting up these buffer sizes.
+
 ## Dependencies
 
 We developed and tested this code using ubuntu 20.04, g++-11 and bazel 4.2.1.
@@ -21,7 +41,7 @@ and configuration.
 # Build the docker container
 docker build -t dppir-image .
 # Run the docker container in the background
-docker run -d -t dppir-image --name dppir
+docker run --name dppir -d -t dppir-image
 # Open a terminal inside the container to execute commands in
 docker exec -it dppir /bin/bash
 cd /DPPIR
@@ -41,15 +61,15 @@ First, you need to run the two parties, each in their own separate terminals. If
 the docker container, you need to open different terminals in the container for each one.
 ```
 # Run the first party
-bazel run //DPPIR:main  -- --config=config/example.txt --stage=all --role=party --party_id=0 --server_id=0
+bazel run --config=opt //DPPIR:main  -- --config=config/example.txt --stage=all --role=party --party_id=0 --server_id=0
 # Run the second party (in a different terminal)
-bazel run //DPPIR:main  -- --config=config/example.txt --stage=all --role=party --party_id=1 --server_id=0
+bazel run --config=opt //DPPIR:main  -- --config=config/example.txt --stage=all --role=party --party_id=1 --server_id=0
 ```
 
 Then, in a third different terminal, you can run the client and provide it with the number
 of queries to make (say 100):
 ```
-bazel run //DPPIR:main  -- --config=config/example.txt --stage=all --role=client --server_id=0 --queries=100
+bazel run --config=opt //DPPIR:main  -- --config=config/example.txt --stage=all --role=client --server_id=0 --queries=100
 ```
 
 Due to our bazel setup, the config files must be located under `config/`. The `--stage` argument
@@ -58,7 +78,7 @@ specifies whether to run the `online` or `offline` stages (or both if `all` is p
 You can generate your own configuration file with your own parameters by running. The absolute
 file path should be used for the output config file command line argument:
 ```
-bazel run //DPPIR/config:gen_config -- /full/path/to/config/outfile.txt
+bazel run --config=opt //DPPIR/config:gen_config -- /full/path/to/config/outfile.txt
 ```
 
 ## Running experiments
