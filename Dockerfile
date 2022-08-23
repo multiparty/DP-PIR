@@ -9,7 +9,7 @@ ENV LANG C.UTF-8
 ENV PATH /usr/local/bin:$PATH
 
 # Dependencies/tools.
-RUN apt-get clean && apt-get update
+RUN apt-get clean && apt-get update --fix-missing
 RUN apt-get install -y curl apt-transport-https gnupg software-properties-common
 
 # g++-11
